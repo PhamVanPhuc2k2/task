@@ -1,0 +1,84 @@
+# syntax=docker/dockerfile:1
+#
+# Ảnh production cho Next.js.
+#
+# Ba tầng, và mỗi tầng có lý do:
+#
+#   deps    — chỉ cài phụ thuộc. Tách riêng để lần build sau, nếu package.json
+#             không đổi, Docker dùng lại tầng này thay vì cài lại từ đầu.
+#   builder — biên dịch. Cần cả devDependencies (TypeScript, ESLint…).
+#   runner  — chỉ chứa thứ để CHẠY. Không có mã nguồn, không có trình biên dịch,
+#             không có devDependencies.
+
+# ── deps ─────────────────────────────────────────────
+FROM node:24-alpine AS deps
+
+WORKDIR /app
+
+# Chép đúng hai file khai phụ thuộc trước khi chép mã nguồn: sửa một dòng trong
+# component không nên làm mất cache của bước cài đặt.
+COPY package.json package-lock.json ./
+
+# `npm ci` chứ không `npm install`: nó cài ĐÚNG theo package-lock, không tự nâng
+# phiên bản. Một bản build lặp lại được là bản build gỡ lỗi được.
+RUN npm ci
+
+# ── builder ──────────────────────────────────────────
+FROM node:24-alpine AS builder
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Địa chỉ API được NHÚNG vào mã lúc build (biến `NEXT_PUBLIC_*` là vậy). Mặc
+# định để đường dẫn TƯƠNG ĐỐI, và đó là lựa chọn quan trọng:
+#
+#   - nginx đứng trước cả hai, nên trình duyệt và API cùng một origin
+#   - cùng origin thì cookie phiên của Sanctum hoạt động mà không cần CORS
+#   - và ảnh build ra CHẠY ĐƯỢC Ở MỌI TÊN MIỀN, không phải build lại cho mỗi
+#     môi trường
+#
+# Nhúng một địa chỉ tuyệt đối vào đây là tự trói ảnh vào đúng một tên miền.
+ARG NEXT_PUBLIC_API_URL=/api/v1
+ARG NEXT_PUBLIC_BACKEND_URL=
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN npm run build
+
+# ── runner ───────────────────────────────────────────
+FROM node:24-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ENV HOSTNAME=0.0.0.0
+
+# Chạy bằng người dùng thường, không phải root. Một lỗ hổng thực thi mã trong
+# Node mà chạy bằng root thì kẻ tấn công có luôn quyền cao nhất trong container.
+RUN addgroup -g 1001 -S nodejs \
+    && adduser -S nextjs -u 1001
+
+# Ba thứ, và thiếu thứ nào cũng hỏng theo kiểu khó đoán:
+#   standalone — server.js cùng node_modules tối thiểu
+#   static     — JS/CSS đã build; thiếu thì trang tải ra nhưng trắng trơn
+#   public     — ảnh tĩnh, manifest PWA
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+USER nextjs
+
+EXPOSE 3000
+
+# Health check gọi thẳng vào chính nó. `wget` có sẵn trong alpine nên không phải
+# cài thêm gì.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget -q --spider http://127.0.0.1:3000/login || exit 1
+
+CMD ["node", "server.js"]

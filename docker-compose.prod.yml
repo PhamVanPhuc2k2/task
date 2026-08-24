@@ -1,0 +1,238 @@
+# Hạ tầng production.
+#
+# Khác bản dev ở những điểm sau, và mỗi điểm là một quyết định:
+#
+#   - **Không bind mount mã nguồn.** Code nằm trong image, nên container nào
+#     cũng chạy đúng phiên bản đã build. Bind mount ở production nghĩa là không
+#     ai biết chắc thứ đang chạy là gì.
+#   - **Không Mailpit.** Thư đi thật.
+#   - **Không mở cổng MySQL và Redis ra ngoài.** Chúng chỉ cần nói chuyện với
+#     nhau trong mạng nội bộ; mở ra host là mở ra Internet nếu tường lửa hở.
+#   - **Worker tách khỏi web.** Deploy web không cắt ngang job đang chạy.
+#   - **Có giới hạn tài nguyên.** Một job nén ảnh chạy loạn không được phép kéo
+#     sập cả máy chủ.
+#
+# Chạy:
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# TLS: đặt sau một reverse proxy có chứng chỉ (Caddy, Traefik, hoặc nginx của
+# nhà cung cấp). Compose này chỉ mở HTTP trên cổng nội bộ.
+
+name: explus
+
+# Xoay vòng log của container.
+#
+# Docker mặc định ghi stdout của mọi container vào một file JSON **không giới
+# hạn kích thước**. Một service nói nhiều — hoặc một vòng lặp lỗi — sẽ âm thầm
+# ăn hết đĩa, và triệu chứng đầu tiên người ta thấy là MySQL không ghi được
+# nữa. Nguyên nhân thật thì nằm cách đó vài lớp.
+#
+# 3 file × 20 MB = tối đa 60 MB mỗi container. Log cần giữ lâu hơn thì phải
+# chuyển ra hệ thống gom log, không phải để nằm trên đĩa máy chủ.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
+services:
+  # ── Ứng dụng: php-fpm ──────────────────────────────
+  app:
+    logging: *logging
+    image: ${APP_IMAGE:-explus/app:latest}
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile.prod
+    restart: unless-stopped
+    env_file: [backend/.env]
+    environment:
+      TZ: UTC
+      # Chỉ container này chạy migration. Worker khởi động cùng lúc mà cũng
+      # chạy migration thì hai tiến trình cùng ALTER một bảng.
+      RUN_MIGRATIONS: "true"
+    volumes:
+      # Chỉ storage cần ghi và cần sống lâu hơn container.
+      - app-storage:/var/www/html/storage
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      # Gọi chính endpoint mà bộ giám sát gọi. Xem App\Http\Controllers\Api\V1\HealthController.
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:9000') === false ? 0 : 0);"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 1G }
+    networks: [app]
+
+  # ── Giao diện: Next.js ─────────────────────────────
+  #
+  # Chạy sau nginx, không mở cổng ra ngoài: mọi thứ đi qua nginx để trình duyệt
+  # chỉ thấy MỘT origin. Xác thực dùng cookie phiên của Sanctum, mà cookie thì
+  # gắn với origin — tách hai tên miền là phải cấu hình CORS, SameSite và danh
+  # sách stateful domain khớp tuyệt đối, sai chỗ nào cũng ra cùng một triệu
+  # chứng: đăng nhập xong bị đá về trang đăng nhập.
+  frontend:
+    logging: *logging
+    image: ${FRONTEND_IMAGE:-explus/frontend:latest}
+    build:
+      context: ./frontend
+      dockerfile: ../docker/node/Dockerfile.prod
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      NODE_ENV: production
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 512M }
+    networks: [app]
+
+  # ── Web server ─────────────────────────────────────
+  nginx:
+    logging: *logging
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      # CHỈ storage, không mount `public`.
+      #
+      # nginx không cần mã PHP: nó chuyển tiếp sang php-fpm với đường dẫn script
+      # cố định, còn php-fpm tự phân giải trong container của nó. Mount `public`
+      # qua volume có tên là mở đường cho một lỗi im lặng — volume chỉ nạp từ
+      # image đúng một lần lúc còn rỗng, nên deploy lần thứ hai mà public đổi
+      # thì nó vẫn giữ bản cũ.
+      - app-storage:/var/www/html/storage:ro
+    depends_on: [app, frontend]
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 256M }
+    networks: [app]
+
+  # ── Queue worker + scheduler ───────────────────────
+  # Tách khỏi `app` để deploy web không cắt ngang job đang chạy dở. Xem
+  # docker/php/supervisord.conf.
+  worker:
+    logging: *logging
+    image: ${APP_IMAGE:-explus/app:latest}
+    restart: unless-stopped
+    env_file: [backend/.env]
+    environment:
+      TZ: UTC
+      RUN_MIGRATIONS: "false"
+    command: ["supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+    volumes:
+      - app-storage:/var/www/html/storage
+    depends_on:
+      mysql: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    # Chờ Horizon xử lý nốt job đang chạy rồi mới giết. Ngắn hơn stopwaitsecs
+    # trong supervisord.conf thì Docker giết trước khi Horizon kịp dừng êm.
+    stop_grace_period: 3700s
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 1G }
+    networks: [app]
+
+  # ── MySQL ──────────────────────────────────────────
+  mysql:
+    logging: *logging
+    image: mysql:8.4
+    restart: unless-stopped
+    # KHÔNG mở cổng ra host.
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?bat buoc phai dat}
+      MYSQL_DATABASE: ${DB_DATABASE:?bat buoc phai dat}
+      MYSQL_USER: ${DB_USERNAME:?bat buoc phai dat}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?bat buoc phai dat}
+      TZ: UTC
+    command:
+      - --default-time-zone=+00:00
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      # Ghi log truy vấn chậm. Đây là thứ trả lời "vì sao trang này chậm" mà
+      # không cần dựng lại sự cố.
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/log/mysql/slow.log
+      - --long-query-time=1
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - mysql-logs:/var/log/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    deploy:
+      resources:
+        limits: { cpus: "2", memory: 2G }
+    networks: [app]
+
+  # ── Redis ──────────────────────────────────────────
+  redis:
+    logging: *logging
+    image: redis:7-alpine
+    restart: unless-stopped
+    # `appendonly yes` giữ hàng đợi qua lần khởi động lại. Không có nó thì mọi
+    # job đang chờ biến mất khi máy chủ khởi động lại — kể cả email OTP.
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - "512mb"
+      # Hàng đợi KHÔNG được phép bị đuổi khỏi bộ nhớ. `noeviction` khiến Redis
+      # từ chối ghi khi đầy — báo lỗi to còn hơn lặng lẽ vứt job đi.
+      - --maxmemory-policy
+      - noeviction
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    deploy:
+      resources:
+        limits: { cpus: "1", memory: 640M }
+    networks: [app]
+
+  # ── Sao lưu ────────────────────────────────────────
+  backup:
+    logging: *logging
+    build:
+      context: ./docker/backup
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      DB_HOST: mysql
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      BACKUP_AGE_PUBLIC_KEY: ${BACKUP_AGE_PUBLIC_KEY:?bat buoc — khong duoc sao luu tran}
+      BACKUP_AGE_PRIVATE_KEY_FILE: /keys/backup-key.txt
+      DRILL_DB_USERNAME: ${DRILL_DB_USERNAME:?bat buoc}
+      DRILL_DB_PASSWORD: ${DRILL_DB_PASSWORD:?bat buoc}
+    volumes:
+      - ./storage/backups:/backups
+      - ./storage/keys:/keys:ro
+    depends_on:
+      mysql: { condition: service_healthy }
+    networks: [app]
+
+volumes:
+  mysql-data:
+  mysql-logs:
+  redis-data:
+  app-storage:
+
+networks:
+  app:
+    driver: bridge

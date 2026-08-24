@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="512" height="512">
+  <!-- Dấu cộng Explus. Nền tối cố định để biểu tượng trên màn hình chính
+       không đổi theo giao diện sáng/tối của máy. -->
+  <rect width="32" height="32" fill="#0c0d09"/>
+  <rect x="5.5" y="5.5" width="21" height="21" fill="none" stroke="#c8f52d" stroke-width="1"/>
+  <path d="M16 10v12M10 16h12" stroke="#c8f52d" stroke-width="2" stroke-linecap="square"/>
+</svg>

@@ -1,0 +1,118 @@
+deptrac:
+  paths:
+    - ./app
+
+  layers:
+    # ── Tầng vào/ra ────────────────────────────────
+    - name: Http
+      collectors:
+        - type: directory
+          value: app/Http/.*
+
+    - name: Console
+      collectors:
+        - type: directory
+          value: app/Console/.*
+
+    - name: Providers
+      collectors:
+        - type: directory
+          value: app/Providers/.*
+
+    # ── Miền nghiệp vụ ─────────────────────────────
+    # Identity là "shared kernel": mọi miền khác đều cần tham chiếu tới
+    # người dùng và phòng ban (assignee_id, manager_id...). Đây là ngoại lệ
+    # duy nhất của quy tắc "Domain A không gọi thẳng Domain B".
+    - name: Identity
+      collectors:
+        - type: directory
+          value: app/Domain/Identity/.*
+
+    - name: Task
+      collectors:
+        - type: directory
+          value: app/Domain/Task/.*
+
+    - name: Report
+      collectors:
+        - type: directory
+          value: app/Domain/Report/.*
+
+    - name: Attendance
+      collectors:
+        - type: directory
+          value: app/Domain/Attendance/.*
+
+    - name: Leave
+      collectors:
+        - type: directory
+          value: app/Domain/Leave/.*
+
+    - name: Payroll
+      collectors:
+        - type: directory
+          value: app/Domain/Payroll/.*
+
+    # ── Tầng nền ───────────────────────────────────
+    - name: Support
+      collectors:
+        - type: directory
+          value: app/Support/.*
+
+  ruleset:
+    # Http gọi xuống Domain được, nhưng Domain không bao giờ gọi ngược lên.
+    Http:
+      - Identity
+      - Task
+      - Report
+      - Attendance
+      - Leave
+      - Payroll
+      - Support
+
+    Console:
+      - Identity
+      - Task
+      - Report
+      - Attendance
+      - Leave
+      - Payroll
+      - Support
+
+    Providers:
+      - Http
+      - Identity
+      - Task
+      - Report
+      - Attendance
+      - Leave
+      - Payroll
+      - Support
+
+    # Các miền nghiệp vụ chỉ được phụ thuộc Identity và Support.
+    # Muốn báo cho miền khác thì bắn Event, không gọi thẳng.
+    Identity:
+      - Support
+
+    Task:
+      - Identity
+      - Support
+
+    Report:
+      - Identity
+      - Support
+
+    Attendance:
+      - Identity
+      - Support
+
+    Leave:
+      - Identity
+      - Support
+
+    Payroll:
+      - Identity
+      - Support
+
+    # Tầng dưới cùng, không phụ thuộc gì trong ứng dụng.
+    Support: ~

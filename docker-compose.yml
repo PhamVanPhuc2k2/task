@@ -1,0 +1,179 @@
+name: task-management
+
+services:
+  # ── PHP-FPM: ứng dụng Laravel ──────────────────────
+  app:
+    build:
+      context: ./docker/php
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      TZ: UTC
+      # 1 = OPcache kiểm dấu thời gian mọi file ở mỗi request — sửa code là
+      #     thấy ngay, nhưng trên bind mount Windows mỗi request tốn ~1,5 giây.
+      # 0 = không kiểm — request còn ~100ms, đổi lại sửa code PHP xong phải chạy
+      #     `docker compose exec app kill -USR2 1`.
+      # Xem README, "Vì sao backend chậm khi dev trên Windows".
+      OPCACHE_VALIDATE_TIMESTAMPS: "${OPCACHE_VALIDATE_TIMESTAMPS:-1}"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [app]
+
+  # ── Nginx: web server ──────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on: [app]
+    networks: [app]
+
+  # ── MySQL ──────────────────────────────────────────
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_DATABASE:-task_management}
+      MYSQL_USER: ${DB_USERNAME:-app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      TZ: UTC
+    # UTC ở tầng lưu trữ — xem README "Quy ước dữ liệu, thời gian & tiền tệ".
+    # utf8mb4 để lưu được tiếng Việt có dấu và emoji.
+    command:
+      - --default-time-zone=+00:00
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    networks: [app]
+
+  # ── Redis: queue, cache, session ───────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [app]
+
+  # ── Mailpit: hộp thư giả cho môi trường dev ────────
+  # Bắt mọi email hệ thống gửi đi, không cho ra ngoài internet. Xem tại
+  # http://localhost:8025 — dùng để đọc mã OTP khi phát triển.
+  # KHÔNG dùng ở production.
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+    environment:
+      MP_MAX_MESSAGES: 500
+      TZ: UTC
+    networks: [app]
+
+  # ── Horizon: chạy queue worker ─────────────────────
+  # Nén ảnh, gửi thông báo, quét deadline đều chạy ở đây.
+  horizon:
+    build:
+      context: ./docker/php
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan horizon
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      TZ: UTC
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [app]
+
+  # ── Scheduler: cron của Laravel ────────────────────
+  # Nhắc deadline, nhắc nộp báo cáo, chốt công cuối tháng.
+  scheduler:
+    build:
+      context: ./docker/php
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan schedule:work
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      TZ: UTC
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks: [app]
+
+  # ── Sao lưu và diễn tập phục hồi ───────────────────
+  #
+  # Tách hẳn khỏi container ứng dụng: nó chạy theo lịch, không phục vụ request,
+  # và nó là thứ DUY NHẤT được cầm khoá giải mã backup. Gộp vào `app` nghĩa là
+  # mọi lỗ hổng của ứng dụng web đều với tới được khoá đó.
+  #
+  # Chạy tay:
+  #   docker compose run --rm backup once     # sao lưu ngay
+  #   docker compose run --rm backup drill    # diễn tập phục hồi ngay
+  backup:
+    build:
+      context: ./docker/backup
+    restart: unless-stopped
+    environment:
+      TZ: UTC
+      DB_HOST: mysql
+      DB_DATABASE: ${DB_DATABASE:-task_management}
+      DB_USERNAME: ${DB_USERNAME:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      BACKUP_DIR: /backups
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+      # Khoá công khai age — sinh bằng `age-keygen -o key.txt`.
+      # Khoá RIÊNG không đặt ở đây; nó là file gắn vào, xem README.
+      BACKUP_AGE_PUBLIC_KEY: ${BACKUP_AGE_PUBLIC_KEY:-}
+      BACKUP_AGE_PRIVATE_KEY_FILE: ${BACKUP_AGE_PRIVATE_KEY_FILE:-}
+      # Tài khoản riêng cho diễn tập phục hồi — tài khoản ứng dụng cố ý KHÔNG
+      # có quyền tạo database. Xem restore-drill.sh để biết cần cấp quyền gì.
+      DRILL_DB_USERNAME: ${DRILL_DB_USERNAME:-restore_drill}
+      DRILL_DB_PASSWORD: ${DRILL_DB_PASSWORD:-drill-secret}
+    volumes:
+      - ./storage/backups:/backups
+      - ./storage/keys:/keys:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [app]
+
+volumes:
+  mysql-data:
+  redis-data:
+
+networks:
+  app:
+    driver: bridge

@@ -1,0 +1,96 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 8
+
+    paths:
+        - app
+        - config
+        - database
+        - routes
+        - tests
+
+    tmpDir: .phpstan.cache
+
+    # Bắt lỗi khi truy cập thuộc tính model không tồn tại trong migration.
+    # Cho Larastan đọc schema từ một bản kết xuất SQL, thay vì tự phân tích 30
+    # file migration.
+    #
+    # Bộ phân tích migration của Larastan sập khi tổng độ dài tên các file
+    # migration vượt một ngưỡng — nó ÂM THẦM bỏ qua những file đầu tiên, làm mất
+    # schema của `users`, `tasks`… và sinh ra hàng trăm lỗi giả ở khắp nơi trừ
+    # chỗ thật sự có vấn đề. Đã nổ hai lần (19/08 và 25/08). Xem README, "Larastan
+    # sập khi thêm migration".
+    #
+    # File này nằm ở `database/larastan-schema/`, KHÔNG ở `database/schema/`, và
+    # đó là điểm quan trọng nhất của cách sửa: Laravel chỉ đọc `database/schema`,
+    # nên hành vi migrate và cách test dựng lại database **không đổi một chút
+    # nào**. Chỉ Larastan đọc file này.
+    #
+    # Tạo lại bằng: composer larastan:schema
+    # Có test khoá riêng để quên tạo lại thì ĐỎ chứ không im lặng —
+    # xem tests/Feature/Support/LarastanSchemaTest.php
+    squashedMigrationsPath:
+        - database/larastan-schema
+
+    checkModelProperties: true
+
+    checkOctaneCompatibility: false
+
+    ignoreErrors:
+        # Bên trong closure của Pest, $this trỏ tới TestCall chứ không phải
+        # TestCase, nên PHPStan không thấy $this->get() / $this->post()...
+        # Đây là giới hạn của DSL Pest, không phải lỗi mã nguồn. Chỉ bỏ qua
+        # đúng loại lỗi này trong thư mục test — phần còn lại vẫn phân tích.
+        -
+            identifier: method.notFound
+            message: '#Call to an undefined method Pest\\PendingCalls\\TestCall#'
+            path: tests/*
+
+        # Larastan khai báo Factory::definition() trả về
+        # array<model property of TModel, mixed>. Cú pháp "model property of"
+        # là mở rộng riêng của Larastan mà phiên bản phpdoc-parser hiện tại
+        # chưa phân tích được, nên không viết lại được ở lớp con.
+        # Sai lệch chỉ nằm ở docblock, không phải lỗi thực thi.
+        -
+            identifier: method.childReturnType
+            path: database/factories/*
+
+        # ResolvesUuids nhận model dưới dạng class-string<Model> nên PHPStan chỉ
+        # thấy Builder<Model> — lớp Model gốc không khai báo cột nào, nên mọi tên
+        # cột đều bị coi là sai. Đây là giới hạn của checkModelProperties với
+        # kiểu tổng quát, không phải lỗi: cột 'uuid' và 'id' có ở mọi model dùng
+        # HasUuid, và test bao phủ đường này.
+        -
+            identifier: argument.type
+            path: app/Http/Concerns/ResolvesUuids.php
+
+        # Cấu hình mặc định của medialibrary trỏ tới một lớp của bản Pro, mà dự
+        # án không mua. Dòng đó chỉ được đọc khi bật tính năng tải tệp tạm của
+        # bản Pro, nên không ảnh hưởng gì. Sửa file config đã publish sẽ mất mỗi
+        # lần publish lại, nên bỏ qua ở đây.
+        -
+            identifier: class.notFound
+            path: config/media-library.php
+
+        # expect(...)->and(...) của Pest là generic; khi giá trị đưa vào lấy từ
+        # $response->json() thì kiểu là mixed và PHPStan không suy được tham số
+        # khuôn mẫu. Giới hạn của DSL Pest, chỉ bỏ qua trong thư mục test.
+        -
+            identifier: argument.templateType
+            path: tests/*
+
+        # Cùng lý do: chuỗi phủ định ->not-> của Pest được cài bằng __get() ảo.
+        -
+            identifier: property.notFound
+            message: '#Pest\\Mixins\\Expectation#'
+            path: tests/*
+
+    excludePaths:
+        # arch() của Pest là DSL khai báo, không phải lời gọi phương thức thật.
+        # PHPStan báo "undefined method" cho từng dòng mà không thêm được giá trị
+        # nào — ràng buộc kiến trúc đã do chính Pest và Deptrac kiểm rồi.
+        - tests/Architecture/*
+        - bootstrap/cache/*
+        - storage/*

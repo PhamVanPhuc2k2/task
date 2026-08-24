@@ -1,0 +1,835 @@
+@import "tailwindcss";
+
+/*
+| Buộc biến thể `dark:` của Tailwind theo LỰA CHỌN của người dùng.
+|
+| Mặc định `dark:` biên dịch ra `@media (prefers-color-scheme: dark)`, tức là
+| bám vào cài đặt hệ điều hành. Token màu của dự án thì đọc `<html data-theme>`
+| — do người dùng chọn. Để nguyên hai nguồn khác nhau sẽ ra lỗi im lặng:
+|
+|   Máy để TỐI, người dùng chọn SÁNG → nền và chữ chuyển sáng đúng, nhưng ảnh
+|   đại diện (`pill.tsx` dùng `dark:bg-…`) vẫn giữ kiểu tối. Vài mảng màu lạc
+|   lõng trên nền sáng, không lỗi, không cảnh báo.
+|
+| Một dòng này kéo cả hai về chung một nguồn sự thật.
+*/
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+|--------------------------------------------------------------------------
+| Explus — hệ màu và token giao diện
+|--------------------------------------------------------------------------
+|
+| Motif dấu "+" chính là chữ "plus" trong tên công ty, xuất hiện xuyên suốt
+| từ logo tới lưới nền.
+|
+| Màu nhấn là lime điện — đọc như tín hiệu "đi tiếp", tránh xanh SaaS và
+| gradient tím đã quá quen.
+|
+*/
+
+/*
+| Ba mặt phẳng, không phải hai.
+|
+| `paper` là nền trang, `paper-raised` là mặt thẻ nổi lên trên nó, `paper-sunken`
+| là mặt lõm xuống (đầu bảng, ô nhập). Nền trang KHÔNG phải màu trắng — trắng
+| dành riêng cho thẻ, nhờ vậy thẻ nổi lên mà không cần vẽ viền đậm.
+|
+| Tông xám hơi lạnh, cố ý: lime là màu vàng-lục ấm, đặt trên nền lạnh thì bật
+| hẳn lên. Nền be cũ cùng họ ấm với lime nên cả hai chìm vào nhau.
+*/
+:root {
+  color-scheme: light;
+
+  --paper: #f4f5f7;
+  --paper-raised: #ffffff;
+  --paper-sunken: #eef0f3;
+  --ink: #101216;
+  --ink-soft: #565d68;
+  --ink-faint: #878e99;
+  --line: #e4e7eb;
+  --line-strong: #cfd4da;
+
+  --accent: #a9d900;
+  --accent-hover: #9bc900;
+  --on-accent: #111507;
+  /* Nền nhạt cho mục đang mở, hàng đang chọn. */
+  --accent-surface: #f2fbd4;
+  --accent-line: #d6ee85;
+  /*
+  | Lime dùng làm CHỮ phải là màu khác.
+  |
+  | #a9d900 trên nền trắng chỉ đạt tương phản ~1,8:1 — dưới xa mức 4,5:1 của
+  | WCAG AA, tức là gần như không đọc được. Trước đây liên kết ở màn "Hôm nay
+  | của tôi" dùng đúng màu đó. Bản lime đậm này đạt 4,6:1 mà vẫn cùng họ màu.
+  */
+  --accent-ink: #5c7600;
+
+  --danger: #b02e12;
+  --danger-surface: #fdeeea;
+  --danger-line: #f3c8bc;
+
+  --notice: #8a6100;
+  --notice-surface: #fdf3d9;
+  --notice-line: #ecd79b;
+
+  /*
+  | Bóng đổ nhiều lớp: một lớp sát mép cho cạnh sắc, một lớp toả rộng và mờ cho
+  | khối. Một lớp duy nhất luôn trông như dán giấy.
+  */
+  --shadow-card:
+    0 1px 2px rgba(16, 18, 22, 0.04), 0 5px 14px -4px rgba(16, 18, 22, 0.07);
+  --shadow-lift:
+    0 2px 4px rgba(16, 18, 22, 0.05), 0 12px 24px -8px rgba(16, 18, 22, 0.11);
+  --shadow-pop:
+    0 6px 12px -4px rgba(16, 18, 22, 0.08),
+    0 24px 48px -12px rgba(16, 18, 22, 0.18);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Sắc theo miền
+|--------------------------------------------------------------------------
+|
+| Mỗi khu vực của ứng dụng mang một sắc riêng. **Đây là chỉ dẫn đường, không
+| phải trang trí.**
+|
+| Bản trước dùng đúng một màu nhấn cho cả mười một mục điều hướng, nên Chấm
+| công, Lương, Thưởng và Báo cáo nhìn y hệt nhau — người dùng phải ĐỌC mới biết
+| mình đang ở đâu. Có sắc riêng thì sau vài ngày họ nhận ra bằng màu và thôi
+| đọc; đó là khác biệt giữa "nhiều màu cho vui" và "nhiều màu để dùng".
+|
+| Lime vẫn là màu THƯƠNG HIỆU: logo, nút hành động chính, màn đăng nhập. Sắc
+| miền không đụng vào vai trò đó — trộn hai việc lại thì nút "Lưu" đổi màu theo
+| trang đang mở, và người dùng mất luôn mốc nhận ra đâu là nút chính.
+|
+| Bốn biến cho mỗi sắc, và ba trong bốn cái là bắt buộc phải có riêng:
+|
+|   --h-X          nền đặc — chấm, cột biểu đồ, viên bo tròn có nền
+|   --h-X-ink      màu CHỮ, phải đạt 4,5:1 trên nền trắng. KHÔNG dùng --h-X
+|                  làm chữ: đó chính là lỗi đã mắc với lime (1,8:1) và phải
+|                  sửa bằng một biến riêng
+|   --h-X-surface  nền rất nhạt cho thẻ và hàng được chọn
+|   --h-X-line     viền
+|
+*/
+:root {
+  /* Công việc, Kanban, Việc của đội, Dự án — cùng một họ nghiệp vụ. */
+  --h-task: #6366f1;
+  --h-task-ink: #4338ca;
+  --h-task-surface: #eef2ff;
+  --h-task-line: #c7d2fe;
+
+  --h-report: #8b5cf6;
+  --h-report-ink: #6d28d9;
+  --h-report-surface: #f5f3ff;
+  --h-report-line: #ddd6fe;
+
+  --h-time: #14b8a6;
+  --h-time-ink: #0f766e;
+  --h-time-surface: #f0fdfa;
+  --h-time-line: #99f6e4;
+
+  --h-pay: #f59e0b;
+  --h-pay-ink: #b45309;
+  --h-pay-surface: #fffbeb;
+  --h-pay-line: #fde68a;
+
+  --h-bonus: #f43f5e;
+  --h-bonus-ink: #be123c;
+  --h-bonus-surface: #fff1f2;
+  --h-bonus-line: #fecdd3;
+
+  --h-people: #0ea5e9;
+  --h-people-ink: #0369a1;
+  --h-people-surface: #f0f9ff;
+  --h-people-line: #bae6fd;
+
+  /* Hôm nay của tôi — mang sắc thương hiệu, đây là "nhà" của nhân viên. */
+  --h-home: #a9d900;
+  --h-home-ink: #5c7600;
+  --h-home-surface: #f2fbd4;
+  --h-home-line: #d6ee85;
+
+  /* Tổng quan nhìn xuyên mọi miền nên cố ý KHÔNG mang sắc miền nào. */
+  --h-all: #475569;
+  --h-all-ink: #1e293b;
+  --h-all-surface: #f1f5f9;
+  --h-all-line: #cbd5e1;
+
+  /*
+  | Sắc của trang đang mở.
+  |
+  | Lớp trung gian này là mấu chốt của cả hệ. Trang khai `data-tone="time"`
+  | một lần, còn mọi thành phần bên trong chỉ đọc `--tone-*` mà không cần biết
+  | mình đang ở miền nào. Không có nó thì mỗi thành phần phải nhận một prop màu,
+  | và chỉ cần một chỗ quên truyền là lệch cả trang.
+  |
+  | Mặc định là graphite, để thành phần đặt ngoài mọi trang vẫn có màu hợp lệ.
+  */
+  --tone: var(--h-all);
+  --tone-ink: var(--h-all-ink);
+  --tone-surface: var(--h-all-surface);
+  --tone-line: var(--h-all-line);
+}
+
+[data-tone="task"] {
+  --tone: var(--h-task);
+  --tone-ink: var(--h-task-ink);
+  --tone-surface: var(--h-task-surface);
+  --tone-line: var(--h-task-line);
+}
+[data-tone="report"] {
+  --tone: var(--h-report);
+  --tone-ink: var(--h-report-ink);
+  --tone-surface: var(--h-report-surface);
+  --tone-line: var(--h-report-line);
+}
+[data-tone="time"] {
+  --tone: var(--h-time);
+  --tone-ink: var(--h-time-ink);
+  --tone-surface: var(--h-time-surface);
+  --tone-line: var(--h-time-line);
+}
+[data-tone="pay"] {
+  --tone: var(--h-pay);
+  --tone-ink: var(--h-pay-ink);
+  --tone-surface: var(--h-pay-surface);
+  --tone-line: var(--h-pay-line);
+}
+[data-tone="bonus"] {
+  --tone: var(--h-bonus);
+  --tone-ink: var(--h-bonus-ink);
+  --tone-surface: var(--h-bonus-surface);
+  --tone-line: var(--h-bonus-line);
+}
+[data-tone="people"] {
+  --tone: var(--h-people);
+  --tone-ink: var(--h-people-ink);
+  --tone-surface: var(--h-people-surface);
+  --tone-line: var(--h-people-line);
+}
+[data-tone="home"] {
+  --tone: var(--h-home);
+  --tone-ink: var(--h-home-ink);
+  --tone-surface: var(--h-home-surface);
+  --tone-line: var(--h-home-line);
+}
+[data-tone="all"] {
+  --tone: var(--h-all);
+  --tone-ink: var(--h-all-ink);
+  --tone-surface: var(--h-all-surface);
+  --tone-line: var(--h-all-line);
+}
+
+[data-theme="dark"] {
+  /*
+  | Nền tối đảo vai trò: sắc đặc sáng lên để nhìn thấy được, và chính nó làm
+  | luôn màu chữ — trên nền #0e1013 thì các sắc này đều vượt xa 4,5:1, nên
+  | không cần biến `-ink` tối riêng như ở nền sáng.
+  */
+  --h-task: #818cf8;
+  --h-task-ink: #a5b4fc;
+  --h-task-surface: rgba(129, 140, 248, 0.12);
+  --h-task-line: rgba(129, 140, 248, 0.3);
+
+  --h-report: #a78bfa;
+  --h-report-ink: #c4b5fd;
+  --h-report-surface: rgba(167, 139, 250, 0.12);
+  --h-report-line: rgba(167, 139, 250, 0.3);
+
+  --h-time: #2dd4bf;
+  --h-time-ink: #5eead4;
+  --h-time-surface: rgba(45, 212, 191, 0.12);
+  --h-time-line: rgba(45, 212, 191, 0.3);
+
+  --h-pay: #fbbf24;
+  --h-pay-ink: #fcd34d;
+  --h-pay-surface: rgba(251, 191, 36, 0.12);
+  --h-pay-line: rgba(251, 191, 36, 0.3);
+
+  --h-bonus: #fb7185;
+  --h-bonus-ink: #fda4af;
+  --h-bonus-surface: rgba(251, 113, 133, 0.12);
+  --h-bonus-line: rgba(251, 113, 133, 0.3);
+
+  --h-people: #38bdf8;
+  --h-people-ink: #7dd3fc;
+  --h-people-surface: rgba(56, 189, 248, 0.12);
+  --h-people-line: rgba(56, 189, 248, 0.3);
+
+  --h-home: #c8f52d;
+  --h-home-ink: #c8f52d;
+  --h-home-surface: rgba(200, 245, 45, 0.12);
+  --h-home-line: rgba(200, 245, 45, 0.3);
+
+  --h-all: #94a3b8;
+  --h-all-ink: #cbd5e1;
+  --h-all-surface: rgba(148, 163, 184, 0.12);
+  --h-all-line: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #0e1013;
+  --paper-raised: #171a1f;
+  --paper-sunken: #0a0c0e;
+  --ink: #eceef1;
+  --ink-soft: #949ba6;
+  --ink-faint: #6c737e;
+  --line: #24282e;
+  --line-strong: #363b43;
+
+  --accent: #c8f52d;
+  --accent-hover: #d7ff4f;
+  --on-accent: #0e1013;
+  --accent-surface: rgba(200, 245, 45, 0.12);
+  --accent-line: rgba(200, 245, 45, 0.3);
+  /* Nền tối thì lime sáng đã thừa tương phản, dùng thẳng. */
+  --accent-ink: #c8f52d;
+
+  --danger: #ff9273;
+  --danger-surface: rgba(255, 120, 80, 0.11);
+  --danger-line: rgba(255, 140, 100, 0.28);
+
+  --notice: #e8c766;
+  --notice-surface: rgba(232, 199, 102, 0.1);
+  --notice-line: rgba(232, 199, 102, 0.26);
+
+  /*
+  | Nền tối gần như nuốt hết bóng đổ, nên chiều sâu ở đây đến từ mặt thẻ sáng
+  | hơn nền cộng với viền. Bóng chỉ còn để tách các lớp nổi (hộp thoại, menu).
+  */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --shadow-lift: 0 6px 16px -6px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 16px 40px -12px rgba(0, 0, 0, 0.75);
+}
+
+/*
+| Sân khấu tối cho màn đăng nhập.
+|
+| Trang đăng nhập luôn tối bất kể máy đang để sáng hay tối — có chủ ý: đây là
+| khoảnh khắc thương hiệu duy nhất trước khi vào app, và nền tối cho toàn
+| quyền kiểm soát ánh sáng, độ phát quang và chiều sâu. Phần app bên trong
+| vẫn theo cài đặt của máy.
+*/
+.stage-dark {
+  color-scheme: dark;
+
+  --paper: #08090a;
+  --paper-raised: #101319;
+  --paper-sunken: #060708;
+  --ink: #f4f5f0;
+  --ink-soft: #9ba193;
+  --ink-faint: #6e7468;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.2);
+
+  --accent: #c8f52d;
+  --accent-hover: #d9ff56;
+  --on-accent: #0a0c06;
+  --accent-surface: rgba(200, 245, 45, 0.1);
+  --accent-line: rgba(200, 245, 45, 0.28);
+  --accent-ink: #c8f52d;
+
+  --danger: #ff9c7e;
+  --danger-surface: rgba(255, 120, 80, 0.09);
+  --danger-line: rgba(255, 140, 100, 0.28);
+
+  --notice: #f0d178;
+  --notice-surface: rgba(240, 200, 100, 0.08);
+  --notice-line: rgba(240, 200, 100, 0.24);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-lift: 0 6px 16px -6px rgba(0, 0, 0, 0.65);
+  --shadow-pop: 0 16px 40px -12px rgba(0, 0, 0, 0.8);
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-sunken: var(--paper-sunken);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-accent-surface: var(--accent-surface);
+  --color-accent-line: var(--accent-line);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --color-danger-surface: var(--danger-surface);
+  --color-danger-line: var(--danger-line);
+  --color-notice: var(--notice);
+  --color-notice-surface: var(--notice-surface);
+  --color-notice-line: var(--notice-line);
+
+  /* Sắc của trang đang mở — xem khối "Sắc theo miền" phía trên. */
+  --color-tone: var(--tone);
+  --color-tone-ink: var(--tone-ink);
+  --color-tone-surface: var(--tone-surface);
+  --color-tone-line: var(--tone-line);
+
+  /* Sắc gọi đích danh, cho chỗ phải hiện nhiều miền cùng lúc (thanh bên). */
+  --color-h-task: var(--h-task);
+  --color-h-task-ink: var(--h-task-ink);
+  --color-h-task-surface: var(--h-task-surface);
+  --color-h-report: var(--h-report);
+  --color-h-report-ink: var(--h-report-ink);
+  --color-h-report-surface: var(--h-report-surface);
+  --color-h-time: var(--h-time);
+  --color-h-time-ink: var(--h-time-ink);
+  --color-h-time-surface: var(--h-time-surface);
+  --color-h-pay: var(--h-pay);
+  --color-h-pay-ink: var(--h-pay-ink);
+  --color-h-pay-surface: var(--h-pay-surface);
+  --color-h-bonus: var(--h-bonus);
+  --color-h-bonus-ink: var(--h-bonus-ink);
+  --color-h-bonus-surface: var(--h-bonus-surface);
+  --color-h-people: var(--h-people);
+  --color-h-people-ink: var(--h-people-ink);
+  --color-h-people-surface: var(--h-people-surface);
+  --color-h-home: var(--h-home);
+  --color-h-home-ink: var(--h-home-ink);
+  --color-h-home-surface: var(--h-home-surface);
+  --color-h-all: var(--h-all);
+  --color-h-all-ink: var(--h-all-ink);
+  --color-h-all-surface: var(--h-all-surface);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+  --shadow-pop: var(--shadow-pop);
+
+  --font-sans: var(--font-be-vietnam), sans-serif;
+  --font-mono: var(--font-jetbrains), monospace;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Nền nhiều lớp
+|--------------------------------------------------------------------------
+*/
+
+/* Lớp 1 — quầng sáng lớn, trôi rất chậm để trang có cảm giác "sống". */
+.aurora {
+  background:
+    radial-gradient(
+      42rem 34rem at 12% 18%,
+      rgba(200, 245, 45, 0.16),
+      transparent 62%
+    ),
+    radial-gradient(
+      38rem 30rem at 88% 12%,
+      rgba(45, 212, 191, 0.13),
+      transparent 60%
+    ),
+    radial-gradient(
+      44rem 36rem at 70% 92%,
+      rgba(200, 245, 45, 0.09),
+      transparent 62%
+    );
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-drift {
+  from {
+    transform: translate3d(-2%, -1.5%, 0) scale(1.02);
+  }
+  to {
+    transform: translate3d(2%, 1.5%, 0) scale(1.08);
+  }
+}
+
+/* Lớp 2 — lưới dấu cộng, mờ dần ra rìa để không cắt ngang bố cục. */
+.plus-field {
+  --plus-size: 38px;
+  background-color: rgba(255, 255, 255, 0.16);
+  -webkit-mask-image: var(--plus-mark);
+  mask-image: var(--plus-mark);
+  -webkit-mask-size: var(--plus-size) var(--plus-size);
+  mask-size: var(--plus-size) var(--plus-size);
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+}
+
+.plus-field-fade {
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-image:
+    var(--plus-mark),
+    radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 78%);
+  mask-image:
+    var(--plus-mark),
+    radial-gradient(70% 60% at 50% 45%, #000 30%, transparent 78%);
+  -webkit-mask-size:
+    var(--plus-size) var(--plus-size),
+    100% 100%;
+  mask-size:
+    var(--plus-size) var(--plus-size),
+    100% 100%;
+  -webkit-mask-repeat: repeat, no-repeat;
+  mask-repeat: repeat, no-repeat;
+}
+
+:root {
+  --plus-mark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='38'%3E%3Cpath d='M19 14v10M14 19h10' stroke='%23000' stroke-width='1'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Lớp 3 — hạt nhiễu. Xoá hiện tượng vệt màu của gradient và tạo chất liệu. */
+.grain {
+  background-image: var(--grain);
+  mix-blend-mode: overlay;
+  opacity: 0.16;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Bề mặt kính
+|--------------------------------------------------------------------------
+|
+| Viền phát sáng dựng bằng gradient 1px bao ngoài, sáng ở đỉnh và mờ dần
+| xuống đáy — mô phỏng ánh sáng rọi từ trên, cho cảm giác vật thể có khối.
+*/
+.glass-frame {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.16),
+    rgba(255, 255, 255, 0.04) 42%,
+    rgba(255, 255, 255, 0.02)
+  );
+  padding: 1px;
+}
+
+.glass-panel {
+  background:
+    linear-gradient(165deg, rgba(24, 28, 22, 0.86), rgba(10, 12, 10, 0.92)),
+    rgba(10, 12, 10, 0.5);
+  backdrop-filter: blur(22px) saturate(130%);
+  -webkit-backdrop-filter: blur(22px) saturate(130%);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Bề mặt của phần đã đăng nhập
+|--------------------------------------------------------------------------
+*/
+
+/*
+| Thẻ bấm được thì nhấc lên khi rê chuột.
+|
+| Bốn thuộc tính đi liền nhau nên gom thành một lớp thay vì rải utility ở mười
+| chỗ rồi lệch nhau dần. Dịch lên đúng 1px — đủ để tay cảm nhận được, chưa đủ
+| để mắt thấy chữ nhảy.
+*/
+.lift {
+  transition:
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.lift:hover {
+  box-shadow: var(--shadow-lift);
+  border-color: var(--line-strong);
+  transform: translateY(-1px);
+}
+
+/*
+| Lưới dấu cộng rất mờ trên nền trang.
+|
+| Cùng motif với logo và với màn đăng nhập, nhưng ở đây chỉ còn thoang thoảng:
+| nền phẳng tuyệt đối trông như chưa tải xong, còn hoa văn đậm thì tranh chỗ
+| đọc với nội dung. Ẩn hẳn ở chế độ tối vì trên nền tối nó nổi lên quá rõ.
+*/
+.plus-wash {
+  /* Tô bằng màu viền rồi cắt theo hình dấu cộng: hoa văn tự đổi theo sáng/tối
+     mà không cần vẽ hai bản SVG. */
+  background-color: var(--line-strong);
+  -webkit-mask-image: var(--plus-mark);
+  mask-image: var(--plus-mark);
+  -webkit-mask-size: 34px 34px;
+  mask-size: 34px 34px;
+  -webkit-mask-repeat: repeat;
+  mask-repeat: repeat;
+  opacity: 0.55;
+}
+
+[data-theme="dark"] .plus-wash {
+  opacity: 0.4;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Chuyển động
+|--------------------------------------------------------------------------
+*/
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+/*
+| `backwards` chứ không `both` — cùng lý do đã ghi ở `.enter` phía dưới.
+|
+| `forwards` giữ khung hình cuối có hiệu lực mãi mãi, mà khung cuối khai
+| `transform`. Phần tử thành khối chứa cho mọi con `position: fixed` bên trong,
+| và bất cứ hộp thoại hay menu nào đặt trong đó sẽ định vị sai. Ở đây chưa có
+| cái nào, nhưng đó đúng là loại lỗi chỉ lộ ra sau khi thêm tính năng mới.
+*/
+.rise-in {
+  animation: rise-in 0.62s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+/* Hiện dần theo thứ tự cho lần tải trang đầu. */
+.stagger > * {
+  animation: rise-in 0.62s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+.stagger > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+.stagger > *:nth-child(2) {
+  animation-delay: 0.12s;
+}
+.stagger > *:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.stagger > *:nth-child(4) {
+  animation-delay: 0.28s;
+}
+.stagger > *:nth-child(5) {
+  animation-delay: 0.36s;
+}
+
+/* Vệt sáng quét ngang nút chính khi rê chuột. */
+.sheen {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  translate: -120% 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 80%
+  );
+  transition: translate 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.sheen:hover::after,
+.sheen:focus-visible::after {
+  translate: 120% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .rise-in,
+  .stagger > * {
+    animation: none;
+  }
+  .sheen::after {
+    display: none;
+  }
+  /* Bóng đổ vẫn đổi (đó là tín hiệu "bấm được"), chỉ bỏ phần dịch chuyển. */
+  .lift {
+    transition: box-shadow 0.18s ease;
+  }
+  .lift:hover {
+    transform: none;
+  }
+}
+
+/* Viền focus dùng chung. */
+.focus-frame:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Bề mặt mang sắc miền
+|--------------------------------------------------------------------------
+*/
+
+/*
+| Thẻ có sắc.
+|
+| Bóng đổ **ám màu của chính miền** chứ không phải xám. Bóng xám trên thẻ có
+| màu trông như thẻ bị bẩn; bóng cùng họ màu làm thẻ như đang phát ra ánh sáng
+| của chính nó. Đây là thứ tách bản này khỏi bản trước rõ nhất, dù không ai
+| gọi tên được khi nhìn.
+|
+| `color-mix` để bóng tự bám theo sắc của trang mà không phải khai tay tám bộ
+| biến bóng khác nhau.
+*/
+.tone-card {
+  border: 1px solid var(--tone-line);
+  background: var(--paper-raised);
+  box-shadow:
+    0 1px 2px color-mix(in oklab, var(--tone) 10%, transparent),
+    0 10px 26px -12px color-mix(in oklab, var(--tone) 26%, transparent);
+}
+
+.tone-card-tinted {
+  border: 1px solid var(--tone-line);
+  background: var(--tone-surface);
+}
+
+/*
+| Vạch sắc ở mép trên thẻ.
+|
+| Một đường 3px, không phải viền cả bốn cạnh. Viền màu quanh thẻ ăn hết sự chú
+| ý và làm trang thành một mớ khung màu; một vạch ở mép trên đủ để mắt gom
+| nhóm mà vẫn để nội dung là thứ nổi nhất.
+*/
+.tone-edge {
+  position: relative;
+  overflow: hidden;
+}
+
+.tone-edge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--tone),
+    color-mix(in oklab, var(--tone) 45%, transparent)
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Con số
+|--------------------------------------------------------------------------
+|
+| Trang Tổng quan của giám đốc trước đây để số liệu ở cỡ 0,85rem — bằng cỡ chữ
+| chú thích. Con số là lý do người ta mở trang đó, nên nó phải là thứ to nhất
+| trên màn hình.
+|
+| `tabular-nums` bắt buộc: số có bề rộng thay đổi thì một cột số nhảy lung tung
+| khi dữ liệu đổi, và bảng công ba mươi cột thành răng cưa.
+*/
+.figure {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Mở trang
+|--------------------------------------------------------------------------
+|
+| Các khối hiện lên lần lượt thay vì bật ra cùng lúc. Độ trễ rất ngắn (45ms
+| mỗi khối, tối đa 8 khối) — đủ để mắt lần theo thứ tự đọc, chưa đủ để ai phải
+| ngồi chờ. Trang tải xong vẫn dưới 400ms.
+*/
+.enter > * {
+  /*
+  | `backwards`, KHÔNG phải `both`. Đây là một dòng đã gây lỗi thật.
+  |
+  | `both` = `backwards` + `forwards`, và `forwards` giữ khung hình cuối **có
+  | hiệu lực vĩnh viễn**. Khung cuối khai `transform`, nên phần tử mang lớp này
+  | vĩnh viễn được coi là có transform — và **một tổ tiên có transform trở
+  | thành khối chứa của mọi con `position: fixed`**.
+  |
+  | Hệ quả cụ thể: bảng Kanban. `DragOverlay` của dnd-kit là `position: fixed`
+  | và nằm bên trong `<TaskBoard>`, mà `<TaskBoard>` là con trực tiếp của
+  | `.enter`. Thẻ đang kéo bị định vị theo cái div đó thay vì theo màn hình,
+  | nên nó bay lệch hẳn khỏi con trỏ. Kéo thả "hỏng" mà không có lỗi nào trong
+  | console.
+  |
+  | `backwards` giữ đúng phần cần giữ — khung hình ĐẦU trong lúc chờ hết độ trễ,
+  | để khối không loé lên trước khi tới lượt — rồi buông hẳn sau khi chạy xong.
+  |
+  | Luật rút ra: hiệu ứng dùng chung cho cả ứng dụng thì **không được để lại
+  | transform sau khi kết thúc**. Trang nào cũng có thể có menu, hộp thoại hay
+  | thứ gì đó `position: fixed` bên trong.
+  */
+  animation: enter-rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.enter > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.enter > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+.enter > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+.enter > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+.enter > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+.enter > *:nth-child(6) {
+  animation-delay: 225ms;
+}
+.enter > *:nth-child(7) {
+  animation-delay: 270ms;
+}
+.enter > *:nth-child(n + 8) {
+  animation-delay: 315ms;
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter > * {
+    animation: none;
+  }
+}
+
+/*
+| Viền focus theo sắc miền.
+|
+| `.focus-frame` dùng lime cho nút hành động; ở giữa một trang mang sắc khác
+| thì vòng focus lime lạc lõng. Lớp này để dùng trên phần tử nằm trong vùng đã
+| khai `data-tone`.
+*/
+.focus-tone:focus-visible {
+  outline: 2px solid var(--tone);
+  outline-offset: 2px;
+}

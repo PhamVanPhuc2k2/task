@@ -1,0 +1,137 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Backend: Laravel ───────────────────────────────
+  backend:
+    name: Backend (PHP 8.4)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: task_management_test
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # PHP 8.4 là bắt buộc: spatie/laravel-model-states,
+      # spatie/laravel-activitylog và pest v5 đều yêu cầu ^8.4.
+      - name: Cài PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_mysql, bcmath, intl, zip, gd, exif, pcntl, redis
+          coverage: none
+          tools: composer:v2
+
+      - name: Lấy cache Composer
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Cài dependency
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Chuẩn bị môi trường
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      # ── Các cổng chặn merge ──────────────────────────
+      - name: Định dạng code (Pint)
+        run: ./vendor/bin/pint --test
+
+      - name: Phân tích tĩnh (Larastan mức 8)
+        run: ./vendor/bin/phpstan analyse --memory-limit=1G --no-progress
+
+      # Không dùng --fail-on-uncovered: mọi phụ thuộc vào Illuminate/Carbon đều
+      # tính là "uncovered" vì vendor không nằm trong layer nào. Cái cần chặn là
+      # "Violations" — vi phạm ranh giới giữa các tầng và các miền.
+      - name: Ranh giới kiến trúc (Deptrac)
+        run: ./vendor/bin/deptrac analyse --no-progress
+
+      - name: Kiểm thử (Pest, gồm cả architecture test)
+        run: ./vendor/bin/pest --parallel
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: task_management_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          REDIS_HOST: 127.0.0.1
+          CACHE_STORE: redis
+          QUEUE_CONNECTION: redis
+
+      - name: Rà soát lỗ hổng phụ thuộc
+        run: composer audit --no-interaction
+
+  # ── Frontend: Next.js ──────────────────────────────
+  frontend:
+    name: Frontend (Node 24)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Cài dependency
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Kiểm tra kiểu (tsc)
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Rà soát lỗ hổng phụ thuộc
+        run: npm audit --audit-level=high

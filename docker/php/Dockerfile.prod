@@ -1,0 +1,133 @@
+# Image production — khác bản dev ở ba điểm, và cả ba đều có lý do.
+#
+#   1. **Mã nguồn nằm TRONG image**, không phải bind mount. Bản dev gắn thư mục
+#      từ host để sửa code là thấy ngay; ở production điều đó nghĩa là không ai
+#      biết chắc container đang chạy đúng phiên bản nào.
+#   2. **OPcache bật hết cỡ, không kiểm dấu thời gian.** Code không đổi trong
+#      suốt vòng đời container nên việc kiểm lại mỗi request là lãng phí thuần.
+#   3. **Không có Composer, không có công cụ build, không có dev dependency.**
+#      Composer trong container production là một trình chạy mã tuỳ ý sẵn sàng
+#      cho bất kỳ ai vào được shell.
+#
+# Build nhiều tầng: tầng `vendor` và `frontend` chỉ để tạo ra artefact, chúng
+# không đi vào image cuối.
+
+# ── Tầng 1: cài phụ thuộc PHP ────────────────────────
+FROM composer:2 AS vendor
+
+WORKDIR /app
+
+# Chép riêng hai file khai báo trước rồi mới chép mã nguồn: Docker cache tầng
+# này theo nội dung file, nên sửa code mà không đổi phụ thuộc thì không phải
+# cài lại toàn bộ vendor.
+COPY backend/composer.json backend/composer.lock ./
+
+# --no-dev: bỏ Pest, Larastan, Pint, Deptrac. Chúng là công cụ phát triển; có
+#   mặt ở production chỉ làm image nặng và mở rộng bề mặt tấn công.
+# --classmap-authoritative: gộp toàn bộ class thành một bảng tra cứu. Autoloader
+#   không còn phải dò hệ tệp khi tìm class — đổi lại là class sinh động lúc chạy
+#   sẽ không nạp được, mà dự án này không có cái nào.
+# --ignore-platform-req cho pcntl và exif: image `composer:2` dùng để CÀI không
+#   có hai extension đó, nhưng image chạy thật ở tầng dưới có đủ (xem dòng
+#   docker-php-ext-install). Không có hai cờ này thì `composer install` chết với
+#   "ext-pcntl is missing" — và đó là lý do image production của backend chưa
+#   từng build được.
+#
+#   Bỏ qua ĐÍCH DANH hai extension, không dùng `--ignore-platform-reqs` (số
+#   nhiều): cờ đó bỏ qua cả yêu cầu về phiên bản PHP, và một bản cài cho sai
+#   phiên bản PHP sẽ lọt qua mà không ai biết.
+RUN composer install \
+        --no-dev \
+        --no-scripts \
+        --no-interaction \
+        --prefer-dist \
+        --ignore-platform-req=ext-pcntl \
+        --ignore-platform-req=ext-exif
+
+# Giờ mới chép mã nguồn, rồi DỰNG LẠI bảng tra cứu class.
+#
+# Đây là bước bắt buộc, và thiếu nó là lỗi rất khó lần: `--classmap-authoritative`
+# cấm autoloader dò hệ tệp — nó CHỈ tin bảng tra cứu. Mà bảng dựng ở bước trên
+# chỉ nhìn thấy `composer.json`, chưa có thư mục `app/` nào, nên **không class
+# nào của ứng dụng có trong đó**.
+#
+# Hậu quả không phải "chậm" mà là chết hẳn: Laravel khởi động rồi ngã ngay ở
+# route đầu tiên với `Invalid route action: [App\Http\Controllers\...]`. Nhìn
+# câu lỗi đó không ai đoán ra nguyên nhân nằm ở cờ của Composer.
+#
+# Tách làm hai bước thay vì chép mã nguồn từ đầu: bước `install` ở trên vẫn giữ
+# được cache của Docker khi chỉ sửa code mà không đổi phụ thuộc.
+COPY backend/ ./
+
+RUN composer dump-autoload \
+        --no-dev \
+        --no-scripts \
+        --optimize \
+        --classmap-authoritative
+
+# ── Tầng 2: image chạy thật ──────────────────────────
+#
+# Trước đây ở giữa còn một tầng build Next.js. Đã xoá, vì **kết quả của nó
+# không được copy đi đâu cả**: mỗi lần build backend phải chạy `npm ci` và
+# `next build` để rồi vứt bỏ toàn bộ. Giao diện giờ có image riêng, xem
+# docker/node/Dockerfile.prod.
+FROM php:8.4-fpm-alpine
+
+RUN apk add --no-cache \
+        bash \
+        icu \
+        libzip \
+        oniguruma \
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        supervisor \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        linux-headers \
+        icu-dev \
+        libzip-dev \
+        oniguruma-dev \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j"$(nproc)" \
+        pdo_mysql bcmath intl zip gd exif pcntl opcache \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && pecl clear-cache \
+    && apk del .build-deps \
+    && rm -rf /tmp/* /var/cache/apk/*
+
+COPY docker/php/php.ini /usr/local/etc/php/conf.d/99-app.ini
+COPY docker/php/php.prod.ini /usr/local/etc/php/conf.d/99-prod.ini
+
+WORKDIR /var/www/html
+
+COPY --chown=www-data:www-data backend/ ./
+COPY --from=vendor --chown=www-data:www-data /app/vendor ./vendor
+
+# Thư mục ghi được. Ở production đây là những nơi DUY NHẤT ứng dụng được ghi;
+# phần còn lại của mã nguồn chỉ đọc.
+RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
+
+# KHÔNG chạy `config:cache` ở đây.
+#
+# Cache cấu hình đóng băng giá trị của biến môi trường **tại thời điểm build**.
+# Image build một lần rồi chạy ở nhiều nơi với cấu hình khác nhau, nên làm ở đây
+# là nhét cấu hình của máy build vào mọi nơi. Việc đó thuộc về lúc khởi động
+# container — xem entrypoint.prod.sh.
+
+COPY docker/php/entrypoint.prod.sh /usr/local/bin/entrypoint
+COPY docker/php/supervisord.conf /etc/supervisor/supervisord.conf
+
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint \
+    && chmod +x /usr/local/bin/entrypoint
+
+USER www-data
+
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+CMD ["php-fpm"]

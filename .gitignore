@@ -1,0 +1,71 @@
+# ── Backend (Laravel) ────────────────────────────────
+/backend/vendor/
+/backend/node_modules/
+/backend/public/build/
+/backend/public/hot
+/backend/public/storage
+/backend/storage/*.key
+/backend/storage/pail
+/backend/storage/app/public/*
+!/backend/storage/app/public/.gitignore
+/backend/storage/framework/cache/data/*
+/backend/storage/framework/sessions/*
+/backend/storage/framework/testing/*
+/backend/storage/framework/views/*
+/backend/storage/logs/*
+/backend/bootstrap/cache/*
+!/backend/bootstrap/cache/.gitignore
+/backend/.phpunit.result.cache
+/backend/.phpunit.cache
+/backend/auth.json
+/backend/.env
+/backend/.env.backup
+/backend/.env.production
+/backend/.phpstan.cache
+/backend/.deptrac.cache
+
+# ── Frontend (Next.js) ───────────────────────────────
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/.env
+/frontend/.env*.local
+/frontend/next-env.d.ts
+/frontend/.tsbuildinfo
+/frontend/coverage/
+/frontend/test-results/
+/frontend/playwright-report/
+
+# ── Docker / hạ tầng ─────────────────────────────────
+/docker/data/
+.env
+
+# ── Hệ điều hành & IDE ───────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.sample.json
+*.swp
+*~
+
+# ── Tệp tạm ──────────────────────────────────────────
+*.log
+npm-debug.log*
+yarn-error.log*
+.cache/
+tmp/
+
+# ── Sao lưu ──────────────────────────────────────────
+# Bản sao lưu là bản sao ĐẦY ĐỦ của lương, số điện thoại, mọi bình luận. Nó
+# tuyệt đối không được vào git.
+/storage/backups/*
+!/storage/backups/.gitignore
+
+# Khoá giải mã sao lưu. Commit nó vào git là biến việc mã hoá thành trang trí:
+# ai clone repo cũng mở được mọi bản sao lưu.
+/storage/keys/*
+!/storage/keys/.gitignore

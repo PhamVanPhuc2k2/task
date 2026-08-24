@@ -1,0 +1,13 @@
+# Chuẩn hoá xuống dòng.
+*               text=auto eol=lf
+
+# Script chạy trong container BẮT BUỘC dùng LF.
+#
+# Ai clone repo trên Windows với `core.autocrlf=true` sẽ nhận về file CRLF, và
+# dòng `#!/bin/sh\r` không phải là một trình thông dịch hợp lệ. Docker báo
+# "no such file or directory" — trỏ vào chính script vừa COPY vào, nên rất dễ
+# tưởng là lỗi đường dẫn. Đã dính đúng lỗi này khi dựng container sao lưu.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf

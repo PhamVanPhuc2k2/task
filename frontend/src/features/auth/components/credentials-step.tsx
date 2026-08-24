@@ -1,0 +1,126 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import { useForm } from "react-hook-form";
+
+import { ApiError, NetworkError } from "@/lib/api-client";
+
+import { useLoginStepOne, type TwoFactorChannel } from "../api/auth-api";
+import { loginSchema, type LoginInput } from "../schemas/login-schema";
+import { Field, FormError, StepHeading, SubmitButton } from "./form-primitives";
+
+/** Bước một: email và mật khẩu. */
+export function CredentialsStep({
+  onTwoFactorRequired,
+  onSetupRequired,
+}: {
+  onTwoFactorRequired: (
+    channel: TwoFactorChannel,
+    sentTo: string | null,
+    canResend: boolean,
+  ) => void;
+  onSetupRequired: () => void;
+}) {
+  const login = useLoginStepOne();
+
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
+  });
+
+  const onSubmit = handleSubmit(async (values) => {
+    try {
+      const result = await login.mutateAsync(values);
+
+      if (result.data.two_factor_required === true) {
+        onTwoFactorRequired(
+          result.data.channel ?? "email",
+          result.data.sent_to ?? null,
+          result.data.can_resend ?? false,
+        );
+      } else {
+        onSetupRequired();
+      }
+    } catch (error) {
+      if (error instanceof ApiError) {
+        const emailError = error.fieldError("email");
+        const passwordError = error.fieldError("password");
+
+        if (emailError !== null) setError("email", { message: emailError });
+        if (passwordError !== null)
+          setError("password", { message: passwordError });
+
+        // Sai mật khẩu, tài khoản bị khoá, quá số lần thử: hiện ở đầu form.
+        if (emailError === null && passwordError === null) {
+          setError("root", { message: error.message });
+        }
+
+        return;
+      }
+
+      setError("root", {
+        message:
+          error instanceof NetworkError
+            ? error.message
+            : "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+      });
+    }
+  });
+
+  return (
+    <div className="rise-in">
+      <StepHeading
+        step={1}
+        total={2}
+        title="Chào mừng trở lại"
+        description="Đăng nhập bằng tài khoản công ty cấp."
+      />
+
+      <form onSubmit={onSubmit} noValidate className="space-y-5">
+        {errors.root?.message !== undefined && (
+          <FormError message={errors.root.message} />
+        )}
+
+        <Field
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="username"
+          placeholder="ten.ban@explus.vn"
+          autoFocus
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <Field
+          id="password"
+          label="Mật khẩu"
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••••••"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+
+        <SubmitButton pending={isSubmitting}>
+          {isSubmitting ? "Đang kiểm tra" : "Tiếp tục"}
+        </SubmitButton>
+      </form>
+
+      <p className="text-ink-faint mt-6 text-center text-[0.82rem] leading-relaxed">
+        <Link
+          href="/forgot-password"
+          className="hover:text-accent focus-frame rounded underline decoration-dotted underline-offset-4 transition-colors"
+        >
+          Quên mật khẩu?
+        </Link>
+      </p>
+    </div>
+  );
+}

@@ -1,0 +1,47 @@
+{
+  "name": "frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "api:types": "openapi-typescript ../backend/storage/api-docs/openapi.json -o ./src/types/api.ts",
+    "check": "npm run lint && npm run format:check && npm run typecheck"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@hookform/resolvers": "^5.7.1",
+    "@tanstack/react-query": "^5.101.4",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.84.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@tanstack/react-query-devtools": "^5.101.4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "eslint-config-prettier": "^10.1.8",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "typescript-eslint": "^8.66.0"
+  },
+  "_comment_overrides": "js-yaml <4.3.1 có lỗi tiêu tốn CPU bậc hai khi phân tích !!omap (GHSA-5p4m-2wfm-xmqj). Nó đi vào qua openapi-typescript -> @redocly/openapi-core, mà bản mới nhất của openapi-typescript vẫn ghim bản cũ. Ép nâng ở đây; bỏ dòng này khi thượng nguồn tự nâng. Xem README mục 1.9.",
+  "overrides": {
+    "js-yaml": "^4.3.1"
+  }
+}

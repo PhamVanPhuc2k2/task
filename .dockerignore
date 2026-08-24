@@ -1,0 +1,59 @@
+# Những thứ KHÔNG được đưa vào build context.
+#
+# Mục đích kép: build nhanh hơn, và quan trọng hơn — không để bí mật hay rác
+# của máy dev lọt vào image production.
+
+# ── Bắt buộc: symlink trỏ ra ngoài build context ─────
+#
+# `backend/public/storage` là symlink tuyệt đối tới `/var/www/html/storage/app/public`,
+# một đường dẫn chỉ tồn tại BÊN TRONG container. Docker từ chối build context có
+# symlink kiểu đó với lỗi `invalid file request` — và đó là lý do image production
+# của backend chưa từng build được.
+#
+# Bỏ nó ra đây là đúng chứ không phải né: symlink được tạo lúc CHẠY bởi
+# `php artisan storage:link` trong entrypoint.prod.sh, vì đích của nó nằm trên
+# volume và chỉ tồn tại khi container đã lên.
+backend/public/storage
+
+# ── Bí mật ───────────────────────────────────────────
+**/.env
+**/.env.*
+!**/.env.example
+storage/keys
+storage/backups
+
+# ── Phụ thuộc và sản phẩm build ──────────────────────
+# Được cài lại trong Dockerfile với đúng cờ của production.
+backend/vendor
+frontend/node_modules
+frontend/.next
+frontend/out
+
+# ── Rác của máy dev ──────────────────────────────────
+.git
+.github
+# Cache khám phá gói của Laravel, SINH RA lúc dev.
+#
+# `bootstrap/cache/packages.php` ở máy dev liệt kê cả provider của gói
+# require-dev (Scramble). Copy nó vào image build với `--no-dev` thì Laravel cố
+# nạp một class không tồn tại và **chết ngay lúc khởi động** — kể cả `artisan
+# migrate` cũng không chạy được.
+#
+# Bỏ ra đây thì Laravel tự sinh lại đúng theo bộ gói thực tế trong image.
+backend/bootstrap/cache/*.php
+
+backend/.phpstan.cache
+backend/storage/logs/*
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+**/.DS_Store
+**/Thumbs.db
+**/.idea
+**/.vscode
+
+# ── Tài liệu và script không cần trong image ─────────
+docs
+README.md
+*.md
