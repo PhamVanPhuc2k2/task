@@ -73,12 +73,33 @@ mysqldump \
 
 KICH_THUOC=$(wc -c < "${THU_MUC}/${TEN}")
 
-# Một file dump rỗng vẫn là một file. Không kiểm kích thước thì lịch backup chạy
-# xanh mỗi đêm trong khi thư mục đầy những file 20 byte.
+# Một file dump rỗng vẫn là một file. Không kiểm thì lịch backup chạy xanh mỗi
+# đêm trong khi thư mục đầy những file 20 byte.
+#
+# Nhưng kích thước MỘT MÌNH không đủ để kết luận, và bản trước đã chặn nhầm:
+# lần deploy ĐẦU TIÊN thì database vừa được tạo, chưa migrate, nên dump ra 478
+# byte là ĐÚNG — không có gì để dump cả. Script từ chối, và cả lần deploy đầu
+# tiên không đi qua nổi bước một.
+#
+# Nên hỏi thẳng database: có bảng nào không. Rỗng thật thì bản dump nhỏ là hợp
+# lệ; có bảng mà dump vẫn nhỏ thì mới là hỏng.
 if [ "$KICH_THUOC" -lt 1024 ]; then
-    echo "BẢN DUMP QUÁ NHỎ (${KICH_THUOC} byte) — gần như chắc chắn đã hỏng." >&2
-    rm -f "${THU_MUC}/${TEN}"
-    exit 1
+    SO_BANG=$(mysql \
+        --host="$DB_HOST" \
+        --user="$DB_USERNAME" \
+        --password="$DB_PASSWORD" \
+        --skip-column-names \
+        --silent \
+        -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_DATABASE}';" \
+        2>/dev/null || echo "?")
+
+    if [ "$SO_BANG" = "0" ]; then
+        echo "→ Database chưa có bảng nào (lần chạy đầu). Bản dump ${KICH_THUOC} byte là hợp lệ."
+    else
+        echo "BẢN DUMP QUÁ NHỎ (${KICH_THUOC} byte) trong khi database có ${SO_BANG} bảng — đã hỏng." >&2
+        rm -f "${THU_MUC}/${TEN}"
+        exit 1
+    fi
 fi
 
 if [ -n "${BACKUP_AGE_PUBLIC_KEY:-}" ]; then
