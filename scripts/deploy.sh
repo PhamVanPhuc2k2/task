@@ -48,6 +48,18 @@ fi
 # ── 1. Sao lưu ───────────────────────────────────────
 echo ""
 echo "→ [1/5] Sao lưu database trước khi đổi gì..."
+# Build LẠI image backup trước khi chạy.
+#
+# `backup.sh` được COPY vào image lúc build, nên sửa file trên đĩa không có tác
+# dụng gì cho tới khi build lại. Bản trước chỉ build `app` và `frontend`, nên
+# mọi thay đổi trong script sao lưu **âm thầm không được áp dụng** — sửa xong,
+# `git pull` xong, chạy lại vẫn ra hành vi cũ, và không có gì gợi ý vì sao.
+#
+# Gặp thật khi deploy lần đầu lên máy chủ: vá lỗi "database rỗng bị coi là dump
+# hỏng", pull về, chạy lại vẫn báo đúng câu lỗi cũ.
+#
+# Build ở đây rẻ: Docker dùng lại cache khi Dockerfile và script không đổi.
+$COMPOSE build backup
 $COMPOSE run --rm backup once
 
 # ── 2. Build ─────────────────────────────────────────
