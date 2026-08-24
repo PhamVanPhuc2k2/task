@@ -83,26 +83,34 @@ APP_IMAGE="$IMAGE" $COMPOSE run --rm \
     -e RUN_MIGRATIONS=false \
     app php artisan migrate --force --isolated --no-interaction
 
-# Quyền mới phải tới được vai trò, nếu không tính năng vừa deploy sẽ 403 với
-# đúng người đáng lẽ được dùng nó.
+# Chạy TRỌN BỘ seeder — hai lỗi thật, cùng một nguyên nhân.
 #
-# Đã mắc thật khi thêm quyền `setting.manage`: migrate xong, mã mới chạy, trang
-# cài đặt có đủ, nhưng giám đốc bấm vào thì 403 — và không có gì trong log nói
-# vì sao. Deploy "thành công" mà tính năng không ai vào được.
+# 1. Quyền mới không tới được vai trò. Thêm quyền `setting.manage` xong: migrate
+#    chạy, mã mới lên, trang cài đặt có đủ — nhưng giám đốc bấm vào thì 403, và
+#    không có gì trong log nói vì sao.
 #
-# Chạy được nhiều lần: seeder CHỈ cấp thêm quyền vừa mới ra đời, không dùng
-# `syncPermissions` nên không xoá tuỳ chỉnh của quản trị viên.
-echo "   Đồng bộ quyền mới vào vai trò..."
+# 2. Không có tài khoản nào. Bản trước chỉ gọi RolePermissionSeeder, nên sau lần
+#    deploy ĐẦU TIÊN database có 27 quyền và **0 người dùng** — bảy kiểm tra đều
+#    xanh, chỉ là không có cửa vào.
+#
+# Cả hai đều là "deploy thành công, hệ thống không dùng được".
+#
+# DatabaseSeeder gọi ba seeder, và cả ba đều chạy lại được nhiều lần:
+#   - OrganizationSeeder  : firstOrCreate phòng ban và chức vụ
+#   - RolePermissionSeeder: chỉ cấp thêm quyền vừa ra đời, KHÔNG dùng
+#                           syncPermissions nên không xoá tuỳ chỉnh
+#   - AdminUserSeeder     : bỏ qua nếu tài khoản đã tồn tại
+echo "   Đồng bộ quyền và tài khoản quản trị..."
 APP_IMAGE="$IMAGE" $COMPOSE run --rm \
     -e RUN_MIGRATIONS=false \
-    app php artisan db:seed --class=RolePermissionSeeder --force --no-interaction
+    app php artisan db:seed --force --no-interaction
 
 # ── 4. Đổi web ───────────────────────────────────────
 echo ""
 echo "→ [4/5] Đổi container web..."
 # Frontend lên TRƯỚC nginx: nginx chuyển tiếp sang nó, nên đổi nginx trước sẽ có
 # một khoảng nó trỏ vào container đã chết.
-APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE"     $COMPOSE up -d --no-deps app frontend nginx
+APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \n    $COMPOSE up -d --no-deps app frontend nginx
 
 echo "   Chờ health check..."
 for i in $(seq 1 30); do
