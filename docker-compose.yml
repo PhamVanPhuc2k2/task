@@ -9,6 +9,14 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./backend:/var/www/html
+      # Chỉ để đọc, và chỉ để TEST đọc được.
+      #
+      # ShellScriptTest quét mọi .sh trong hai thư mục này. Không mount thì
+      # trong container chúng không tồn tại, máy quét trả về danh sách rỗng, và
+      # test báo XANH vì không tìm thấy gì để chê — đúng kiểu "máy dò báo sạch
+      # vì máy dò không chạy". Đã xảy ra thật ngay lần chạy đầu tiên.
+      - ./scripts:/var/www/scripts:ro
+      - ./docker:/var/www/docker:ro
     environment:
       TZ: UTC
       # 1 = OPcache kiểm dấu thời gian mọi file ở mỗi request — sửa code là

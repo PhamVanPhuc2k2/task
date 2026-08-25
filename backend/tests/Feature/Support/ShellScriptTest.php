@@ -34,7 +34,11 @@ declare(strict_types=1);
 | Test này biến chuyện đó thành ĐỎ ngay trên máy dev.
 */
 
-/** Mọi script shell của dự án, kể cả script nằm trong image Docker. */
+/**
+ * Mọi script shell của dự án, kể cả script nằm trong image Docker.
+ *
+ * @return list<string> đường dẫn tuyệt đối
+ */
 function scriptsShell(): array
 {
     $goc = dirname(base_path());
