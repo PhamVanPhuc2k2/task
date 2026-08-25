@@ -94,6 +94,15 @@ final class DepartmentAdminController
     {
         $phongBan->loadMissing('parent:id,uuid,name');
 
+        // Đếm cả ở đây, dù chỗ gọi hiện tại không dùng tới.
+        //
+        // Phải TRÙNG hình dạng với `DepartmentController::index()`, vì frontend
+        // dùng chung đúng một kiểu `Department` cho cả hai. Thiếu hai trường
+        // này thì kiểu ở TypeScript nói dối: nó khai là luôn có, mà đường này
+        // trả về không có — và TypeScript không kiểm được lời khai đó, nên lỗi
+        // chỉ lộ ra khi có người render kết quả của mutation và thấy `undefined`.
+        $phongBan->loadCount(['children', 'users']);
+
         return [
             'id' => $phongBan->uuid,
             'name' => $phongBan->name,
@@ -102,6 +111,8 @@ final class DepartmentAdminController
             'is_active' => $phongBan->is_active,
             'parent_id' => $phongBan->parent?->uuid,
             'parent_name' => $phongBan->parent?->name,
+            'child_count' => (int) ($phongBan->children_count ?? 0),
+            'user_count' => (int) ($phongBan->users_count ?? 0),
         ];
     }
 }

@@ -293,3 +293,31 @@ it('mã để trống lưu thành null chứ không phải chuỗi rỗng', func
 
     expect(Department::query()->whereNull('code')->count())->toBe(2);
 });
+
+it('trả về cùng hình dạng ở cả đường đọc lẫn đường ghi', function (): void {
+    /*
+    | Frontend dùng chung đúng MỘT kiểu `Department` cho cả GET lẫn POST/PUT.
+    | Đường ghi thiếu một trường thì kiểu ở TypeScript nói dối — nó khai là
+    | luôn có — mà TypeScript không kiểm được lời khai đó với dữ liệu thật.
+    | Lỗi chỉ lộ ra khi có người render kết quả mutation và thấy `undefined`.
+    */
+    $gd = giamDoc();
+
+    $khiTao = $this->actingAs($gd)
+        ->postJson('/api/v1/departments', ['name' => 'Phòng Mới'])
+        ->assertCreated()
+        ->json('data');
+
+    $khiDoc = collect(
+        $this->actingAs($gd)->getJson('/api/v1/departments')->assertOk()->json('data'),
+    )->firstWhere('id', $khiTao['id']);
+
+    expect(array_keys($khiTao))->toEqualCanonicalizing(array_keys($khiDoc));
+
+    $khiSua = $this->actingAs($gd)
+        ->putJson("/api/v1/departments/{$khiTao['id']}", ['name' => 'Phòng Mới hơn'])
+        ->assertOk()
+        ->json('data');
+
+    expect(array_keys($khiSua))->toEqualCanonicalizing(array_keys($khiDoc));
+});
