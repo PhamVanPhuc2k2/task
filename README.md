@@ -3239,6 +3239,108 @@ Nên bước cuối của mỗi lần deploy là **mở `/login` bằng trình d
 
 ---
 
+
+## Đường ống CI/CD
+
+```
+đẩy lên main
+   │
+   ├─ Backend (PHP 8.4)   Pint · Larastan 8 · Deptrac · 688 test · composer audit
+   ├─ Frontend (Node 24)  ESLint · Prettier · tsc · next build · npm audit
+   │        └─ cả hai phải xanh mới đi tiếp
+   │
+   ├─ Build image → GHCR  ghcr.io/…/app:<sha>  ·  ghcr.io/…/frontend:<sha>
+   │
+   └─ Triển khai          SSH → ci-deploy.sh → deploy.sh --pull <sha>
+              └─ kiểm https://extask.us/login từ INTERNET, không phải từ máy chủ
+```
+
+Pull request thì dừng sau hai cổng chặn. Chỉ `push` vào `main` mới build và triển khai.
+
+### CI từng chạy 9 lần và đỏ cả 9
+
+Đáng ghi lại vì nó là bài học chứ không phải sự cố: **một CI chưa bao giờ xanh là một CI không tồn tại.** Nó vẫn chạy, vẫn tốn phút, vẫn hiện dấu X mà không ai còn nhìn.
+
+Cả bốn lỗi tìm ra đều cùng một hình dạng — *máy dev có sẵn thứ mà máy CI không có*:
+
+| Cổng | Đỏ vì | Vì sao máy dev không thấy |
+|---|---|---|
+| `tsc` | `layout.tsx` dùng `LayoutProps<"/">`, kiểu do Next sinh vào `.next/types/` | Máy dev có sẵn từ lần build trước; CI chạy typecheck **trước** build |
+| Larastan | `scriptsShell()` thiếu kiểu phần tử mảng | Cache 78MB trên máy dev che mất, chỉ lộ khi chạy lạnh |
+| `npm audit` | `nanoid < 3.3.18` | Chưa bao giờ chạy tới — hai cổng trước đã đỏ |
+| Pest | **358 test đỏ** | Chưa bao giờ chạy tới |
+
+Lỗi thứ tư mới là lỗi đáng sợ nhất, và nó nằm ngay trong file CI:
+
+```yaml
+env:
+  CACHE_STORE: redis        # ← dòng này làm đỏ 358 test
+  QUEUE_CONNECTION: redis   # ← dòng này làm đỏ 10 test
+```
+
+Biến môi trường của tiến trình **luôn thắng** thẻ `<env>` của PHPUnit — `force` mặc định là `false`, nên PHPUnit không ghi đè biến đã có. Hai dòng đó lặng lẽ vứt bỏ lựa chọn đã cân nhắc trong `phpunit.xml`.
+
+Cái đắt là `CACHE_STORE`: **bộ đếm giới hạn tần suất nằm trong cache**. Với `array` thì mỗi test có cache riêng và bộ đếm về 0; với `redis` thì bộ đếm sống xuyên qua mọi test và mọi tiến trình song song. Thông báo lỗi là:
+
+```
+Expected response status code [403] but received 429.
+```
+
+Không có chữ nào nhắc tới cache. Một test kiểm phân quyền báo sai vì bị chặn tần suất.
+
+**Quy tắc rút ra: khối `env:` của CI chỉ được khai những gì phụ thuộc vào MÁY chạy test** — địa chỉ database, địa chỉ Redis. Mọi lựa chọn khác thuộc về `phpunit.xml`.
+
+### Vì sao build trong CI chứ không trên máy chủ
+
+Hai lý do, và lý do thứ hai mới là lý do thật:
+
+1. Máy chủ lúc đo chỉ còn **~2,2GB khả dụng** trong khi `next build` cần ~2GB, và nó đang chạy chung với vài dự án khác. OOM killer không giết tiến trình build — nó giết tiến trình nào tiện tay nhất.
+2. **Image build trên máy chủ không phải thứ CI đã kiểm.** CI kiểm mã nguồn rồi vứt đi; máy chủ build lại từ đầu bằng bộ phụ thuộc giải lại vào lúc khác. Không có gì đối chiếu hai thứ đó.
+
+Với `--pull` thì thứ đang chạy đúng là thứ đã qua 688 test.
+
+### Khoá SSH của CI không mở được shell
+
+`authorized_keys` trên máy chủ trói khoá đó vào đúng một script:
+
+```
+command="/srv/explus/scripts/ci-deploy.sh",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding ssh-ed25519 AAAA… ci@explus
+```
+
+Gửi lệnh gì cũng không quan trọng — sshd luôn chạy `ci-deploy.sh`, còn lệnh người gọi gõ chỉ nằm trong `$SSH_ORIGINAL_COMMAND` cho script tự đọc và tự quyết. Script chỉ chấp nhận đúng dạng `deploy <sha 40 ký tự hệ 16>`.
+
+Đã kiểm thật: đăng nhập bằng khoá đó rồi gõ `id; cat /srv/explus/.env` — không có gì chạy ngoài script.
+
+Token GHCR đi qua **stdin**, không qua tham số dòng lệnh (tham số hiện trong `ps` cho mọi user trên máy đọc được), và là `GITHUB_TOKEN` của chính lần chạy đó nên hết hạn khi job kết thúc. Không có gì lâu dài phải cất trên máy chủ.
+
+### Bốn secret cần khai trên GitHub
+
+*Settings → Secrets and variables → Actions → New repository secret*
+
+| Tên | Giá trị |
+|---|---|
+| `VPS_HOST` | Địa chỉ IP máy chủ |
+| `VPS_USER` | `root` |
+| `VPS_SSH_KEY` | Toàn bộ nội dung `~/.ssh/explus-ci-deploy` (khoá riêng, gồm cả hai dòng `BEGIN`/`END`) |
+| `VPS_HOST_KEY` | Dòng `ssh-keyscan -t ed25519 <ip>` trả về — để ghim, không tin bừa lần đầu |
+
+Thiếu bất kỳ cái nào thì job dừng ngay ở bước đầu kèm tên biến còn thiếu. **Không bỏ qua êm**: một job xanh vì nó không làm gì cả là thứ nguy hiểm nhất trong cả đường ống — nó dạy người đọc rằng dấu tích nghĩa là đã deploy.
+
+### Quay lui
+
+`deploy.sh` ghi **cả hai** image đang chạy vào `.last-known-good` trước khi đổi:
+
+```
+APP_IMAGE=ghcr.io/…/app:<sha>
+FRONTEND_IMAGE=ghcr.io/…/frontend:<sha>
+```
+
+Bản trước chỉ ghi app, nên `rollback.sh` để lại hệ thống ở trạng thái lai — backend bản cũ, giao diện bản mới — và không có gì báo. Đúng hình dạng của lỗi đăng nhập đã mất một buổi để tìm.
+
+`deploy.sh` giữ 3 bản image gần nhất và **không bao giờ xoá** bản ghi trong `.last-known-good` hay bản đang được container dùng.
+
+---
+
 ## Ghi chú
 
 - Nghỉ lễ Việt Nam đưa vào bảng dữ liệu, **không hardcode** — Tết âm lịch trôi theo từng năm.

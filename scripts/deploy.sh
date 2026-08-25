@@ -19,17 +19,50 @@
 # lần một thêm cái mới và ghi cả hai chỗ, lần hai mới xoá cái cũ.
 #
 # Dùng:
-#   ./scripts/deploy.sh              # deploy từ mã nguồn hiện tại
-#   ./scripts/deploy.sh v1.4.2       # deploy một tag cụ thể
+#   ./scripts/deploy.sh              # build tại chỗ từ mã nguồn hiện tại
+#   ./scripts/deploy.sh v1.4.2       # build tại chỗ, gắn tag đó
+#   ./scripts/deploy.sh --pull abc123 # KÉO image đã build sẵn từ registry
 #
+# ── Vì sao có chế độ --pull ──────────────────────────────────────────────────
+#
+# Build ngay trên máy chủ đang phục vụ người dùng có hai vấn đề, và vấn đề thứ
+# hai mới là vấn đề thật:
+#
+#   1. `next build` cần khoảng 2GB. Máy chủ có 7,5GB nhưng đang chạy chung với
+#      vài dự án khác, lúc đo chỉ còn ~2,2GB khả dụng. Build lúc đó là đánh cược
+#      với OOM killer — mà OOM killer không giết tiến trình build, nó giết tiến
+#      trình nào tiện tay nhất.
+#
+#   2. **Image build trên máy chủ KHÔNG phải thứ CI đã kiểm.** CI kiểm mã nguồn
+#      rồi vứt đi; máy chủ build lại từ đầu bằng bộ dependency giải lại lúc đó.
+#      Hai lần giải `composer install`/`npm ci` cách nhau vài giờ có thể ra hai
+#      cây phụ thuộc khác nhau, và không có gì đối chiếu.
+#
+# Với --pull thì thứ chạy trên máy chủ đúng là thứ CI đã build và đã chạy test.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 COMPOSE="docker compose -f docker-compose.prod.yml"
+
+KEO_TU_REGISTRY=false
+if [ "${1:-}" = "--pull" ]; then
+    KEO_TU_REGISTRY=true
+    shift
+fi
+
+# Đổi được bằng biến môi trường để không trói script vào một tài khoản GitHub.
+REGISTRY="${REGISTRY:-ghcr.io/phamvanphuc2k2/task}"
+
 TAG="${1:-$(git rev-parse --short HEAD 2>/dev/null || date -u +%Y%m%d%H%M%S)}"
-IMAGE="explus/app:${TAG}"
-FRONTEND_IMAGE="explus/frontend:${TAG}"
+
+if [ "$KEO_TU_REGISTRY" = true ]; then
+    IMAGE="${REGISTRY}/app:${TAG}"
+    FRONTEND_IMAGE="${REGISTRY}/frontend:${TAG}"
+else
+    IMAGE="explus/app:${TAG}"
+    FRONTEND_IMAGE="explus/frontend:${TAG}"
+fi
 
 echo "════════════════════════════════════════════"
 echo "  Triển khai ${IMAGE}"
@@ -37,12 +70,34 @@ echo "             ${FRONTEND_IMAGE}"
 echo "════════════════════════════════════════════"
 
 # Ghi lại image đang chạy TRƯỚC khi đổi. Đây là thứ scripts/rollback.sh đọc.
-DANG_CHAY=$($COMPOSE images app --format json 2>/dev/null \
-    | grep -o '"Tag":"[^"]*"' | head -1 | cut -d'"' -f4 || echo "")
+#
+# Phải lấy THAM CHIẾU ĐẦY ĐỦ, không chỉ cái tag. Bản trước ghép cứng
+# "explus/app:${TAG}", nên từ lúc image chuyển sang registry thì file
+# .last-known-good trỏ vào một cái tên không tồn tại — và rollback.sh chỉ phát
+# hiện ra điều đó vào đúng lúc đang cần quay lui gấp.
+# Ghi CẢ HAI image. Bản trước chỉ ghi app, nên quay lui xong hệ thống ở trạng
+# thái lai: backend bản cũ, giao diện bản mới. Không có gì báo, và đó đúng là
+# hình dạng của lỗi đăng nhập đã mất một buổi để tìm.
+anh_dang_chay() {
+    local cid
+    cid=$($COMPOSE ps -q "$1" 2>/dev/null | head -1 || echo "")
+    [ -z "$cid" ] && return 0
+    docker inspect --format '{{.Config.Image}}' "$cid" 2>/dev/null || true
+}
 
-if [ -n "$DANG_CHAY" ]; then
-    echo "explus/app:${DANG_CHAY}" > .last-known-good
-    echo "→ Phiên bản đang chạy: ${DANG_CHAY} (đã ghi vào .last-known-good)"
+APP_CU=$(anh_dang_chay app)
+FE_CU=$(anh_dang_chay frontend)
+
+if [ -n "$APP_CU" ]; then
+    {
+        echo "APP_IMAGE=${APP_CU}"
+        [ -n "$FE_CU" ] && echo "FRONTEND_IMAGE=${FE_CU}"
+    } > .last-known-good
+    echo "→ Đang chạy: ${APP_CU}"
+    [ -n "$FE_CU" ] && echo "           ${FE_CU}"
+    echo "  (đã ghi vào .last-known-good)"
+else
+    echo "→ Chưa có container app nào chạy — lần deploy đầu tiên."
 fi
 
 # ── 1. Sao lưu ───────────────────────────────────────
@@ -62,17 +117,30 @@ echo "→ [1/5] Sao lưu database trước khi đổi gì..."
 $COMPOSE build backup
 $COMPOSE run --rm backup once
 
-# ── 2. Build ─────────────────────────────────────────
+# ── 2. Lấy image ─────────────────────────────────────
 echo ""
-echo "→ [2/5] Build image..."
-APP_IMAGE="$IMAGE" $COMPOSE build app
 
-# Frontend build riêng: nó là ứng dụng Node, không dùng chung tầng nào với PHP.
-#
-# Địa chỉ API được nhúng vào mã lúc build, và mặc định là đường dẫn TƯƠNG ĐỐI
-# (`/api/v1`). Nhờ vậy ảnh build ra chạy được ở mọi tên miền — nginx đứng trước
-# cả hai nên trình duyệt và API cùng một origin.
-FRONTEND_IMAGE="$FRONTEND_IMAGE" $COMPOSE build frontend
+if [ "$KEO_TU_REGISTRY" = true ]; then
+    echo "→ [2/5] Kéo image từ registry (KHÔNG build trên máy chủ)..."
+    echo "   ${IMAGE}"
+    echo "   ${FRONTEND_IMAGE}"
+
+    # Kéo TRƯỚC khi chạy migration. Registry hỏng, tag gõ sai, hay chưa đăng
+    # nhập được thì phải biết ngay tại đây — lúc chưa động vào database.
+    docker pull "$IMAGE"
+    docker pull "$FRONTEND_IMAGE"
+else
+    echo "→ [2/5] Build image tại chỗ..."
+    APP_IMAGE="$IMAGE" $COMPOSE build app
+
+    # Frontend build riêng: nó là ứng dụng Node, không dùng chung tầng nào với
+    # PHP.
+    #
+    # Địa chỉ API được nhúng vào mã lúc build, và mặc định là đường dẫn TƯƠNG
+    # ĐỐI (`/api/v1`). Nhờ vậy ảnh build ra chạy được ở mọi tên miền — nginx
+    # đứng trước cả hai nên trình duyệt và API cùng một origin.
+    FRONTEND_IMAGE="$FRONTEND_IMAGE" $COMPOSE build frontend
+fi
 
 # ── 3. Migration ─────────────────────────────────────
 echo ""
@@ -141,6 +209,56 @@ echo "→ [5/5] Đổi worker (chờ job đang chạy xong)..."
 APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \
     $COMPOSE exec -T app php artisan queue:restart || true
 APP_IMAGE="$IMAGE" $COMPOSE up -d --no-deps worker
+
+# ── Dọn image cũ ─────────────────────────────────────
+#
+# Mỗi lần deploy để lại một cặp image ~680MB và không xoá gì. Đĩa 50GB, đã dùng
+# 23GB — cứ để vậy thì vài chục lần deploy nữa là đầy, và ổ đầy trên máy chạy
+# MySQL không phải "hết chỗ" mà là hỏng dữ liệu.
+#
+# Giữ ba bản gần nhất, đủ để quay lui vài bước.
+#
+# Hai thứ TUYỆT ĐỐI không được xoá, và đó là toàn bộ phần khó của đoạn này:
+#   - image các container đang dùng
+#   - image ghi trong .last-known-good — xoá nó là vứt đường lùi đi, mà lại
+#     không có gì báo cho tới đúng lúc cần quay lui
+echo ""
+echo "→ Dọn image cũ (giữ 3 bản gần nhất)..."
+
+GIU=$(mktemp)
+{
+    docker ps -a --format '{{.Image}}'
+    # .last-known-good ở dạng KEY=giá trị — chỉ lấy phần giá trị.
+    [ -f .last-known-good ] && sed 's/^[A-Z_]*=//' .last-known-good
+    echo "$IMAGE"
+    echo "$FRONTEND_IMAGE"
+} | sort -u > "$GIU"
+
+for KHO in "${REGISTRY}/app" "${REGISTRY}/frontend" explus/app explus/frontend; do
+    # `|| true` không phải cho đẹp.
+    #
+    # Script này chạy dưới `set -o pipefail`. Repo chưa có image nào thì
+    # `docker images` không in gì, `grep` không khớp gì và thoát 1, cả pipeline
+    # trả về 1 — và `set -e` giết script NGAY SAU KHI deploy đã thành công trọn
+    # vẹn. Người vận hành thấy deploy "thất bại" và phản xạ là chạy rollback,
+    # tức là quay lui một bản deploy hoàn toàn tốt.
+    DANH_SACH=$(docker images "$KHO" --format '{{.Repository}}:{{.Tag}}' 2>/dev/null \
+        | grep -v ':<none>$' || true)
+
+    [ -z "$DANH_SACH" ] && continue
+
+    # `docker images` xếp mới nhất trước, nên bỏ 3 dòng đầu là bỏ 3 bản mới nhất.
+    echo "$DANH_SACH" | tail -n +4 | while read -r CU; do
+        if grep -qxF "$CU" "$GIU"; then
+            echo "   giữ ${CU} (đang dùng hoặc là đường lùi)"
+            continue
+        fi
+        echo "   xoá ${CU}"
+        docker rmi "$CU" >/dev/null 2>&1 || true
+    done
+done
+
+rm -f "$GIU"
 
 echo ""
 echo "✔ Xong. Đang chạy ${IMAGE}."

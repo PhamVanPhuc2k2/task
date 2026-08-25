@@ -69,3 +69,7 @@ tmp/
 # ai clone repo cũng mở được mọi bản sao lưu.
 /storage/keys/*
 !/storage/keys/.gitignore
+
+# Ghi lại image đang chạy trước mỗi lần deploy, để rollback.sh đọc.
+# Chỉ có ý nghĩa trên chính máy chủ đó.
+/.last-known-good

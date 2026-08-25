@@ -1,4 +1,4 @@
-name: CI
+name: CI/CD
 
 on:
   push:
@@ -8,7 +8,13 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # KHÔNG huỷ giữa chừng trên main.
+  #
+  # Trên nhánh khác thì huỷ lần chạy cũ là đúng: chỉ mất mấy phút chạy test.
+  # Trên main thì lần chạy đó có thể đang deploy — đẩy tiếp một commit nữa sẽ
+  # giết nó vào giữa bước đổi container hoặc giữa migration, và hệ thống dừng ở
+  # một trạng thái không ai mô tả được.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   # ── Backend: Laravel ───────────────────────────────
@@ -83,6 +89,25 @@ jobs:
       - name: Ranh giới kiến trúc (Deptrac)
         run: ./vendor/bin/deptrac analyse --no-progress
 
+      # Chỉ khai những gì phụ thuộc vào MÁY chạy test (địa chỉ database, Redis).
+      #
+      # Mọi lựa chọn khác thuộc về phpunit.xml, và CI không được lấn sang. Biến
+      # môi trường của tiến trình LUÔN thắng thẻ <env> của PHPUnit (force mặc
+      # định là false — PHPUnit không ghi đè biến đã có), nên mỗi dòng thừa ở
+      # đây là một dòng lặng lẽ đổi cấu hình test.
+      #
+      # Bản trước có thêm CACHE_STORE=redis và QUEUE_CONNECTION=redis. Đo bằng
+      # cách bật lại từng cái:
+      #
+      #   CACHE_STORE=redis       → 358 test đỏ
+      #   QUEUE_CONNECTION=redis  →  10 test đỏ
+      #
+      # Cache dùng chung là nặng nhất, và lý do rất khó đoán từ thông báo lỗi:
+      # bộ đếm giới hạn tần suất nằm trong cache. Với `array` thì mỗi test có
+      # cache riêng và bộ đếm về 0; với `redis` thì bộ đếm **sống xuyên qua mọi
+      # test và mọi tiến trình song song**, nên test thứ n bị chặn 429 trong khi
+      # nó đang kiểm 403. Thông báo là "Expected 403 but received 429" — không
+      # có chữ nào nhắc tới cache.
       - name: Kiểm thử (Pest, gồm cả architecture test)
         run: ./vendor/bin/pest --parallel
         env:
@@ -93,8 +118,6 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
           REDIS_HOST: 127.0.0.1
-          CACHE_STORE: redis
-          QUEUE_CONNECTION: redis
 
       - name: Rà soát lỗ hổng phụ thuộc
         run: composer audit --no-interaction
@@ -135,3 +158,167 @@ jobs:
 
       - name: Rà soát lỗ hổng phụ thuộc
         run: npm audit --audit-level=high
+
+  # ── Build image và đẩy lên GHCR ────────────────────
+  #
+  # Chỉ chạy khi ĐÃ qua hết cổng chặn ở trên, và chỉ trên main.
+  #
+  # Vì sao build ở đây chứ không trên máy chủ: xem đầu scripts/deploy.sh. Tóm
+  # tắt là máy chủ chỉ còn ~2,2GB RAM khả dụng trong khi `next build` cần ~2GB,
+  # và quan trọng hơn — image build trên máy chủ không phải thứ vừa chạy test.
+  build-push:
+    name: Build image → GHCR
+    needs: [backend, frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # GHCR chỉ nhận tên viết thường, mà tài khoản GitHub thì có chữ hoa.
+      - name: Tên repo viết thường
+        id: ten
+        run: echo "repo=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Gắn tag bằng SHA ĐẦY ĐỦ chứ không phải bản rút gọn.
+      #
+      # SHA rút gọn 7 ký tự sẽ đụng nhau khi repo lớn dần, và lúc đụng thì
+      # `docker pull` lấy về một image khác hẳn mà không báo gì. Tag `latest`
+      # thêm vào chỉ để người ta gõ tay cho nhanh — deploy KHÔNG bao giờ dùng
+      # nó, vì `latest` không nói được đang chạy mã nào.
+      - name: Build app (PHP)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/php/Dockerfile.prod
+          push: true
+          tags: |
+            ghcr.io/${{ steps.ten.outputs.repo }}/app:${{ github.sha }}
+            ghcr.io/${{ steps.ten.outputs.repo }}/app:latest
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,mode=max,scope=app
+
+      # Không truyền NEXT_PUBLIC_API_URL: mặc định trong Dockerfile là đường dẫn
+      # TƯƠNG ĐỐI (`/api/v1`), nên một image chạy được ở mọi tên miền.
+      - name: Build frontend (Next.js)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: docker/node/Dockerfile.prod
+          push: true
+          tags: |
+            ghcr.io/${{ steps.ten.outputs.repo }}/frontend:${{ github.sha }}
+            ghcr.io/${{ steps.ten.outputs.repo }}/frontend:latest
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ── Triển khai lên máy chủ ─────────────────────────
+  deploy:
+    name: Triển khai lên máy chủ
+    needs: build-push
+    runs-on: ubuntu-latest
+
+    # Đặt tên môi trường để sau này bật "cần người duyệt" được ngay trong giao
+    # diện GitHub, không phải sửa file này.
+    environment:
+      name: production
+      url: https://extask.us
+
+    # Hàng đợi riêng cho deploy, và KHÔNG huỷ lần đang chạy: hai lần deploy
+    # chồng nhau là hai lần `migrate` chồng nhau.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      # Thiếu secret thì hỏng ở đây, với câu nói rõ thiếu cái gì.
+      #
+      # Không "bỏ qua êm" khi thiếu cấu hình: một job màu xanh vì nó không làm
+      # gì cả là thứ nguy hiểm nhất trong toàn bộ đường ống này — nó dạy người
+      # đọc rằng dấu tích nghĩa là đã deploy.
+      - name: Kiểm secret
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
+        run: |
+          THIEU=""
+          for TEN in VPS_HOST VPS_USER VPS_SSH_KEY VPS_HOST_KEY; do
+              [ -z "${!TEN:-}" ] && THIEU="${THIEU} ${TEN}"
+          done
+          if [ -n "$THIEU" ]; then
+              echo "✘ Thiếu secret:${THIEU}" >&2
+              echo "  Thêm ở: Settings → Secrets and variables → Actions" >&2
+              echo "  Xem README, mục 'Đường ống CI/CD'." >&2
+              exit 1
+          fi
+          echo "✔ Đủ 4 secret."
+
+      - name: Chuẩn bị SSH
+        env:
+          KHOA: ${{ secrets.VPS_SSH_KEY }}
+          HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KHOA" > ~/.ssh/id_ci
+          chmod 600 ~/.ssh/id_ci
+          # Ghim host key thay vì chấp nhận bừa lần đầu. Không có dòng này thì
+          # mỗi lần chạy là một lần tin người lạ, và một kẻ đứng giữa chỉ cần
+          # đúng một lần chạy để nhận được token GHCR.
+          printf '%s\n' "$HOST_KEY" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Chạy deploy trên máy chủ
+        env:
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          # Token đi qua stdin, không qua tham số dòng lệnh: tham số hiện trong
+          # `ps` cho mọi tiến trình trên máy chủ đọc được.
+          #
+          # Khoá này bị trói vào scripts/ci-deploy.sh bằng `command=` trong
+          # authorized_keys, nên chuỗi dưới đây chỉ là dữ liệu cho script đó
+          # đọc — không mở được shell.
+          printf '%s\n' "${{ secrets.GITHUB_TOKEN }}" \
+            | ssh -i ~/.ssh/id_ci \
+                  -o BatchMode=yes \
+                  -o StrictHostKeyChecking=yes \
+                  "${VPS_USER}@${VPS_HOST}" \
+                  "deploy ${GITHUB_SHA}"
+
+      - name: Kiểm bằng con mắt người dùng
+        run: |
+          # Bước cuối, và là bước duy nhất nhìn hệ thống TỪ BÊN NGOÀI.
+          #
+          # deploy.sh đã có health check, nhưng nó chạy từ trong máy chủ nên
+          # không thấy được Cloudflare, nginx của máy chủ, hay chứng chỉ. Cả ba
+          # đều từng hỏng riêng trong khi container vẫn xanh.
+          for i in $(seq 1 10); do
+              MA=$(curl -s -o /dev/null -w '%{http_code}' https://extask.us/login || echo 000)
+              if [ "$MA" = "200" ]; then
+                  echo "✔ https://extask.us/login trả về 200"
+                  exit 0
+              fi
+              echo "   lần $i: HTTP $MA, chờ 6 giây..."
+              sleep 6
+          done
+          echo "✘ Trang đăng nhập KHÔNG phục vụ được từ internet." >&2
+          echo "  Container có thể vẫn xanh — kiểm nginx máy chủ và Cloudflare." >&2
+          exit 1
