@@ -17,12 +17,10 @@ import { api } from "@/lib/api-client";
  * tính — kể cả khi tab bị ẩn sau cửa sổ VS Code, vì đó chính là tình huống cần
  * đo.
  *
- * ── Nhưng vẫn báo có thao tác hay không ──────────────────────────────────────
- *
- * Cờ `active` giữ lại đúng tín hiệu mà bản cũ có. Tổng giờ cộng cả hai loại,
- * nhưng dòng thời gian vẫn vẽ được "ngồi làm" khác màu với "để tab đó". Bỏ hẳn
- * cờ này thì đổi cách tính đồng nghĩa với mất luôn khả năng phân biệt, và khi
- * có tranh cãi về một ngày công cụ thể thì không còn gì để nhìn.
+ * Cũng KHÔNG đo riêng "thời gian có thao tác trên Explus". Đã làm rồi bỏ: với
+ * công ty làm remote thì con số đó gần như luôn thấp và không ai dùng nó để ra
+ * quyết định, mà lại cắt vụn phiên thành nhiều dòng. Nhờ bỏ nó, hook này không
+ * còn phải nghe sự kiện chuột và bàn phím nào nữa.
  *
  * ── Bốn cái bẫy của trình duyệt ──────────────────────────────────────────────
  *
@@ -50,15 +48,6 @@ import { api } from "@/lib/api-client";
 /** Khoảng gửi nhịp. Khớp với ngưỡng nối phiên 10 phút ở backend. */
 const NHIP_MS = 60_000;
 
-/**
- * Các sự kiện tính là "có thao tác thật".
- *
- * `pointerdown`/`keydown`/`wheel` chứ không phải `mousemove`: rê chuột qua màn
- * hình lúc đi ngang bàn không phải là làm việc, và `mousemove` bắn hàng trăm
- * lần mỗi giây.
- */
-const SU_KIEN = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
-
 export interface NhipTim {
   /** Số phút hôm nay, null khi chưa nhận được nhịp nào. */
   soPhut: number | null;
@@ -70,21 +59,12 @@ export function useHeartbeat(enabled: boolean): NhipTim {
   const [soPhut, setSoPhut] = useState<number | null>(null);
   const [chamTran, setChamTran] = useState(false);
 
-  // `useRef` chứ không `useState`: cờ này đổi hàng chục lần mỗi phút và không
-  // được phép làm component vẽ lại.
-  const coThaoTac = useRef(false);
+  // `useRef` chứ không `useState`: cờ này đổi mỗi phút và không được phép làm
+  // component vẽ lại.
   const dangGui = useRef(false);
 
   useEffect(() => {
     if (!enabled) return;
-
-    const danhDau = () => {
-      coThaoTac.current = true;
-    };
-
-    for (const ten of SU_KIEN) {
-      window.addEventListener(ten, danhDau, { passive: true });
-    }
 
     const gui = async () => {
       // Chỉ còn MỘT điều kiện chặn: đang có request bay dở.
@@ -93,18 +73,16 @@ export function useHeartbeat(enabled: boolean): NhipTim {
       // có cờ này thì hàng chục request cùng lúc chồng lên nhau, và cái tới
       // sau ghi đè số phút của cái tới trước theo thứ tự ngẫu nhiên.
       //
-      // KHÔNG còn chặn theo `document.hidden`: tab ẩn sau cửa sổ VS Code chính
-      // là tình huống cần đo, không phải tình huống cần bỏ qua.
+      // KHÔNG chặn theo `document.hidden`: tab ẩn sau cửa sổ VS Code chính là
+      // tình huống cần đo, không phải tình huống cần bỏ qua.
       if (dangGui.current) return;
 
-      const daThaoTac = coThaoTac.current;
-      coThaoTac.current = false;
       dangGui.current = true;
 
       try {
         const kq = await api.post<{
           data: { today_minutes: number; capped: boolean };
-        }>("/attendance/heartbeat", { active: daThaoTac });
+        }>("/attendance/heartbeat");
 
         setSoPhut(kq.data.today_minutes);
         setChamTran(kq.data.capped);
@@ -119,17 +97,12 @@ export function useHeartbeat(enabled: boolean): NhipTim {
     };
 
     // Gửi ngay một nhịp lúc vào app, đừng bắt chờ đủ một phút mới bắt đầu đếm.
-    coThaoTac.current = true;
     void gui();
 
     const dinhKy = window.setInterval(() => void gui(), NHIP_MS);
 
     return () => {
       window.clearInterval(dinhKy);
-
-      for (const ten of SU_KIEN) {
-        window.removeEventListener(ten, danhDau);
-      }
     };
   }, [enabled]);
 

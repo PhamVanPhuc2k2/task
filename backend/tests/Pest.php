@@ -193,9 +193,7 @@ function daNopBaoCao(User $u, string $ngay): DailyReport
  *
  * @return TestResponse<JsonResponse>
  */
-function nhip(User $u, bool $coThaoTac = true): TestResponse
+function nhip(User $u): TestResponse
 {
-    return test()->actingAs($u)->postJson('/api/v1/attendance/heartbeat', [
-        'active' => $coThaoTac,
-    ]);
+    return test()->actingAs($u)->postJson('/api/v1/attendance/heartbeat');
 }

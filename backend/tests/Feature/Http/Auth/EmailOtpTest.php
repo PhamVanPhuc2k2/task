@@ -249,3 +249,49 @@ it('vào được bằng mã khôi phục khi không nhận được email', fun
     $this->assertAuthenticatedAs($user, 'web');
     expect($user->refresh()->two_factor_recovery_codes)->toBe(['BBBBB-22222']);
 });
+
+it('người chưa từng đăng nhập vẫn nhập được mã ngay lần đầu', function (): void {
+    /*
+    | Test này khoá chỗ nguy hiểm nhất của việc bỏ bước thiết lập.
+    |
+    | `verifyCode()` từng chặn theo cột `two_factor_confirmed_at`. Nếu chỉ đổi
+    | `EmailOtpProvider::isEnrolled()` mà quên chỗ đó thì kênh email TỰ KHOÁ
+    | CHÍNH NÓ: người mới được đưa tới màn nhập mã, mã tới hộp thư đàng hoàng,
+    | nhập vào lại luôn sai — và không có thông báo nào nói vì sao.
+    */
+    $u = nguoiDung(daBat: false);
+
+    expect($u->two_factor_confirmed_at)->toBeNull();
+
+    test()->postJson('/api/v1/auth/login', [
+        'email' => 'nv@congty.vn',
+        'password' => MAT_KHAU_EMAIL,
+    ])
+        ->assertOk()
+        // Đi thẳng sang bước nhập mã, không qua màn thiết lập nào.
+        ->assertJsonPath('data.two_factor_required', true)
+        ->assertJsonMissingPath('data.two_factor_setup_required');
+
+    test()->postJson('/api/v1/auth/two-factor-challenge', ['code' => maVuaGui()])
+        ->assertOk();
+
+    test()->assertAuthenticated('web');
+
+    // Mốc xác nhận lần đầu vẫn được ghi — cột không còn quyết định luồng đăng
+    // nhập, nhưng vẫn trả lời được "người này qua xác thực hai lớp lần đầu lúc
+    // nào". Bỏ hẳn thì nó rỗng mãi mãi và không ai biết còn nghĩa gì.
+    expect($u->refresh()->two_factor_confirmed_at)->not->toBeNull();
+});
+
+it('không còn bắt ai đi qua màn thiết lập nữa', function (): void {
+    // Kênh email không có gì để thiết lập: địa chỉ đã nằm sẵn trên tài khoản,
+    // và việc mã tới được hộp thư chính là bằng chứng địa chỉ đúng.
+    nguoiDung(daBat: false);
+
+    buocMot();
+
+    test()->postJson('/api/v1/auth/login', [
+        'email' => 'nv@congty.vn',
+        'password' => MAT_KHAU_EMAIL,
+    ])->assertJsonMissingPath('data.two_factor_setup_required');
+});

@@ -14,21 +14,13 @@ import {
 /**
  * Dòng thời gian một ngày của cả đội.
  *
- * ## Bốn màu, bốn ý nghĩa khác nhau
+ * ## Ba màu, ba ý nghĩa khác nhau
  *
  * | Màu | Nghĩa |
  * |---|---|
- * | Sắc miền đậm | Đang thao tác trên Explus |
- * | Sắc miền **nhạt** | Mở Explus nhưng làm việc ở nơi khác |
+ * | Sắc miền (xanh ngọc) | Đang mở Explus — được tính giờ công |
  * | Vàng | **Không mở Explus** — máy tắt, đóng trình duyệt, mất mạng |
  * | Xám | Ngoài khoảng đã ghi nhận: chưa vào, hoặc đã nghỉ |
- *
- * ### Vì sao nhạt chứ không đổi màu
- *
- * Hai sắc đầu **đều là giờ công**, chỉ khác nhau ở chỗ người dùng có chạm vào
- * Explus hay không. Đổi cái thứ hai sang vàng sẽ nói sai một điều quan trọng:
- * lập trình viên ngồi cả buổi trong IDE là chuyện bình thường, không phải dấu
- * hiệu cần để mắt tới. Nhạt hơn là đủ để phân biệt mà không hàm ý phán xét.
  *
  * Vàng chỉ dùng cho khe **ở giữa**. Khoảng trước phiên đầu và sau phiên cuối để
  * xám: chưa tới giờ làm và đã về thì không phải ngồi không, tô vàng vào đó là
@@ -212,17 +204,7 @@ function Truc({
         ))}
 
         {row.sessions.map((p) => (
-          <Doan
-            key={`p-${p.start}`}
-            seg={p}
-            tu={tu}
-            rong={rong}
-            // `=== false` chứ không `!p.interactive`: trường này có thể vắng
-            // mặt ở dữ liệu cũ, và vắng mặt nghĩa là "không biết" chứ không
-            // phải "không có thao tác". Đoán sai hướng thì cả ngày công cũ
-            // hiện ra nhạt màu như thể không ai làm gì.
-            loai={p.interactive === false ? "present" : "work"}
-          />
+          <Doan key={`p-${p.start}`} seg={p} tu={tu} rong={rong} loai="work" />
         ))}
       </div>
 
@@ -250,7 +232,7 @@ function Doan({
   seg: TimelineSegment;
   tu: number;
   rong: number;
-  loai: "work" | "idle" | "present";
+  loai: "work" | "idle";
 }) {
   const s = Math.max(toMinutes(seg.start), tu);
   const e = Math.min(toMinutes(seg.end), tu + rong);
@@ -261,21 +243,10 @@ function Doan({
   return (
     <span
       aria-hidden="true"
-      title={
-        `${seg.start} – ${seg.end} · ${seg.minutes} phút` +
-        (loai === "present" ? " · mở Explus, không thao tác" : "")
-      }
+      title={`${seg.start} – ${seg.end} · ${seg.minutes} phút`}
       className={cn(
         "absolute inset-y-0 rounded-full",
-        loai === "work" && "bg-tone",
-        loai === "idle" && "bg-notice",
-        // Mở Explus nhưng không chạm vào: vẫn là giờ công, nên dùng CÙNG sắc
-        // với phiên có thao tác chứ không đổi sang màu cảnh báo. Chỉ nhạt hơn.
-        //
-        // Đổi sang màu vàng ở đây sẽ nói sai một điều quan trọng: lập trình
-        // viên làm cả buổi trong IDE là chuyện bình thường, không phải dấu
-        // hiệu cần để mắt.
-        loai === "present" && "bg-tone/40",
+        loai === "work" ? "bg-tone" : "bg-notice",
       )}
       style={{
         left: `${((s - tu) / rong) * 100}%`,
@@ -290,8 +261,7 @@ function Doan({
 
 function ChuGiaiDongThoiGian() {
   const muc: { mau: string; nhan: string }[] = [
-    { mau: "bg-tone", nhan: "Đang thao tác trên Explus" },
-    { mau: "bg-tone/40", nhan: "Mở Explus, làm việc ở nơi khác" },
+    { mau: "bg-tone", nhan: "Đang mở Explus" },
     { mau: "bg-notice", nhan: "Không mở Explus" },
     { mau: "bg-paper-sunken border-line border", nhan: "Ngoài giờ ghi nhận" },
   ];

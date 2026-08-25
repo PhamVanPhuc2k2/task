@@ -99,13 +99,37 @@ final readonly class EmailOtpProvider implements TwoFactorProvider
     }
 
     /**
-     * Kênh email không lưu gì trên người dùng — mã sinh mới mỗi lần đăng nhập
-     * và tra trong bảng `two_factor_codes`. Nên "đã thiết lập" ở đây đúng bằng
-     * "đã xác nhận một lần".
+     * Kênh email KHÔNG có gì để thiết lập, nên ai cũng coi như đã sẵn sàng.
+     *
+     * ── Vì sao đổi ───────────────────────────────────────────────────────────
+     *
+     * Bản trước trả về `two_factor_confirmed_at !== null`, nên nhân viên mới bị
+     * đẩy qua một màn "Bảo vệ tài khoản" trước khi vào được. Màn đó làm đúng
+     * MỘT việc: gửi mã sáu số tới email — y hệt việc mà bước nhập mã cũng làm.
+     * Xong rồi còn bắt lưu một danh sách mã khôi phục.
+     *
+     * Với kênh TOTP thì màn đó có nghĩa: phải quét mã QR để điện thoại và máy
+     * chủ cùng biết một bí mật. Với email thì **không có bí mật nào để trao
+     * đổi** — địa chỉ đã nằm sẵn trên tài khoản, và việc mã tới được hộp thư
+     * chính là bằng chứng địa chỉ đúng.
+     *
+     * Nên nó là nghi thức thuần tuý: thêm hai màn hình vào ngày đầu đi làm của
+     * mọi nhân viên, đổi lại không có thêm một lớp bảo vệ nào.
+     *
+     * ## Điều này KHÔNG làm yếu bảo mật
+     *
+     * Mọi tài khoản vẫn phải nhập mã sáu số gửi tới email ở mỗi lần đăng nhập.
+     * Thứ duy nhất mất đi là mã khôi phục — mà với hệ thống dùng chính email
+     * làm kênh OTP, mã khôi phục gần như không cứu được ai: mất quyền vào hộp
+     * thư thì cũng mất luôn đường "quên mật khẩu". Đường phục hồi thật là quản
+     * trị viên đặt lại (`/users/{user}/reset-two-factor`), và nó vẫn nguyên.
+     *
+     * Người đã có mã khôi phục từ trước vẫn dùng được — xem
+     * TwoFactorService::consumeRecoveryCode.
      */
     public function isEnrolled(User $user): bool
     {
-        return $user->two_factor_confirmed_at !== null;
+        return true;
     }
 
     public function supportsResend(): bool

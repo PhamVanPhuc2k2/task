@@ -245,62 +245,27 @@ it('tháng không hợp lệ thì về tháng hiện tại thay vì lỗi', func
 */
 
 it('vẫn tính giờ khi chỉ mở tab, không thao tác gì', function (): void {
-    // Đây là test quan trọng nhất của cả thay đổi này.
+    /*
+    | Đây là test quan trọng nhất của cách tính mới.
+    |
+    | Giao diện gửi nhịp chừng nào tab còn mở — không nghe sự kiện bấm/gõ nào,
+    | không kiểm tab có đang hiển thị không. Test này gửi nhịp đều đặn đúng như
+    | vậy và đòi ra một phiên liền mạch.
+    */
     $u = nhanVienChamCong();
 
     $moc = CarbonImmutable::parse('2026-03-02 09:00:00', 'Asia/Ho_Chi_Minh');
 
     foreach ([0, 5, 10, 15] as $phut) {
         $this->travelTo($moc->addMinutes($phut));
-        nhip($u, coThaoTac: false)->assertOk();
+        nhip($u)->assertOk();
     }
 
     // `sole()` chứ không `first()`: nó khẳng định luôn "đúng MỘT phiên", tức
     // là bốn nhịp đã nối vào nhau chứ không tạo bốn dòng rời.
     $phien = WorkSession::query()->where('user_id', $u->id)->sole();
 
-    expect($phien->started_at->diffInMinutes($phien->ended_at))->toBe(15.0)
-        ->and($phien->interactive)->toBeFalse();
-});
-
-it('cắt phiên mới khi chuyển giữa có thao tác và chỉ mở tab', function (): void {
-    // Không cắt theo loại thì một phiên bốn tiếng lẫn lộn cả hai, và dòng thời
-    // gian mất khả năng phân biệt "ngồi làm" với "để đó".
-    $u = nhanVienChamCong();
-
-    $moc = CarbonImmutable::parse('2026-03-02 09:00:00', 'Asia/Ho_Chi_Minh');
-
-    $this->travelTo($moc);
-    nhip($u, coThaoTac: true);
-
-    $this->travelTo($moc->addMinutes(5));
-    nhip($u, coThaoTac: true);
-
-    // Rời sang VS Code — vẫn mở tab nhưng không chạm vào Explus nữa.
-    $this->travelTo($moc->addMinutes(10));
-    nhip($u, coThaoTac: false);
-
-    $loai = WorkSession::query()
-        ->where('user_id', $u->id)
-        ->orderBy('started_at')
-        ->pluck('interactive')
-        ->all();
-
-    // So cả dãy một lần: vừa kiểm số phiên vừa kiểm thứ tự loại, và đọc ra
-    // đúng điều đang muốn nói — "có thao tác trước, để tab sau".
-    expect($loai)->toBe([true, false]);
-});
-
-it('không gửi cờ active thì coi như có thao tác', function (): void {
-    // Bản giao diện cũ chỉ gửi nhịp khi CÓ thao tác. Trong quãng người dùng
-    // chưa tải lại trang sau deploy, mặc định `false` sẽ gắn nhãn sai cho mọi
-    // phiên của họ.
-    $u = nhanVienChamCong();
-
-    $this->actingAs($u)->postJson('/api/v1/attendance/heartbeat')->assertOk();
-
-    expect(WorkSession::query()->where('user_id', $u->id)->first()?->interactive)
-        ->toBeTrue();
+    expect($phien->started_at->diffInMinutes($phien->ended_at))->toBe(15.0);
 });
 
 /*
@@ -326,11 +291,10 @@ it('ngừng ghi khi đã chạm trần giờ trong ngày', function (): void {
         'ended_at' => $moc->addMinutes(60)->utc(),
         'work_date' => '2026-03-02',
         'source' => 'heartbeat',
-        'interactive' => false,
     ]);
 
     $this->travelTo($moc->addMinutes(62));
-    $phanHoi = nhip($u, coThaoTac: false)->assertOk();
+    $phanHoi = nhip($u)->assertOk();
 
     expect($phanHoi->json('data.capped'))->toBeTrue()
         // Không phiên mới, và phiên cũ không dài thêm một giây nào.
@@ -352,7 +316,6 @@ it('trần không chặn quãng do người quản lý nhập tay', function ():
         'ended_at' => $moc->addMinutes(300)->utc(),
         'work_date' => '2026-03-02',
         'source' => 'manual',
-        'interactive' => true,
     ]);
 
     $this->travelTo($moc->addMinutes(310));
@@ -372,7 +335,6 @@ it('trần bằng 0 nghĩa là không giới hạn', function (): void {
         'ended_at' => $moc->addMinutes(900)->utc(),
         'work_date' => '2026-03-02',
         'source' => 'heartbeat',
-        'interactive' => false,
     ]);
 
     $this->travelTo($moc->addMinutes(905));

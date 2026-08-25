@@ -16,8 +16,7 @@ use Illuminate\Support\Facades\Date;
 /**
  * Nhịp tim từ giao diện: "người này đang mở Explus".
  *
- * Giao diện gửi mỗi phút chừng nào tab còn mở, kèm cờ `active` nói phút đó có
- * thao tác thật hay chỉ để đó. Đây
+ * Giao diện gửi mỗi phút chừng nào tab còn mở. Đây
  * là đường được gọi nhiều nhất trong cả hệ thống — hai trăm nhân sự × tám tiếng
  * ≈ 96.000 lượt mỗi ngày, nên nó cố tình làm ít việc: một truy vấn tìm phiên
  * gần nhất, một truy vấn ghi.
@@ -37,12 +36,7 @@ final class HeartbeatController
         /** @var User $actor */
         $actor = $request->user();
 
-        // `active` vắng mặt = coi như CÓ thao tác.
-        //
-        // Bản giao diện cũ chỉ gửi nhịp khi thật sự có thao tác, nên với nó
-        // mặc định `true` là đúng. Mặc định `false` sẽ gắn nhãn sai cho mọi
-        // phiên sinh ra trong quãng người dùng chưa tải lại trang sau deploy.
-        $phien = $ghiNhip->execute($actor, $request->boolean('active', default: true));
+        $phien = $ghiNhip->execute($actor);
 
         /** @var CarbonImmutable $bayGio */
         $bayGio = Date::now();

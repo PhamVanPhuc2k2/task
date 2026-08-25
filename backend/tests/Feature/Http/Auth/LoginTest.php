@@ -42,7 +42,14 @@ it('mật khẩu đúng chưa cho vào ngay, còn phải qua bước xác thực
         'password' => 'MatKhauDung@2026',
     ])
         ->assertOk()
-        ->assertJsonPath('data.two_factor_setup_required', true)
+        // Đi THẲNG sang bước nhập mã, kể cả với người chưa từng đăng nhập.
+        //
+        // Kênh email không có gì để thiết lập: địa chỉ đã nằm sẵn trên tài
+        // khoản. Bản trước đẩy nhân viên mới qua một màn "Bảo vệ tài khoản"
+        // làm đúng việc mà bước này cũng làm — gửi mã sáu số — rồi bắt lưu một
+        // danh sách mã khôi phục. Xem EmailOtpProvider::isEnrolled.
+        ->assertJsonPath('data.two_factor_required', true)
+        ->assertJsonMissingPath('data.two_factor_setup_required')
         // Chưa được lộ thông tin người dùng ở bước này.
         ->assertJsonMissingPath('data.email');
 

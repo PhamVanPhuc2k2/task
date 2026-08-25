@@ -86,11 +86,38 @@ final readonly class TwoFactorService
     /** Kiểm mã lúc đăng nhập. */
     public function verifyCode(User $user, string $code): bool
     {
-        if (! $user->hasTwoFactorEnabled()) {
+        /*
+        | Hỏi PROVIDER, không hỏi cột `two_factor_confirmed_at`.
+        |
+        | Cùng lý do với LoginController: chỉ provider mới biết "sẵn sàng nhập
+        | mã" nghĩa là gì ở kênh đang dùng. Với TOTP là đã quét mã QR; với
+        | email là luôn luôn, vì không có gì để thiết lập.
+        |
+        | Hỏi cột kia thì kênh email tự khoá chính nó: người chưa từng xác nhận
+        | được đưa tới màn nhập mã, mã tới hộp thư đàng hoàng, mà nhập vào lại
+        | luôn sai — và không có thông báo nào nói vì sao.
+        */
+        if (! $this->provider->isEnrolled($user)) {
             return false;
         }
 
-        return $this->provider->verify($user, $code);
+        if (! $this->provider->verify($user, $code)) {
+            return false;
+        }
+
+        /*
+        | Ghi mốc xác nhận lần đầu.
+        |
+        | Không còn dùng để quyết định luồng đăng nhập nữa, nhưng vẫn là dữ liệu
+        | thật đáng giữ: nó trả lời "người này đã qua xác thực hai lớp lần đầu
+        | lúc nào". Bỏ hẳn thì cột im lặng rỗng mãi mãi và không ai biết nó còn
+        | nghĩa gì.
+        */
+        if ($user->two_factor_confirmed_at === null) {
+            $user->forceFill(['two_factor_confirmed_at' => now()])->save();
+        }
+
+        return true;
     }
 
     /**

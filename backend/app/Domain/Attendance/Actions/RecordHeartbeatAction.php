@@ -28,9 +28,10 @@ use Illuminate\Support\Facades\DB;
  * người ta mất niềm tin vào bảng công; cái thứ hai nhìn dòng thời gian là thấy,
  * và còn bị trần ngày chặn.
  *
- * Nhưng **tín hiệu cũ không bị vứt đi**: mỗi nhịp vẫn mang cờ `$coThaoTac`, và
- * phiên bị cắt khi cờ đổi. Tổng giờ cộng cả hai loại, dòng thời gian vẫn vẽ
- * được hai màu.
+ * Cũng không đo riêng "thời gian có thao tác trên Explus". Đã cân nhắc và bỏ:
+ * với công ty làm remote thì con số đó gần như luôn thấp và không nói lên điều
+ * gì, mà lại cắt vụn phiên ra nhiều dòng chỉ để phục vụ một thông tin không ai
+ * dùng để ra quyết định.
  *
  * **Vì sao không lưu từng nhịp tim.** Một nhịp mỗi phút, tám tiếng, hai trăm
  * người, hai mươi hai ngày công ≈ 2,1 triệu dòng mỗi tháng cho một thông tin
@@ -59,13 +60,8 @@ final class RecordHeartbeatAction
      */
     private const int NGUONG_PHUT = 10;
 
-    /**
-     * @param  bool  $coThaoTac  Phút vừa rồi người dùng có bấm/gõ/cuộn không.
-     *                           Mặc định `true` để bản giao diện cũ — vốn chỉ
-     *                           gửi khi CÓ thao tác — vẫn ghi đúng loại.
-     * @return WorkSession|null Null khi đã chạm trần giờ trong ngày.
-     */
-    public function execute(User $user, bool $coThaoTac = true): ?WorkSession
+    /** @return WorkSession|null Null khi đã chạm trần giờ trong ngày. */
+    public function execute(User $user): ?WorkSession
     {
         /** @var CarbonImmutable $bayGio */
         $bayGio = Date::now();
@@ -80,7 +76,7 @@ final class RecordHeartbeatAction
             ->orderByDesc('ended_at')
             ->first();
 
-        if ($this->noiDuoc($phienGanNhat, $bayGio, $coThaoTac)) {
+        if ($this->noiDuoc($phienGanNhat, $bayGio)) {
             /** @var WorkSession $phienGanNhat */
             $phienGanNhat->forceFill(['ended_at' => $bayGio])->save();
 
@@ -93,7 +89,6 @@ final class RecordHeartbeatAction
             'ended_at' => $bayGio,
             'work_date' => $homNay,
             'source' => 'heartbeat',
-            'interactive' => $coThaoTac,
         ]);
     }
 
@@ -127,30 +122,19 @@ final class RecordHeartbeatAction
     /**
      * Nhịp vừa tới có thuộc phiên đang mở không.
      *
-     * Ba điều kiện:
-     *
-     *   1. Khoảng lặng dưới ngưỡng.
-     *   2. **Cùng ngày công** — điều kiện dễ quên nhất. Người làm xuyên nửa đêm
-     *      phải được cắt sang phiên mới của ngày hôm sau, nếu không thì một
-     *      phiên nằm vắt qua hai ngày và toàn bộ số giờ dồn hết vào ngày bắt
-     *      đầu.
-     *   3. **Cùng loại** — có thao tác hay chỉ mở tab. Không cắt theo loại thì
-     *      một phiên bốn tiếng lẫn lộn cả hai, và dòng thời gian mất khả năng
-     *      phân biệt "ngồi làm" với "để đó". Cắt như vậy làm số phiên mỗi ngày
-     *      nhiều hơn trước, nhưng vẫn ở mức hàng chục chứ không hàng nghìn: chỉ
-     *      sinh thêm dòng ở đúng lúc người dùng chuyển giữa hai trạng thái.
+     * Hai điều kiện, và điều kiện thứ hai dễ bị quên: ngoài việc khoảng lặng
+     * phải dưới ngưỡng, nhịp mới còn phải **cùng ngày công**. Người làm xuyên
+     * nửa đêm sẽ được cắt sang phiên mới của ngày hôm sau — nếu không thì một
+     * phiên nằm vắt qua hai ngày và toàn bộ số giờ của nó bị dồn hết vào ngày
+     * bắt đầu.
      */
-    private function noiDuoc(?WorkSession $phien, CarbonImmutable $bayGio, bool $coThaoTac): bool
+    private function noiDuoc(?WorkSession $phien, CarbonImmutable $bayGio): bool
     {
         if ($phien === null) {
             return false;
         }
 
         if ($phien->ended_at->diffInMinutes($bayGio) > self::NGUONG_PHUT) {
-            return false;
-        }
-
-        if ($phien->interactive !== $coThaoTac) {
             return false;
         }
 

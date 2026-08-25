@@ -3159,6 +3159,42 @@ Phần ghi tách sang `DepartmentAdminController`. Không phải để ngăn n�
 
 ---
 
+### Đăng nhập: bỏ bước thiết lập hai lớp ✅ Đã xong
+
+Nhân viên mới trước đây phải đi qua ba màn trước khi vào được hệ thống:
+
+```
+nhập mật khẩu → màn "Bảo vệ tài khoản" → nhập mã → màn "Lưu mã khôi phục" → vào
+```
+
+Màn giữa làm đúng **một** việc: gửi mã sáu số tới email — y hệt việc mà bước nhập mã cũng làm. Màn cuối bắt lưu tám mã khôi phục.
+
+Với kênh **TOTP** thì màn đó có nghĩa: phải quét mã QR để điện thoại và máy chủ cùng biết một bí mật. Với **email thì không có bí mật nào để trao đổi** — địa chỉ đã nằm sẵn trên tài khoản, và việc mã tới được hộp thư chính là bằng chứng địa chỉ đúng.
+
+Nên nó là nghi thức thuần tuý: thêm hai màn vào ngày đầu đi làm của mọi nhân viên, đổi lại không thêm một lớp bảo vệ nào. Giờ còn:
+
+```
+nhập mật khẩu → nhập mã → vào
+```
+
+#### Không làm yếu bảo mật
+
+Mọi tài khoản **vẫn phải nhập mã sáu số** gửi tới email ở mỗi lần đăng nhập. Thứ duy nhất mất đi là mã khôi phục — mà với hệ thống dùng chính email làm kênh OTP, mã khôi phục gần như không cứu được ai: mất quyền vào hộp thư thì cũng mất luôn đường "quên mật khẩu".
+
+Đường phục hồi thật là quản trị viên đặt lại (`/users/{user}/reset-two-factor`), và nó vẫn nguyên. Người đã có mã khôi phục từ trước vẫn dùng được.
+
+#### Chỗ nguy hiểm nhất của thay đổi này
+
+`verifyCode()` từng chặn theo cột `two_factor_confirmed_at`. Chỉ đổi `EmailOtpProvider::isEnrolled()` mà quên chỗ đó thì kênh email **tự khoá chính nó**: người mới được đưa tới màn nhập mã, mã tới hộp thư đàng hoàng, nhập vào lại luôn sai — và không có thông báo nào nói vì sao.
+
+Giờ cả hai chỗ đều hỏi provider chứ không hỏi cột. Có test khoá riêng đúng đường đó: đăng nhập lần đầu bằng tài khoản chưa từng xác nhận, đi hết từ mật khẩu tới lúc `assertAuthenticated`.
+
+Cột `two_factor_confirmed_at` vẫn được ghi ở lần xác nhận đầu tiên — không còn quyết định luồng nào, nhưng vẫn trả lời được "người này qua xác thực hai lớp lần đầu lúc nào".
+
+Màn thiết lập và mã QR **giữ nguyên** cho kênh TOTP, chỉ là kênh email không đi qua đó nữa.
+
+---
+
 ### Chấm công theo sự có mặt ✅ Đã xong
 
 Cách cũ chỉ ghi nhịp khi có **thao tác thật** trên Explus và tab đang hiển thị. Với lập trình viên đó là đo sai người: họ sống trong IDE và terminal, cả buổi sáng viết code xong hệ thống hiện số 0.
@@ -3167,20 +3203,15 @@ Cách cũ chỉ ghi nhịp khi có **thao tác thật** trên Explus và tab đa
 
 Giờ **mở tab là tính** — không cần thao tác, không cần tab đang hiển thị. Tab nằm sau cửa sổ VS Code chính là tình huống cần đo, không phải tình huống cần bỏ qua.
 
-#### Không vứt tín hiệu cũ đi
+#### Đã thử đo "thời gian có thao tác" rồi bỏ
 
-Mỗi nhịp vẫn mang cờ `active`, và phiên bị **cắt khi cờ đổi**. Tổng giờ cộng cả hai loại, nhưng dòng thời gian vẽ được bốn màu:
+Bản đầu giữ lại cờ `active` cho từng nhịp và cắt phiên khi cờ đổi, để dòng thời gian vẽ được "ngồi làm" khác màu với "để tab đó".
 
-| Màu | Nghĩa |
-|---|---|
-| Sắc miền **đậm** | Đang thao tác trên Explus |
-| Sắc miền **nhạt** | Mở Explus, làm việc ở nơi khác |
-| Vàng | Không mở Explus — máy tắt, đóng trình duyệt, mất mạng |
-| Xám | Ngoài khoảng đã ghi nhận |
+Bỏ sau khi cân nhắc lại. Với công ty làm remote, con số đó **gần như luôn thấp và không ai dùng nó để ra quyết định** — lập trình viên làm cả buổi trong IDE là chuyện bình thường, nên "thao tác trên Explus ít" không nói lên điều gì. Đổi lại nó cắt vụn phiên thành nhiều dòng và bắt giao diện phải giải thích một sắc màu thứ tư.
 
-Hai sắc đầu **đều là giờ công**. Đổi cái thứ hai sang vàng sẽ nói sai một điều quan trọng: lập trình viên ngồi cả buổi trong IDE là chuyện bình thường, không phải dấu hiệu cần để mắt. Nhạt hơn là đủ để phân biệt mà không hàm ý phán xét.
+Nhờ bỏ nó, hook nhịp tim **không còn nghe sự kiện chuột và bàn phím nào nữa** — chỉ còn một bộ đếm mỗi phút.
 
-Bỏ hẳn cờ này thì đổi cách tính đồng nghĩa với **mất luôn** khả năng phân biệt "ngồi làm" với "để đó" — và khi có tranh cãi về một ngày công cụ thể thì không còn gì để nhìn.
+Cột `work_sessions.interactive` vẫn còn trong database và sẽ được xoá ở **lần deploy sau**. Theo quy ước của dự án: migration xoá cột phải tách làm hai lần deploy, vì `deploy.sh` chạy migration TRƯỚC khi đổi container — xoá ngay bây giờ thì image cũ còn đang chạy sẽ đọc phải một cột không tồn tại.
 
 #### Trần giờ mỗi ngày là thứ thay chỗ cho điều kiện thao tác
 

@@ -26,11 +26,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $ended_at
  * @property string $work_date
  * @property string $source
- * @property bool $interactive Phút đó có bấm/gõ/cuộn, hay chỉ để tab mở.
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
-#[Fillable(['user_id', 'started_at', 'ended_at', 'work_date', 'source', 'interactive'])]
+#[Fillable(['user_id', 'started_at', 'ended_at', 'work_date', 'source'])]
 final class WorkSession extends Model
 {
     /** @return BelongsTo<User, $this> */
@@ -76,7 +75,6 @@ final class WorkSession extends Model
             // theo múi giờ ứng dụng và mở lại đúng cái bẫy mà cột này sinh ra
             // để chặn.
             'work_date' => 'string',
-            'interactive' => 'boolean',
         ];
     }
 }
