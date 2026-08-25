@@ -93,7 +93,29 @@ fi
 # là để lại một chỗ rò cho lần sau.
 trap 'rm -f "$0"; docker logout ghcr.io >/dev/null 2>&1 || true' EXIT
 
-printf '%s' "$TOKEN" | docker login ghcr.io -u ci --password-stdin
+# Đăng nhập hỏng thì CẢNH BÁO, không dừng.
+#
+# Nghe ngược, nhưng chỗ chặn đúng không nằm ở đây:
+#
+#   - Gói trên GHCR đang CÔNG KHAI (repo public), nên `docker pull` chạy được
+#     mà không cần đăng nhập gì. Dừng ở đây là tự chặn một lần deploy hoàn
+#     toàn tốt.
+#   - Tên người dùng `ci` là bịa. GHCR xác thực bằng token, nhưng không có gì
+#     bảo đảm mọi cấu hình đều bỏ qua phần tên — và một lần deploy chết vì cái
+#     tên bịa đó thì thông báo lỗi chẳng gợi ý gì về nguyên nhân.
+#
+# Chỗ chặn thật là `docker pull` ở bước 2 của deploy.sh: kéo không được thì
+# hỏng ở đó, to và rõ, và quan trọng nhất là **trước khi chạy migration**.
+# Không có đường nào đi tiếp mà thiếu image.
+#
+# Ngày gói chuyển sang riêng tư, dòng cảnh báo này là thứ đầu tiên đọc được
+# trong log khi deploy bắt đầu hỏng.
+if ! printf '%s' "$TOKEN" | docker login ghcr.io -u ci --password-stdin; then
+    echo "⚠️  Đăng nhập GHCR không thành công — sẽ thử kéo ẩn danh." >&2
+    echo "    Chỉ được nếu gói đang để công khai. Kéo hỏng thì deploy.sh dừng" >&2
+    echo "    ở bước 2, trước khi động vào database." >&2
+fi
+
 unset TOKEN
 
 echo "→ Lấy mã nguồn ${SHA}..."
