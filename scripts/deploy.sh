@@ -110,7 +110,8 @@ echo ""
 echo "→ [4/5] Đổi container web..."
 # Frontend lên TRƯỚC nginx: nginx chuyển tiếp sang nó, nên đổi nginx trước sẽ có
 # một khoảng nó trỏ vào container đã chết.
-APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \n    $COMPOSE up -d --no-deps app frontend nginx
+APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \
+    $COMPOSE up -d --no-deps app frontend nginx
 
 echo "   Chờ health check..."
 for i in $(seq 1 30); do

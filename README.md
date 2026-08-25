@@ -3188,6 +3188,57 @@ Riêng **danh sách nhân viên và cơ cấu phòng ban** thì chắc chắn ph
 
 ---
 
+## Vận hành trên máy chủ thật
+
+### `git pull` không bao giờ đủ
+
+**Sau mọi lần `git pull` trên máy chủ, phải chạy `./scripts/deploy.sh`.**
+
+Lý do: gần như không có gì trong repo được đọc trực tiếp lúc chạy. Script sao lưu, mã đã build của giao diện, autoload của PHP — tất cả **được nướng vào image lúc build**. Sửa file trên đĩa rồi khởi động lại container thì container vẫn chạy bản cũ nằm trong image.
+
+Đã cắn **hai lần trong cùng một ngày**:
+
+| Lần | Sửa gì | Pull xong, chạy lại | Vì sao |
+|---|---|---|---|
+| 1 | `docker/backup/backup.sh` — database rỗng bị coi là dump hỏng | Vẫn báo đúng câu lỗi cũ | `backup.sh` được COPY vào image; deploy chỉ build `app` và `frontend` |
+| 2 | `frontend/src/lib/api-client.ts` — `buildUrl` ném `TypeError` | Đăng nhập vẫn hỏng y nguyên | Container vẫn chạy `explus/frontend:e3b6348`, bản vá nằm ở `550c218` |
+
+Cả hai lần triệu chứng đều là **"tôi đã sửa rồi mà nó vẫn hỏng y hệt"** — không có thông báo lỗi nào, không có gì trong log, và không có gì gợi ý rằng mã đang chạy không phải mã vừa kéo về.
+
+Cách tự kiểm trong 5 giây:
+
+```bash
+docker compose -f docker-compose.prod.yml images | grep explus
+git rev-parse --short HEAD
+```
+
+Hai con số phải khớp. Không khớp nghĩa là chưa deploy.
+
+### `bash -n` không bắt được lệnh không tồn tại
+
+Một lần sửa file bằng công cụ thay chuỗi ghi ra `\n` **dạng hai ký tự** thay vì dấu xuống dòng, ngay giữa lệnh đổi container:
+
+```bash
+APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \n    $COMPOSE up -d --no-deps app frontend nginx
+```
+
+Bash đọc `\n` là chữ `n` đã thoát — tức là **một lệnh tên `n`**. Cú pháp hợp lệ hoàn toàn, nên `bash -n` báo xanh. Chỉ lúc chạy thật mới ra `n: command not found`.
+
+Điều tệ nhất là **vị trí** của nó: bước 4/5. Sao lưu xong, image build xong, migration chạy xong — rồi dừng. Container vẫn chạy image cũ, health check vẫn xanh, log vẫn sạch, và bản vá vừa build không hề được đưa vào dùng. Người vận hành thấy một dòng lỗi lạ ở cuối một màn hình đầy dấu tích.
+
+`ShellScriptTest` khoá lại chuyện này: nó quét mọi `.sh` trong `scripts/` và `docker/`, và nó có một test riêng để chứng minh chính nó đang thật sự đọc được file — vì một máy dò tìm nhầm chỗ sẽ báo "sạch" y hệt một máy dò không tìm thấy gì.
+
+### Kiểm tra sau mỗi lần deploy
+
+Health check trong `deploy.sh` kiểm **cả API lẫn giao diện**, nhưng nó chạy từ trong máy chủ. Việc đó không thay được một lần mở trình duyệt thật:
+
+- `buildUrl` ném lỗi ở phía trình duyệt thì **mọi lệnh `curl` từ máy chủ đều xanh** — không request nào rời khỏi tab Network để mà thấy.
+- Đăng nhập hỏng theo kiểu đó hiện ra là "Không kết nối được tới máy chủ", trong khi máy chủ hoàn toàn bình thường.
+
+Nên bước cuối của mỗi lần deploy là **mở `/login` bằng trình duyệt và đăng nhập một lần**.
+
+---
+
 ## Ghi chú
 
 - Nghỉ lễ Việt Nam đưa vào bảng dữ liệu, **không hardcode** — Tết âm lịch trôi theo từng năm.
