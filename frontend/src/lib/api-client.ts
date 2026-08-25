@@ -52,9 +52,28 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
 }
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
+  /*
+  | `BASE_URL` có thể là đường dẫn TƯƠNG ĐỐI (`/api/v1`), và đó là chủ ý: ảnh
+  | Docker build một lần chạy được ở mọi tên miền, vì trình duyệt tự phân giải
+  | theo origin đang mở. Nhúng địa chỉ tuyệt đối vào lúc build là trói ảnh vào
+  | đúng một tên miền.
+  |
+  | Nhưng `new URL()` đòi base **tuyệt đối**. Truyền base tương đối vào là nó
+  | ném `TypeError` ngay — TRƯỚC khi có request nào rời trình duyệt.
+  |
+  | Hỏng im lặng đúng kiểu tệ nhất: tab Network không thấy request nào cả, còn
+  | người dùng nhận câu "Không kết nối được tới máy chủ" trong khi máy chủ hoàn
+  | toàn bình thường. Mọi lệnh curl từ phía server đều xanh. Đã mất một buổi vì
+  | đúng lỗi này lúc deploy lên extask.us.
+  */
+  const goc =
+    typeof window === "undefined" ? "http://localhost" : window.location.origin;
+
+  const base = /^https?:\/\//.test(BASE_URL) ? BASE_URL : `${goc}${BASE_URL}`;
+
   const url = new URL(
     path.startsWith("/") ? path.slice(1) : path,
-    BASE_URL.endsWith("/") ? BASE_URL : `${BASE_URL}/`,
+    base.endsWith("/") ? base : `${base}/`,
   );
 
   if (query) {
