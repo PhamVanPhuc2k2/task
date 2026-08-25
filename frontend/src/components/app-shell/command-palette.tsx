@@ -18,7 +18,7 @@ import { cn } from "@/lib/cn";
 import { THEME_LABELS, type ThemeChoice } from "@/lib/theme";
 import { useTheme } from "@/lib/use-theme";
 
-import { visibleNavItems, type Tone } from "./nav-items";
+import { NAV_GROUP_LABELS, visibleNavItems, type Tone } from "./nav-items";
 
 /**
  * Bảng lệnh mở bằng Ctrl+K.
@@ -112,7 +112,10 @@ export function CommandPalette({
     const dieuHuong = visibleNavItems(permissions).map<Lenh>((item) => ({
       id: `nav:${item.href}`,
       nhan: item.label,
-      phu: "Đi tới",
+      // Kèm tên nhóm: bảng lệnh liệt kê phẳng nên nếu không nói ra thì
+      // "Chấm công" và "Cài đặt trang" nằm cạnh nhau y hệt nhau, đúng chỗ khó
+      // hình dung mà việc gom nhóm trên thanh bên sinh ra để bỏ.
+      phu: `Đi tới · ${NAV_GROUP_LABELS[item.group]}`,
       timTheo: khongDau(item.label),
       tone: item.tone,
       icon: item.icon,

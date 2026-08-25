@@ -14,7 +14,12 @@ import { useSiteBranding } from "@/features/settings/api/site-api";
 import { cn } from "@/lib/cn";
 
 import { CommandButton, CommandPalette } from "./command-palette";
-import { isActive, visibleNavItems, type NavItem } from "./nav-items";
+import {
+  coPhanDoi,
+  isActive,
+  visibleNavGroups,
+  type NavSection,
+} from "./nav-items";
 
 /**
  * Khung chung của phần đã đăng nhập: thanh bên, đầu trang, vùng nội dung.
@@ -61,7 +66,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Chưa biết quyền thì chưa vẽ mục nào — vẽ bừa rồi rút lại còn khó chịu hơn
   // là hiện khung xương một nhịp.
-  const items = user ? visibleNavItems(user.permissions) : null;
+  const nhomMuc = user ? visibleNavGroups(user.permissions) : null;
+  const quyen = user?.permissions ?? [];
 
   return (
     <div className="relative min-h-screen lg:grid lg:grid-cols-[15.5rem_1fr]">
@@ -75,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* Thanh bên cố định — chỉ từ lg trở lên. */}
       <aside className="border-line hidden lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-r">
         <Brand />
-        <NavList items={items} pathname={pathname} />
+        <NavList sections={nhomMuc} permissions={quyen} pathname={pathname} />
         <SidebarFooter />
       </aside>
 
@@ -94,7 +100,8 @@ export function AppShell({ children }: { children: ReactNode }) {
                 theo pathname: bấm xong mà ngăn kéo vẫn che kín trang vừa mở
                 thì người dùng tưởng bấm hụt. */}
             <NavList
-              items={items}
+              sections={nhomMuc}
+              permissions={quyen}
               pathname={pathname}
               onNavigate={() => setDrawerOpen(false)}
             />
@@ -251,16 +258,18 @@ function Brand({ mini = false }: { mini?: boolean }) {
 }
 
 function NavList({
-  items,
+  sections,
+  permissions,
   pathname,
   onNavigate,
 }: {
   /** `null` = chưa biết quyền của người dùng, hiện khung xương. */
-  items: NavItem[] | null;
+  sections: NavSection[] | null;
+  permissions: string[];
   pathname: string;
   onNavigate?: () => void;
 }) {
-  if (items === null) {
+  if (sections === null) {
     return (
       <nav aria-label="Điều hướng chính" className="flex-1 space-y-1 px-3 py-2">
         {Array.from({ length: 5 }, (_, i) => (
@@ -279,54 +288,97 @@ function NavList({
       aria-label="Điều hướng chính"
       className="flex-1 overflow-y-auto px-3 py-2"
     >
-      <ul className="space-y-0.5">
-        {items.map((item) => {
-          const active = isActive(item, pathname);
-          const Icon = item.icon;
+      {sections.map((phan) => (
+        <div key={phan.group} className="mb-4 last:mb-0">
+          {/*
+            Tiêu đề nhóm là phần tử ngữ nghĩa, không phải chữ trang trí:
+            `aria-labelledby` nối nó với danh sách bên dưới, nên trình đọc màn
+            hình đọc "Quản trị, danh sách 3 mục" thay vì đổ liền một mạch mười
+            hai liên kết không có ranh giới nào.
+          */}
+          {phan.label !== null && (
+            <h2
+              id={`nav-${phan.group}`}
+              className="text-ink-faint mb-1.5 px-4 text-[0.68rem] font-semibold tracking-[0.09em] uppercase"
+            >
+              {phan.label}
+            </h2>
+          )}
 
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                onClick={onNavigate}
-                aria-current={active ? "page" : undefined}
-                data-tone={item.tone}
-                className={cn(
-                  "focus-tone group relative flex items-center gap-2.5 rounded-xl py-2 pr-3 pl-4 text-[0.89rem] transition-all duration-200",
-                  active
-                    ? "bg-tone-surface text-ink font-semibold"
-                    : "text-ink-soft hover:bg-paper-raised hover:text-ink",
-                )}
-              >
-                {/*
+          <ul
+            aria-labelledby={
+              phan.label === null ? undefined : `nav-${phan.group}`
+            }
+            className="space-y-0.5"
+          >
+            {phan.items.map((item) => {
+              const active = isActive(item, pathname);
+              const Icon = item.icon;
+              const coDoi = coPhanDoi(item, permissions);
+
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    data-tone={item.tone}
+                    className={cn(
+                      "focus-tone group relative flex items-center gap-2.5 rounded-xl py-2 pr-3 pl-4 text-[0.89rem] transition-all duration-200",
+                      active
+                        ? "bg-tone-surface text-ink font-semibold"
+                        : "text-ink-soft hover:bg-paper-raised hover:text-ink",
+                    )}
+                  >
+                    {/*
                   Vạch sắc bên trái cho mục đang mở.
 
                   Đây là mảnh nối thị giác với vạch ở đầu trang: cùng một màu,
                   cùng một hình dạng, ở hai đầu màn hình. Mắt tự nối hai thứ đó
                   lại và người dùng biết mình đang ở đâu mà không phải đọc.
                 */}
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "bg-tone absolute top-1/2 left-0 h-4 w-[3px] -translate-y-1/2 rounded-full transition-all duration-200",
-                    active ? "opacity-100" : "opacity-0 group-hover:opacity-40",
-                  )}
-                />
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "bg-tone absolute top-1/2 left-0 h-4 w-[3px] -translate-y-1/2 rounded-full transition-all duration-200",
+                        active
+                          ? "opacity-100"
+                          : "opacity-0 group-hover:opacity-40",
+                      )}
+                    />
 
-                <Icon
-                  className={cn(
-                    "transition-colors",
-                    active
-                      ? "text-tone-ink"
-                      : "text-ink-faint group-hover:text-ink-soft",
-                  )}
-                />
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                    <Icon
+                      className={cn(
+                        "transition-colors",
+                        active
+                          ? "text-tone-ink"
+                          : "text-ink-faint group-hover:text-ink-soft",
+                      )}
+                    />
+
+                    <span className="truncate">{item.label}</span>
+
+                    {/*
+                  Viên nhãn "cả đội": trang này có thêm một tầng dành cho người
+                  quản lý, ngay bên dưới phần của chính mình.
+
+                  Không tách thành mục riêng vì chúng là MỘT trang. Nhưng cũng
+                  không im lặng: thiếu dấu hiệu này thì "Chấm công" của giám đốc
+                  và "Chấm công" của nhân viên trông y hệt nhau trên thanh bên,
+                  trong khi mở ra là hai màn hình khác hẳn.
+                */}
+                    {coDoi && (
+                      <span className="border-line text-ink-faint ml-auto shrink-0 rounded-full border px-1.5 py-px text-[0.63rem] leading-[1.35] font-medium">
+                        cả đội
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
     </nav>
   );
 }

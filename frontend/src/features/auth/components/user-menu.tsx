@@ -101,22 +101,15 @@ export function UserMenu({ user }: { user: AuthUser }) {
             Cài đặt thông báo
           </MucLink>
 
-          {/* Ẩn với người không có quyền — để họ không bấm rồi thấy màn "không
-              có quyền". Chặn thật nằm ở backend, đây chỉ là chuyện lịch sự. */}
-          {user.permissions.includes("setting.manage") && (
-            <MucLink href="/settings/site" onClick={dong}>
-              Cài đặt trang
-            </MucLink>
-          )}
+          {/*
+            "Cài đặt trang" và "Cơ cấu tổ chức" ĐÃ CHUYỂN sang nhóm Quản trị
+            trên thanh bên.
 
-          {/* Quyền RIÊNG, không dùng chung `setting.manage`: cây phòng ban
-              quyết định ai xem được dữ liệu của ai, nên nó là một quyết định
-              khác với việc đổi logo hay giờ nhắc báo cáo. */}
-          {user.permissions.includes("organization.manage") && (
-            <MucLink href="/settings/departments" onClick={dong}>
-              Cơ cấu tổ chức
-            </MucLink>
-          )}
+            Menu này là về CHÍNH NGƯỜI đang đăng nhập: giao diện, thông báo của
+            họ, thoát ra. Hai màn kia là về hệ thống, và để chúng ở đây thì câu
+            "phần quản trị nằm ở đâu" có hai câu trả lời — đúng chỗ mập mờ mà
+            việc gom nhóm thanh bên sinh ra để bỏ.
+          */}
 
           <div className="bg-line my-1 h-px" />
 

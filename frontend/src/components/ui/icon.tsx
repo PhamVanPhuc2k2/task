@@ -171,3 +171,25 @@ export function IconLeave(props: IconProps) {
     </Base>
   );
 }
+
+/** Cơ cấu tổ chức — sơ đồ cây một gốc hai nhánh. */
+export function IconOrgChart(props: IconProps) {
+  return (
+    <Base {...props}>
+      <rect x="9" y="2.5" width="6" height="5" rx="1.5" />
+      <rect x="2.5" y="16.5" width="6" height="5" rx="1.5" />
+      <rect x="15.5" y="16.5" width="6" height="5" rx="1.5" />
+      <path d="M12 7.5v4M5.5 16.5v-2a1 1 0 0 1 1-1h11a1 1 0 0 1 1 1v2" />
+    </Base>
+  );
+}
+
+/** Cài đặt trang — bánh răng. */
+export function IconSettings(props: IconProps) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.5v2.2M12 19.3v2.2M4.9 4.9l1.6 1.6M17.5 17.5l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.9 19.1l1.6-1.6M17.5 6.5l1.6-1.6" />
+    </Base>
+  );
+}

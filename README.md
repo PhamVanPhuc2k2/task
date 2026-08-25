@@ -3159,6 +3159,49 @@ Phần ghi tách sang `DepartmentAdminController`. Không phải để ngăn n�
 
 ---
 
+### Thanh bên chia theo vai ✅ Đã xong
+
+Mười hai mục xếp phẳng không nói được mục nào là việc của nhân viên, mục nào là công cụ quản lý. Giám đốc mở ra thấy "Chấm công" nằm ngay cạnh "Nhân sự", không có gì gợi ý rằng một cái là bảng công của chính mình còn cái kia là quản trị cả công ty.
+
+Chia làm ba nhóm theo **ai được phục vụ**, không theo chủ đề nghiệp vụ:
+
+| Nhóm | Nghĩa |
+|---|---|
+| **Của tôi** | Ai cũng thấy, mở ra là dữ liệu của chính mình |
+| **Quản lý** | Nhìn người khác: cả phòng, cả công ty |
+| **Quản trị** | Sửa chính hệ thống: nhân sự, cơ cấu, cài đặt |
+
+#### Nhân viên không thấy tiêu đề nhóm nào
+
+Chỉ còn đúng một nhóm thì `visibleNavGroups` bỏ luôn tiêu đề. Một cái nhãn "Của tôi" phía trên danh sách mà mọi mục đều là của mình chỉ thêm một dòng chữ không phân biệt được gì với dòng nào cả.
+
+#### Viên nhãn "cả đội" cho năm trang hai tầng
+
+Năm trang — Báo cáo ngày, Chấm công, Nghỉ phép, Lương, Thưởng — có phần của chính mình ở trên và phần cả phòng ở dưới, phần dưới chỉ hiện với người có quyền. Nghĩa là **cùng một nhãn trên thanh bên dẫn tới hai màn hình khác nhau tuỳ người đang đăng nhập**, và đó chính là chỗ khó hình dung nhất.
+
+Không tách thành hai mục riêng, vì chúng là MỘT trang: một mục trỏ tới giữa trang bằng neo sẽ làm trạng thái "đang mở" sai ở cả hai mục. Thay vào đó mục mang thêm viên nhãn `cả đội` với người có quyền. Người không có quyền không thấy gì thêm — với họ trang đó thật sự chỉ có một tầng.
+
+#### Gom phần quản trị về một chỗ
+
+Trước đây "Nhân sự" nằm trên thanh bên còn "Cơ cấu tổ chức" và "Cài đặt trang" giấu trong menu tài khoản. Giờ cả ba nằm trong nhóm **Quản trị**, và menu tài khoản chỉ còn những thứ thuộc về *chính người đang đăng nhập*: giao diện, cài đặt thông báo, đăng xuất.
+
+Để chúng ở cả hai nơi thì câu "phần quản trị nằm ở đâu" có hai câu trả lời — đúng chỗ mập mờ mà việc gom nhóm sinh ra để bỏ.
+
+#### Đã kiểm bằng quyền thật của cả bốn vai
+
+Biên dịch `nav-items.ts` ra JS rồi chạy với đúng bộ quyền đọc từ database, thay vì nhìn mã rồi đoán. Kết quả:
+
+```
+NHÂN VIÊN      → 9 mục, KHÔNG có tiêu đề nhóm
+TRƯỞNG PHÒNG   → Của tôi (3 mục có [cả đội]) · Quản lý (1)
+GIÁM ĐỐC       → Của tôi (5 [cả đội]) · Quản lý (2) · Quản trị (2)
+ADMIN          → như giám đốc, thêm Nhân sự
+```
+
+Chính phép kiểm này lộ ra hai điều về phân quyền, không phải về giao diện — xem "Câu hỏi còn mở".
+
+---
+
 ## Quyết định kiến trúc đã chốt
 
 **Có Redis ngay từ đầu.** Không phải vì hiệu năng mà vì queue: nén ảnh báo cáo (nhân viên chụp điện thoại 5–8MB mỗi ảnh, xử lý đồng bộ sẽ treo request), gửi thông báo, tổng hợp báo cáo, xuất Excel. Tiện thể dùng luôn cho cache, session, rate limit. Chi phí gần như bằng 0.
@@ -3200,6 +3243,24 @@ Những thứ dưới đây có ích nhưng chưa cần, ghi ra để khỏi qu�
 ## Câu hỏi còn mở
 
 Cần chốt trước khi làm sâu vào đợt 1:
+
+### 0. Hai điều lộ ra khi kiểm thanh bên theo vai
+
+Không phải lỗi giao diện — lỗi ở bộ quyền, và chỉ nhìn thấy khi xếp mọi mục theo vai cạnh nhau.
+
+**a) Giám đốc KHÔNG có `user.manage`.**
+
+Nghĩa là nhóm Quản trị của giám đốc có "Cơ cấu tổ chức" và "Cài đặt trang" nhưng **không có "Nhân sự"**: họ sắp xếp được cây phòng ban, nhưng không thêm được người vào phòng ban vừa tạo, cũng không đổi được phòng ban của ai.
+
+Đây là lựa chọn cố ý ở `Role::defaultPermissions()` — tách quản trị *hệ thống* (IT) khỏi quản trị *nghiệp vụ*. Nhưng với công ty dưới 10 người, người duy nhất mang vai admin thường cũng chính là giám đốc, nên ranh giới đó không mua được gì mà lại chặn đúng việc họ cần làm. **Cần chốt: có cấp `user.manage` cho giám đốc không.**
+
+**b) `RolePermissionSeeder` có một điểm mù.**
+
+Nó chỉ cấp cho vai trò đã tồn tại những quyền **vừa mới ra đời trong lượt chạy đó**. Trường hợp không xử lý được: một quyền đã có sẵn từ trước, sau này mới được thêm vào danh sách mặc định của một vai trò. Lúc đó quyền không còn "mới", nên **không vai trò nào nhận được nó, và không có gì báo**.
+
+Đúng họ với lỗi đã cắn hai lần: *"tính năng có đủ, chỉ là không ai vào được."* Chưa cắn production — máy chủ được seed sau khi mã đã ổn định — nhưng database dev đã dính: trưởng phòng ở đó thiếu `report.view.team`, tức là mất đúng việc chính của họ mỗi sáng.
+
+Cách sửa: đối chiếu quyền mặc định của vai trò với quyền vai trò đang có, và cấp thêm phần thiếu — thay vì chỉ nhìn vào danh sách quyền mới sinh.
 
 ### 1. Quy mô ✅ Đã chốt: **dưới 10 người**
 
