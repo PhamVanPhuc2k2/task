@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\Leave\TeamLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\TeamLeaveController;
 use App\Http\Controllers\Api\V1\Notifications\NotificationController;
 use App\Http\Controllers\Api\V1\Notifications\NotificationSettingController;
+use App\Http\Controllers\Api\V1\Organization\DepartmentAdminController;
 use App\Http\Controllers\Api\V1\Organization\DepartmentController;
 use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Payroll\AllocateBonusController;
@@ -160,6 +161,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     // cũng đọc được: đây là thông tin cả công ty vốn đã biết.
     Route::get('/departments', [DepartmentController::class, 'index']);
     Route::get('/positions', [PositionController::class, 'index']);
+
+    /*
+    | Sửa cây phòng ban. Quyền `organization.manage` — admin và giám đốc.
+    |
+    | Tách khỏi `user.manage` có chủ ý: thêm một nhân viên ảnh hưởng tới một
+    | người, còn chuyển một phòng ban sang nhánh khác đổi phạm vi nhìn của mọi
+    | trưởng phòng trên đường đi — cùng lúc, ở 13 chỗ, không màn hình nào báo.
+    | Lý do đầy đủ ở Permission::ManageOrganization.
+    |
+    | PUT chứ không PATCH, cùng lý do với /users/{user}.
+    */
+    Route::post('/departments', [DepartmentAdminController::class, 'store']);
+    Route::put('/departments/{department}', [DepartmentAdminController::class, 'update']);
+    Route::delete('/departments/{department}', [DepartmentAdminController::class, 'destroy']);
 
     // PUT chứ không PATCH: sửa hồ sơ nhân viên là thay thế toàn bộ, vì `null`
     // ở PATCH không phân biệt được "xoá quản lý trực tiếp" với "không đụng

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Identity;
 
 use App\Domain\Identity\Contracts\TwoFactorProvider;
+use App\Domain\Identity\Models\Department;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Services\EmailOtpProvider;
 use App\Domain\Identity\Services\TotpProvider;
+use App\Policies\DepartmentPolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -44,6 +46,7 @@ final class IdentityServiceProvider extends ServiceProvider
         // Laravel tự dò policy theo quy ước App\Models\X → App\Policies\XPolicy.
         // Model của dự án nằm ở App\Domain\{Miền}\Models nên phải khai báo tay.
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Department::class, DepartmentPolicy::class);
 
         $this->configurePasswordRules();
     }

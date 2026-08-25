@@ -109,6 +109,15 @@ export function UserMenu({ user }: { user: AuthUser }) {
             </MucLink>
           )}
 
+          {/* Quyền RIÊNG, không dùng chung `setting.manage`: cây phòng ban
+              quyết định ai xem được dữ liệu của ai, nên nó là một quyết định
+              khác với việc đổi logo hay giờ nhắc báo cáo. */}
+          {user.permissions.includes("organization.manage") && (
+            <MucLink href="/settings/departments" onClick={dong}>
+              Cơ cấu tổ chức
+            </MucLink>
+          )}
+
           <div className="bg-line my-1 h-px" />
 
           <button

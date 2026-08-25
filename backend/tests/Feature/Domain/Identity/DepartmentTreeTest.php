@@ -45,3 +45,24 @@ it('lộ ra uuid thay vì id tuần tự', function (): void {
 
     expect($department->uuid)->toBeString()->toHaveLength(36);
 });
+
+it('không treo khi database đã sẵn một vòng', function (): void {
+    /*
+    | Lớp phòng thứ hai, sau phần chặn ở `UpdateDepartmentAction`.
+    |
+    | Vòng vẫn có thể vào bằng đường khác: sửa tay bằng SQL, một migration sau
+    | này, hay một lỗi ở đúng chỗ chặn kia. Không có tập "đã thăm" thì hàng đợi
+    | không bao giờ rỗng — request treo tới hết timeout, php-fpm giữ nguyên
+    | tiến trình, log không có dòng nào.
+    |
+    | Test này ghi thẳng vào cột để bỏ qua mọi lớp kiểm, đúng như dữ liệu hỏng
+    | ngoài đời sẽ làm.
+    */
+    $a = Department::factory()->create(['name' => 'A']);
+    $b = Department::factory()->create(['parent_id' => $a->id, 'name' => 'B']);
+
+    Department::query()->whereKey($a->id)->update(['parent_id' => $b->id]);
+
+    // Không có phanh thì dòng dưới đây không bao giờ trả về.
+    expect($a->refresh()->descendantIds())->toBe([$b->id]);
+});

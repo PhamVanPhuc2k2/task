@@ -34,6 +34,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $deleted_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
+ *
+ * `withCount()` gắn thêm thuộc tính lúc chạy, không có cột nào trong migration
+ * để Larastan suy ra — phải khai tay, nếu không mọi chỗ đọc chúng đều báo lỗi.
+ * @property int|null $children_count
+ * @property int|null $users_count
  */
 #[Fillable(['parent_id', 'name', 'code', 'description', 'is_active'])]
 final class Department extends Model
@@ -80,13 +85,35 @@ final class Department extends Model
             $childrenByParent[(int) ($row->parent_id ?? 0)][] = (int) $row->id;
         }
 
+        /*
+        | `$daTham` không phải để tối ưu — nó là phanh hãm.
+        |
+        | Không có nó, một vòng trong cây (A là cha của B, rồi B được đặt làm
+        | cha của A) khiến hàng đợi không bao giờ rỗng: A đẩy B, B đẩy A, mãi
+        | mãi. `$found` phình tới khi hết bộ nhớ.
+        |
+        | Và nó KHÔNG hỏng kiểu dễ thấy: request treo, php-fpm giữ tiến trình
+        | đó cho tới khi hết timeout, log không có dòng nào. Mà hàm này đỡ 13
+        | chỗ phân quyền, nên một bản ghi hỏng làm chết cả chấm công lẫn nghỉ
+        | phép lẫn báo cáo.
+        |
+        | `UpdateDepartmentAction` đã chặn không cho tạo vòng. Đây là lớp thứ
+        | hai: dữ liệu vẫn có thể vào bằng đường khác — nhập tay bằng SQL, một
+        | migration sau này, hay một lỗi ở đúng chỗ chặn kia.
+        */
         $found = [];
+        $daTham = [(int) $this->id => true];
         $queue = [(int) $this->id];
 
         while ($queue !== []) {
             $current = array_shift($queue);
 
             foreach ($childrenByParent[$current] ?? [] as $childId) {
+                if (isset($daTham[$childId])) {
+                    continue;
+                }
+
+                $daTham[$childId] = true;
                 $found[] = $childId;
                 $queue[] = $childId;
             }

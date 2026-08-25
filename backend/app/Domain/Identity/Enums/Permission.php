@@ -96,6 +96,22 @@ enum Permission: string
     case ManageSettings = 'setting.manage';
     case ViewReports = 'report.view';
 
+    /**
+     * Sửa cây phòng ban.
+     *
+     * Quyền RIÊNG, cố ý không gộp vào `user.manage`, và lý do không phải là sự
+     * ngăn nắp: **cây phòng ban là thứ quyết định ai nhìn thấy dữ liệu của ai.**
+     *
+     * `Department::subtreeIds()` đỡ 13 chỗ — chấm công, nghỉ phép, đi muộn, báo
+     * cáo ngày, task của đội, danh sách người được giao việc. Chuyển một phòng
+     * ban sang nhánh khác là đổi phạm vi nhìn của mọi trưởng phòng nằm trên
+     * đường đi, **cùng lúc, không có màn hình nào báo**.
+     *
+     * Thêm một nhân viên thì ảnh hưởng gói gọn ở một người. Đổi cây phòng ban
+     * thì ảnh hưởng cả hệ thống. Hai việc đó không nên đi chung một quyền.
+     */
+    case ManageOrganization = 'organization.manage';
+
     public function label(): string
     {
         return match ($this) {
@@ -126,6 +142,7 @@ enum Permission: string
             self::ManageRoles => 'Quản lý vai trò và quyền',
             self::ManageSettings => 'Đổi cài đặt trang và chính sách công ty',
             self::ViewReports => 'Xem báo cáo',
+            self::ManageOrganization => 'Sửa cơ cấu phòng ban',
         };
     }
 }

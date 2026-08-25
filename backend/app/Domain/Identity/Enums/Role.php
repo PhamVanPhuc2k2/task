@@ -83,6 +83,16 @@ enum Role: string
                 // cáo, cửa sổ nộp đơn. Trước đây những thứ này chỉ sửa được
                 // bằng cách vào máy chủ sửa .env rồi khởi động lại.
                 Permission::ManageSettings,
+
+                // Và sửa được cây phòng ban. Trước đây thêm một phòng ban phải
+                // sửa OrganizationSeeder rồi deploy lại — nghĩa là cơ cấu tổ
+                // chức của công ty nằm trong mã nguồn, và mỗi lần đổi phòng ban
+                // là một lần đụng vào production.
+                //
+                // KHÔNG cấp cho trưởng phòng: cây phòng ban quyết định phạm vi
+                // nhìn của chính họ, nên tự sửa được là tự mở rộng quyền của
+                // mình.
+                Permission::ManageOrganization,
             ],
 
             self::TruongPhong => [

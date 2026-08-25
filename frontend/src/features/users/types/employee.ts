@@ -44,8 +44,14 @@ export interface Department {
   id: string;
   name: string;
   code: string | null;
+  description: string | null;
+  is_active: boolean;
   parent_id: string | null;
   parent_name: string | null;
+  /** Số phòng ban trực thuộc trực tiếp. Trang cơ cấu tổ chức dùng để chặn xoá. */
+  child_count: number;
+  /** Số nhân sự đang thuộc phòng ban này, tính cả người đã nghỉ việc. */
+  user_count: number;
 }
 
 export interface Position {

@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**683 test xanh** (4680 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**706 test xanh** (4731 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 69 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -3098,6 +3098,64 @@ Tương tự phần trên: **phạt tiền là trái luật, nhưng giảm thư�
 - [ ] Tiêu chí cộng/trừ điểm gắn với dữ liệu thật: đúng hạn, chất lượng, đủ báo cáo
 - [ ] Dashboard lãnh đạo: ai trễ deadline, ai chưa báo cáo, task quá hạn theo phòng ban, xu hướng đi muộn
 - [ ] Báo cáo tháng tự tổng hợp, xuất PDF/Excel
+
+---
+
+### Quản lý phòng ban ✅ Đã xong
+
+Trước đây thêm hoặc đổi tên một phòng ban phải sửa `OrganizationSeeder.php` rồi deploy lại — **cơ cấu tổ chức của công ty nằm trong mã nguồn**, và mỗi lần đụng vào nó là một lần đụng vào production. Dữ liệu đang chạy là năm phòng mẫu (KD, KT, MKT, HCNS, TCKT) cho một công ty dưới 10 người.
+
+Giao diện ở `/settings/departments`, vào từ menu tài khoản.
+
+#### Vì sao là quyền riêng, không dùng chung `user.manage`
+
+Đây là quyết định quan trọng nhất của mục này. **Cây phòng ban là thứ quyết định ai nhìn thấy dữ liệu của ai.**
+
+`Department::subtreeIds()` đỡ **13 chỗ**: chấm công, đơn nghỉ, đi muộn, báo cáo ngày, task của đội, danh sách người được giao việc. Chuyển một phòng ban sang nhánh khác đổi phạm vi nhìn của mọi trưởng phòng nằm trên đường đi — cùng lúc, không màn hình nào báo.
+
+Thêm một nhân viên thì ảnh hưởng gói gọn ở một người. Đổi cây phòng ban thì ảnh hưởng cả hệ thống. Hai việc đó không đi chung một quyền được.
+
+**Trưởng phòng KHÔNG có quyền này**, và có test khoá riêng: họ nhìn phòng mình cộng mọi phòng bên dưới, nên tự sửa được cây là tự nối thêm nhánh vào phạm vi của chính mình — gồm cả bảng công và đơn nghỉ của người phòng khác.
+
+#### Vòng trong cây: lỗi treo không có log
+
+`descendantIds()` duyệt cây bằng hàng đợi. Một vòng — A là cha của B rồi B được đặt làm cha của A — khiến hàng đợi không bao giờ rỗng: request treo tới hết timeout, php-fpm giữ nguyên tiến trình, **log không có một dòng nào**. Và vì hàm đó đỡ 13 chỗ nên chấm công, nghỉ phép, báo cáo chết cùng lúc.
+
+Chặn ở hai lớp:
+
+| Lớp | Ở đâu | Chặn gì |
+|---|---|---|
+| 1 | `UpdateDepartmentAction` | Không cho đặt cha là chính nó hoặc là cấp dưới của nó |
+| 2 | `Department::descendantIds()` | Tập "đã thăm" — dừng ngay cả khi database đã sẵn một vòng |
+
+Lớp 2 không thừa: vòng vẫn vào được bằng SQL sửa tay, bằng một migration sau này, hoặc bằng một lỗi ở đúng lớp 1. Có test ghi thẳng vào cột để dựng vòng, và test đó **đã được chứng minh là đỏ khi gỡ phanh ra** — không chỉ xanh khi có.
+
+#### Xoá mềm làm hai ràng buộc khoá ngoại thành vô nghĩa
+
+Migration khai `restrictOnDelete` cho `parent_id` và `nullOnDelete` cho `users.department_id`. Cả hai **chỉ có hiệu lực khi xoá cứng**. Phòng ban dùng xoá mềm, nên với database thì không có gì bị xoá — chỉ một cột ngày được điền — và cả hai ràng buộc đều im lặng.
+
+Không chặn ở tầng ứng dụng thì xoá một phòng ban làm mọi phòng con và mọi nhân sự bên dưới **rơi khỏi cây** mà không có lỗi nào: `subtreeIds()` của phòng cấp trên không còn với tới họ, nên họ biến mất khỏi bảng công, khỏi danh sách đơn nghỉ, khỏi báo cáo của phòng. Người quản lý chỉ thấy màn hình ngắn đi.
+
+Nên `DeleteDepartmentAction` từ chối khi còn phòng con hoặc còn nhân sự, kèm số lượng và cách xử lý. Đếm **cả người đã nghỉ việc** — họ vẫn giữ `department_id` để bảng công và lương cũ còn tra được theo phòng ban.
+
+#### Tắt khác với xoá
+
+`is_active = false` là cách ngừng dùng một phòng ban mà vẫn giữ mọi thứ:
+
+- Biến mất khỏi các ô chọn, nên không ai xếp người mới vào
+- **Vẫn nằm nguyên trong cây** với `subtreeIds()`
+
+Vế thứ hai là chủ ý. Nếu tắt cũng đồng nghĩa với rơi khỏi cây thì "ngừng dùng một phòng ban" sẽ âm thầm giấu luôn nhân sự của nó khỏi màn hình của cấp trên — đúng loại hỏng im lặng mà cả mục này sinh ra để tránh.
+
+#### Hai controller cho một tài nguyên
+
+`DepartmentController` chỉ đọc và nằm trong danh sách miễn khai quyền của `ControllerAuthorizationTest`, với lý do viết ra: cơ cấu tổ chức là thông tin cả công ty vốn đã biết.
+
+Phần ghi tách sang `DepartmentAdminController`. Không phải để ngăn nắp: thêm phương thức ghi vào tệp kia làm lý do miễn trừ thành lời nói dối, mà test chỉ dò xem tệp **có** dấu hiệu kiểm quyền hay không nên nó vẫn xanh. Hai tệp thì ranh giới công khai / quản trị nhìn thấy được ngay từ tên.
+
+#### Chưa có
+
+**Nhật ký kiểm toán cho thao tác trên cây.** `user_activities` khoá theo `user_id` nên không dùng lại được cho phòng ban; muốn có phải thêm bảng. Đáng làm, vì chuyển một phòng ban đổi phạm vi xem lương của người khác — nhưng nó là một quyết định riêng, không phải phần đuôi của mục này.
 
 ---
 
