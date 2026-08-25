@@ -119,8 +119,46 @@ jobs:
           DB_PASSWORD: root
           REDIS_HOST: 127.0.0.1
 
+      # Tách "CÓ lỗ hổng" khỏi "KHÔNG kiểm được".
+      #
+      # `composer audit` thoát khác 0 cho CẢ HAI trường hợp, nên bản trước
+      # không phân biệt được. Một lần Packagist trục trặc là cả đường ống đỏ,
+      # `build-push` bị bỏ qua, và không deploy được — vì một lý do chẳng liên
+      # quan gì tới mã nguồn vừa đẩy lên.
+      #
+      #   Có khuyến cáo    → CHẶN. Đó đúng là việc của bước này.
+      #   Không kiểm được  → cảnh báo to rồi đi tiếp. Một API không với tới
+      #                      được thì không nói được gì về mã nguồn, mà chặn
+      #                      deploy hàng giờ vì sự cố của người khác là cách
+      #                      dạy người ta quen bỏ qua CI.
+      #
+      # `::warning::` hiện ngay đầu trang tóm tắt của lần chạy, không phải một
+      # dòng chìm giữa log — nên "đi tiếp" ở đây không đồng nghĩa với im lặng.
       - name: Rà soát lỗ hổng phụ thuộc
-        run: composer audit --no-interaction
+        run: |
+          set +e
+          composer audit --no-interaction --format=json \
+            > "$RUNNER_TEMP/audit.json" 2> "$RUNNER_TEMP/audit.err"
+          set -e
+
+          if jq -e . "$RUNNER_TEMP/audit.json" >/dev/null 2>&1; then
+              SO=$(jq '.advisories | length' "$RUNNER_TEMP/audit.json")
+
+              if [ "$SO" -gt 0 ]; then
+                  echo "::error::Có ${SO} khuyến cáo bảo mật trong phụ thuộc PHP."
+                  jq '.advisories' "$RUNNER_TEMP/audit.json"
+                  exit 1
+              fi
+
+              echo "✔ Không có khuyến cáo nào."
+              exit 0
+          fi
+
+          echo "::warning::KHÔNG kiểm được lỗ hổng phụ thuộc PHP — composer audit không trả về JSON hợp lệ. Đây là sự cố công cụ, không phải kết luận là sạch."
+          echo "── stderr ──"
+          cat "$RUNNER_TEMP/audit.err" || true
+          echo "── stdout ──"
+          head -c 2000 "$RUNNER_TEMP/audit.json" || true
 
   # ── Frontend: Next.js ──────────────────────────────
   frontend:
@@ -156,8 +194,32 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Cùng lý do với bước tương ứng ở job backend: `npm audit` cũng thoát
+      # khác 0 cho cả "có lỗ hổng" lẫn "không gọi được registry".
       - name: Rà soát lỗ hổng phụ thuộc
-        run: npm audit --audit-level=high
+        run: |
+          set +e
+          npm audit --json \
+            > "$RUNNER_TEMP/npm-audit.json" 2> "$RUNNER_TEMP/npm-audit.err"
+          set -e
+
+          if jq -e '.metadata.vulnerabilities' "$RUNNER_TEMP/npm-audit.json" >/dev/null 2>&1; then
+              SO=$(jq '.metadata.vulnerabilities.high + .metadata.vulnerabilities.critical' \
+                    "$RUNNER_TEMP/npm-audit.json")
+
+              if [ "$SO" -gt 0 ]; then
+                  echo "::error::Có ${SO} lỗ hổng mức high/critical trong phụ thuộc Node."
+                  npm audit --audit-level=high || true
+                  exit 1
+              fi
+
+              echo "✔ Không có lỗ hổng high/critical."
+              exit 0
+          fi
+
+          echo "::warning::KHÔNG kiểm được lỗ hổng phụ thuộc Node — npm audit không trả về JSON hợp lệ. Đây là sự cố công cụ, không phải kết luận là sạch."
+          echo "── stderr ──"
+          cat "$RUNNER_TEMP/npm-audit.err" || true
 
   # ── Build image và đẩy lên GHCR ────────────────────
   #

@@ -3409,6 +3409,24 @@ Không có chữ nào nhắc tới cache. Một test kiểm phân quyền báo s
 
 **Quy tắc rút ra: khối `env:` của CI chỉ được khai những gì phụ thuộc vào MÁY chạy test** — địa chỉ database, địa chỉ Redis. Mọi lựa chọn khác thuộc về `phpunit.xml`.
 
+### Rà soát lỗ hổng: "có lỗ hổng" khác "không kiểm được"
+
+`composer audit` và `npm audit` đều thoát khác 0 cho **cả hai** trường hợp. Bản đầu không phân biệt, nên một lần Packagist hay npm registry trục trặc là cả đường ống đỏ, `build-push` bị bỏ qua, và không deploy được — vì một lý do chẳng liên quan gì tới mã nguồn vừa đẩy lên. Đã xảy ra thật ở lần chạy đầu tiên sau khi khai đủ secret.
+
+Giờ hai bước đó đọc JSON thay vì tin mã thoát:
+
+| Kết quả | Xử lý |
+|---|---|
+| JSON hợp lệ, có khuyến cáo | **Chặn** — `::error::` kèm chi tiết |
+| JSON hợp lệ, không có gì | Qua |
+| Không phải JSON (mạng hỏng, registry lỗi) | `::warning::` rồi **đi tiếp** |
+
+Vế thứ ba là vế cần giải thích. Một API không với tới được thì **không nói được gì** về mã nguồn — coi nó là "có lỗ hổng" cũng sai như coi nó là "sạch". Mà chặn deploy hàng giờ vì sự cố của bên thứ ba là cách nhanh nhất dạy người ta quen bỏ qua CI.
+
+"Đi tiếp" ở đây không đồng nghĩa với im lặng: `::warning::` hiện ngay đầu trang tóm tắt của lần chạy, kèm nguyên văn stderr, và nói rõ *"đây là sự cố công cụ, không phải kết luận là sạch"*.
+
+Đã kiểm bằng bốn tệp JSON giả trước khi đẩy — sạch, có khuyến cáo, rỗng, và rác — để chắc nhánh "chặn" thật sự chặn chứ không chỉ nhánh "qua" chạy được.
+
 ### Vì sao build trong CI chứ không trên máy chủ
 
 Hai lý do, và lý do thứ hai mới là lý do thật:
