@@ -12,14 +12,25 @@ export interface TimelineSegment {
    * Chỉ có phép ĐẾM là tách đôi: phần trưa không bị gọi là ngồi không.
    */
   lunch_minutes?: number;
+  /**
+   * Phiên này có thao tác thật hay chỉ để tab mở. Chỉ có ở `sessions`.
+   *
+   * Cả hai đều tính vào giờ công — từ khi chấm công theo sự có mặt, lập trình
+   * viên làm cả buổi trong IDE là chuyện bình thường. Cờ này chỉ để vẽ hai
+   * màu, không phải để chấm điểm ai.
+   */
+  interactive?: boolean;
 }
 
 export interface TimelineRow {
   user: { id: string; name: string; department: string | null };
-  /** Các phiên có tương tác thật. */
+  /** Các phiên đang mở Explus — gồm cả có thao tác lẫn chỉ để tab mở. */
   sessions: TimelineSegment[];
   /**
-   * Khoảng lặng **giữa** hai phiên — thời gian không có tương tác nào.
+   * Khoảng lặng **giữa** hai phiên — thời gian không mở Explus.
+   *
+   * Từ khi tính theo sự có mặt, khe ở đây nghĩa là máy tắt, đóng trình duyệt,
+   * hoặc mất mạng — chứ không còn là "có mở mà không đụng vào".
    *
    * Chỉ khe ở giữa, không tính trước phiên đầu và sau phiên cuối: chưa tới giờ
    * làm và đã nghỉ thì không phải "ngồi không".
@@ -29,6 +40,8 @@ export interface TimelineRow {
    */
   gaps: TimelineSegment[];
   worked_minutes: number;
+  /** Phần `worked_minutes` có thao tác thật trên Explus. */
+  interactive_minutes: number;
   idle_minutes: number;
   /**
    * Phần khoảng lặng rơi vào giờ nghỉ trưa.

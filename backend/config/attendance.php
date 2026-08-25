@@ -71,4 +71,25 @@ return [
 
     'weekly_rest_days' => [0, 6],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Trần giờ công tự động mỗi ngày
+    |--------------------------------------------------------------------------
+    |
+    | Từ khi chấm công tính theo SỰ CÓ MẶT (mở tab là tính, không cần thao tác),
+    | một cái tab quên đóng qua đêm sẽ ghi thẳng 16 tiếng công. Chỉ cần vài lần
+    | như vậy là không ai còn tin bảng công nữa — và mất niềm tin thì cả hệ
+    | thống chấm công thành vô dụng, chứ không chỉ sai vài con số.
+    |
+    | Chạm trần thì nhịp tim ngừng được ghi. Ai làm thật quá mức này vẫn khai
+    | được bằng tay, kèm lý do và người duyệt — đúng chỗ mà một ngày công bất
+    | thường nên đi qua.
+    |
+    | 600 phút = 10 tiếng: rộng hơn ca chuẩn 465 phút một quãng đủ để tăng ca
+    | thật mà vẫn chặn được tab bỏ quên. Giám đốc đổi được trong Cài đặt trang.
+    |
+    */
+
+    'max_daily_minutes' => (int) env('ATTENDANCE_MAX_DAILY_MINUTES', 600),
+
 ];

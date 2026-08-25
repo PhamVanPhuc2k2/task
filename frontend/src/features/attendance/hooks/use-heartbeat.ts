@@ -5,17 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api-client";
 
 /**
- * Gửi nhịp tim khi người dùng **thật sự thao tác**, không phải khi tab còn mở.
+ * Gửi nhịp tim **chừng nào tab còn mở**, kèm cờ nói phút đó có thao tác không.
  *
- * Đây là khác biệt cốt lõi so với cách "treo web đếm giờ": mở tab rồi bỏ đi
- * không sinh nhịp nào, nên khoảng đó không được tính vào giờ làm.
+ * ── Vì sao đổi khỏi "chỉ tính khi có thao tác" ───────────────────────────────
  *
- * Bốn cái bẫy của trình duyệt, cái nào cũng đủ làm hỏng số liệu:
+ * Bản trước chỉ gửi nhịp khi có bấm/gõ/cuộn trên Explus và tab đang hiển thị.
+ * Với lập trình viên đó là đo sai người: họ sống trong IDE và terminal, cả buổi
+ * sáng viết code xong hệ thống hiện số 0.
  *
- * 1. **Tab nền bị bóp.** Chrome hạ `setInterval` ở tab ẩn xuống 1 lần/phút rồi
- *    có thể đóng băng hẳn. Ở đây không sao vì tab ẩn thì cũng không nên gửi
- *    nhịp — nhưng đó là lý do KHÔNG được đếm giờ bằng bộ đếm chạy trong tab.
- *    Tổng giờ do backend tính từ mốc thời gian, không do trình duyệt cộng.
+ * Đo hụt người làm thật tệ hơn hẳn đếm dư người treo máy. Nên giờ tab mở là
+ * tính — kể cả khi tab bị ẩn sau cửa sổ VS Code, vì đó chính là tình huống cần
+ * đo.
+ *
+ * ── Nhưng vẫn báo có thao tác hay không ──────────────────────────────────────
+ *
+ * Cờ `active` giữ lại đúng tín hiệu mà bản cũ có. Tổng giờ cộng cả hai loại,
+ * nhưng dòng thời gian vẫn vẽ được "ngồi làm" khác màu với "để tab đó". Bỏ hẳn
+ * cờ này thì đổi cách tính đồng nghĩa với mất luôn khả năng phân biệt, và khi
+ * có tranh cãi về một ngày công cụ thể thì không còn gì để nhìn.
+ *
+ * ── Bốn cái bẫy của trình duyệt ──────────────────────────────────────────────
+ *
+ * 1. **Tab nền bị bóp.** Chrome hạ `setInterval` ở tab ẩn xuống 1 lần/phút —
+ *    đúng bằng nhịp ở đây, nên vẫn về đều, chỉ trôi vài giây. Ngưỡng nối phiên
+ *    của backend là 10 phút nên trôi bấy nhiêu không cắt phiên.
+ *
+ *    Trường hợp xấu: trình duyệt **đóng băng hẳn** tab (Chrome Memory Saver,
+ *    iOS Safari nền lâu). Lúc đó nhịp ngừng và phiên đóng lại — đo hụt chứ
+ *    không đo dư. Đây là giới hạn thật, không vá được từ phía trang.
  *
  * 2. **Đóng máy đột ngột không bắn sự kiện.** Sập nắp laptop, mất điện, mất
  *    mạng, đóng trình duyệt trên điện thoại — `beforeunload` không chạy. Vì
@@ -26,8 +43,8 @@ import { api } from "@/lib/api-client";
  *    trục thời gian nên mở mười tab vẫn ra đúng một phiên.
  *
  * 4. **Ngủ máy giữa chừng.** Máy thức dậy thì `setInterval` bắn bù dồn dập;
- *    cờ `dangGui` chặn chồng request, và khoảng lặng vượt ngưỡng đã được
- *    backend cắt ra khỏi tổng.
+ *    cờ `dangGui` chặn chồng request, và khoảng máy ngủ không có nhịp nào nên
+ *    backend không tính.
  */
 
 /** Khoảng gửi nhịp. Khớp với ngưỡng nối phiên 10 phút ở backend. */
@@ -42,8 +59,16 @@ const NHIP_MS = 60_000;
  */
 const SU_KIEN = ["pointerdown", "keydown", "wheel", "touchstart"] as const;
 
-export function useHeartbeat(enabled: boolean): number | null {
+export interface NhipTim {
+  /** Số phút hôm nay, null khi chưa nhận được nhịp nào. */
+  soPhut: number | null;
+  /** Đã chạm trần giờ tự động trong ngày — nhịp không còn được ghi. */
+  chamTran: boolean;
+}
+
+export function useHeartbeat(enabled: boolean): NhipTim {
   const [soPhut, setSoPhut] = useState<number | null>(null);
+  const [chamTran, setChamTran] = useState(false);
 
   // `useRef` chứ không `useState`: cờ này đổi hàng chục lần mỗi phút và không
   // được phép làm component vẽ lại.
@@ -62,21 +87,27 @@ export function useHeartbeat(enabled: boolean): number | null {
     }
 
     const gui = async () => {
-      // Ba điều kiện, thiếu một là số liệu sai:
-      //   - có thao tác trong phút vừa rồi
-      //   - tab đang hiển thị (ẩn tab đi pha cà phê không tính là làm)
-      //   - chưa có request nào đang bay (máy vừa thức dậy bắn bù dồn dập)
-      if (!coThaoTac.current || document.hidden || dangGui.current) return;
+      // Chỉ còn MỘT điều kiện chặn: đang có request bay dở.
+      //
+      // Máy vừa thức dậy sau khi ngủ thì `setInterval` bắn bù dồn dập; không
+      // có cờ này thì hàng chục request cùng lúc chồng lên nhau, và cái tới
+      // sau ghi đè số phút của cái tới trước theo thứ tự ngẫu nhiên.
+      //
+      // KHÔNG còn chặn theo `document.hidden`: tab ẩn sau cửa sổ VS Code chính
+      // là tình huống cần đo, không phải tình huống cần bỏ qua.
+      if (dangGui.current) return;
 
+      const daThaoTac = coThaoTac.current;
       coThaoTac.current = false;
       dangGui.current = true;
 
       try {
         const kq = await api.post<{
-          data: { today_minutes: number };
-        }>("/attendance/heartbeat");
+          data: { today_minutes: number; capped: boolean };
+        }>("/attendance/heartbeat", { active: daThaoTac });
 
         setSoPhut(kq.data.today_minutes);
+        setChamTran(kq.data.capped);
       } catch {
         // Mất mạng thì im lặng bỏ qua. Nhịp sau sẽ gửi lại, và backend tính
         // giờ từ mốc thời gian nên mất vài nhịp giữa chừng không tạo lỗ hổng
@@ -102,5 +133,5 @@ export function useHeartbeat(enabled: boolean): number | null {
     };
   }, [enabled]);
 
-  return soPhut;
+  return { soPhut, chamTran };
 }

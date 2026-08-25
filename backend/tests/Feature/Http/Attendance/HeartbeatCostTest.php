@@ -48,15 +48,38 @@ function demTruyVanNhip(User $u): int
     return $so;
 }
 
-it('một nhịp tim tốn đúng 3 truy vấn', function (): void {
+it('một nhịp tim tốn đúng 5 truy vấn', function (): void {
     /*
-    | Ba truy vấn đó là:
-    |   1. tìm phiên làm việc gần nhất
-    |   2. ghi phiên (nối dài phiên cũ hoặc mở phiên mới)
-    |   3. tổng hợp số phút hôm nay để trả về cho giao diện
+    | Năm truy vấn đó là:
+    |   1. cộng số phút đã ghi hôm nay, để biết đã chạm trần chưa
+    |   2. tìm phiên làm việc gần nhất
+    |   3. nối dài phiên đang mở
+    |   4. tổng hợp số phút hôm nay
+    |   5. đọc quyết định ngày công (ghi nhận / bỏ qua) cho ngày hôm nay
     |
     | Trước khi tối ưu là SÁU: ba truy vấn đầu là nạp vai trò và quyền, mà
     | endpoint này không kiểm quyền nào cả. Xem EnsureUserIsActive.
+    |
+    | ── Vì sao chấp nhận truy vấn thứ nhất ───────────────────────────────────
+    |
+    | Nó là cái giá của việc đổi sang chấm công theo sự có mặt. Khi tab mở là
+    | tính, một tab quên đóng qua đêm ghi thẳng 16 tiếng công — và vài lần như
+    | vậy là không ai còn tin bảng công nữa. Trần ngày là thứ duy nhất chặn
+    | được, mà muốn biết đã chạm trần thì phải cộng.
+    |
+    | Chi phí thật: một phép SUM trên chỉ mục `(user_id, work_date)` với khoảng
+    | 5–20 dòng. Nó không quét bảng, không join, và không nạp model nào.
+    |
+    | Đã cân nhắc hai cách né và bỏ cả hai:
+    |
+    |   - Gộp vào truy vấn tìm phiên bằng window function: tiết kiệm một lượt
+    |     đi về, đổi lấy một câu SQL mà người đọc sau phải dừng lại mất một
+    |     phút. Không đáng với mức tiết kiệm này.
+    |   - Đệm tổng hôm nay vào Redis: vẫn là một lượt đi về, thêm một chỗ có
+    |     thể lệch với sự thật.
+    |
+    | Số 4 vẫn được khoá lại y như số 3 trước đây. Ai thêm truy vấn thứ năm sẽ
+    | phải viết ra lý do ở đúng chỗ này.
     */
     $u = User::factory()->create();
     $u->assignRole(Role::NhanVien->value);
@@ -65,7 +88,24 @@ it('một nhịp tim tốn đúng 3 truy vấn', function (): void {
     // gặp — 479 trong 480 nhịp của một ngày làm việc là nối dài phiên đang mở.
     nhip($u);
 
-    expect(demTruyVanNhip($u))->toBe(3);
+    /*
+    | `travelTo` KHÔNG phải để cho gọn — thiếu nó thì test này CHẬP CHỜN.
+    |
+    | Hai nhịp liên tiếp trong cùng một giây làm `ended_at` không đổi, nên
+    | Eloquent thấy model không bẩn và **bỏ hẳn lệnh UPDATE**. Đếm ra 4. Nhưng
+    | khi hai nhịp vô tình vắt qua ranh giới giây — hay gặp lúc chạy song song
+    | 16 tiến trình, máy bận — thì UPDATE chạy và đếm ra 5.
+    |
+    | Test cũ khoá số 3 và đã mang sẵn lỗi này từ đầu; nó chỉ hiếm khi đỏ nên
+    | không ai để ý. Một test lúc xanh lúc đỏ còn tệ hơn test đỏ hẳn: người ta
+    | chạy lại lần nữa thấy xanh rồi đi tiếp, và cái nó canh mất tác dụng.
+    |
+    | Nhích một phút thì nhịp đo được LUÔN nối dài phiên — đúng trường hợp
+    | thường gặp mà test này muốn đo, và đếm ra một con số duy nhất.
+    */
+    $this->travelTo(now()->addMinute());
+
+    expect(demTruyVanNhip($u))->toBe(5);
 });
 
 it('không nạp vai trò và quyền trên đường nhịp tim', function (): void {

@@ -107,6 +107,7 @@ final class AttendanceTimelineController
                 'sessions' => $dong->sessions,
                 'gaps' => $dong->gaps,
                 'worked_minutes' => $dong->workedMinutes,
+                'interactive_minutes' => $dong->interactiveMinutes,
                 'idle_minutes' => $dong->idleMinutes,
                 'lunch_minutes' => $dong->lunchMinutes,
                 'first_seen' => $dong->firstSeen,
@@ -148,7 +149,7 @@ final class AttendanceTimelineController
      * cho một màn hình mở mỗi sáng.
      *
      * @param  list<int>  $ids
-     * @return array<int, list<array{started_at: string, ended_at: string}>>
+     * @return array<int, list<array{started_at: string, ended_at: string, interactive: bool}>>
      */
     private function phienTrongNgay(array $ids, string $ngay): array
     {
@@ -165,10 +166,11 @@ final class AttendanceTimelineController
             // so khoảng sẽ lệch mất phần đầu và cuối ngày.
             ->where('work_date', $ngay)
             ->orderBy('started_at')
-            ->get(['user_id', 'started_at', 'ended_at']);
+            ->get(['user_id', 'started_at', 'ended_at', 'interactive']);
 
         foreach ($ds as $p) {
             $gom[$p->user_id][] = [
+                'interactive' => (bool) $p->interactive,
                 'started_at' => (string) $p->getRawOriginal('started_at'),
                 'ended_at' => (string) $p->getRawOriginal('ended_at'),
             ];

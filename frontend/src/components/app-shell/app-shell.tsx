@@ -50,7 +50,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Nhịp tim chấm công. Chỉ chạy khi đã biết người dùng là ai — gửi trước đó
   // là một lượt 401 vô ích mỗi lần tải trang.
-  const phutHomNay = useHeartbeat(user !== undefined);
+  const nhip = useHeartbeat(user !== undefined);
 
   // Phiên hết hạn giữa chừng: đưa về đăng nhập thay vì để màn hình trống.
   //
@@ -132,7 +132,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               {user ? (
                 <>
                   <CommandButton onClick={() => setLenhMo(true)} />
-                  <GioHomNay phut={phutHomNay} />
+                  <GioHomNay phut={nhip.soPhut} chamTran={nhip.chamTran} />
                   <NotificationBell />
                   <UserMenu user={user} />
                 </>
@@ -175,18 +175,38 @@ export function AppShell({ children }: { children: ReactNode }) {
  * Ẩn cho tới khi có số đầu tiên: hiện "0h" ngay lúc vừa vào app trông như hệ
  * thống đang không ghi nhận gì.
  */
-function GioHomNay({ phut }: { phut: number | null }) {
+function GioHomNay({
+  phut,
+  chamTran,
+}: {
+  phut: number | null;
+  chamTran: boolean;
+}) {
   if (phut === null) return null;
 
   return (
     <Link
       href="/attendance"
-      title="Giờ làm hôm nay — bấm để xem cả tháng"
+      title={
+        chamTran
+          ? "Đã đạt trần giờ tự động của hôm nay — làm thêm thì nhờ quản lý ghi nhận"
+          : "Giờ làm hôm nay — bấm để xem cả tháng"
+      }
       className="focus-frame border-line bg-paper-raised text-ink-soft hover:border-line-strong hover:text-ink hidden items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[0.8rem] font-medium tabular-nums transition-colors sm:inline-flex"
     >
+      {/*
+        Chấm đứng yên khi đã chạm trần.
+
+        Con số ngừng nhúc nhích mà không có dấu hiệu gì thì người dùng tưởng
+        hệ thống hỏng và sẽ tải lại trang mấy lần. Một chấm xám kèm chú thích
+        rẻ hơn nhiều so với một câu hỏi "sao giờ công của em đứng im".
+      */}
       <span
         aria-hidden="true"
-        className="bg-accent size-1.5 shrink-0 rounded-full"
+        className={cn(
+          "size-1.5 shrink-0 rounded-full",
+          chamTran ? "bg-ink-faint" : "bg-accent",
+        )}
       />
       {formatMinutes(phut)}
     </Link>

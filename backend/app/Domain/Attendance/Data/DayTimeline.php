@@ -28,7 +28,7 @@ use Carbon\CarbonImmutable;
 final readonly class DayTimeline
 {
     /**
-     * @param  list<array{start: string, end: string, minutes: int}>  $sessions
+     * @param  list<array{start: string, end: string, minutes: int, interactive: bool}>  $sessions
      * @param  list<array{start: string, end: string, minutes: int, lunch_minutes: int}>  $gaps
      */
     public function __construct(
@@ -36,6 +36,16 @@ final readonly class DayTimeline
         public array $sessions,
         public array $gaps,
         public int $workedMinutes,
+        /**
+         * Phần `workedMinutes` có thao tác thật trên Explus.
+         *
+         * KHÔNG phải một con số để chấm điểm ai. Từ khi chấm công tính theo sự
+         * có mặt, lập trình viên làm cả buổi trong IDE sẽ có con số này gần 0
+         * mà vẫn làm việc đầy đủ — đúng lý do đổi cách tính. Nó chỉ trả lời
+         * "khoảng nào người này đang thao tác trên hệ thống", để dòng thời gian
+         * vẽ được hai màu.
+         */
+        public int $interactiveMinutes,
         public int $idleMinutes,
         /**
          * Phần khoảng lặng rơi vào giờ nghỉ trưa của ca.
@@ -61,7 +71,7 @@ final readonly class DayTimeline
     /**
      * Dựng từ các phiên làm việc thô (giờ UTC như database trả về).
      *
-     * @param  list<array{started_at: string, ended_at: string}>  $phienUtc
+     * @param  list<array{started_at: string, ended_at: string, interactive: bool}>  $phienUtc
      * @param  string  $truaTu  Giờ bắt đầu nghỉ trưa, `HH:MM` giờ Việt Nam.
      * @param  string  $truaDen  Giờ kết thúc nghỉ trưa.
      */
@@ -77,7 +87,7 @@ final readonly class DayTimeline
             $tu = self::vietNam($p['started_at']);
             $den = self::vietNam($p['ended_at']);
 
-            $moc[] = ['tu' => $tu, 'den' => $den];
+            $moc[] = ['tu' => $tu, 'den' => $den, 'co' => $p['interactive']];
         }
 
         // Sắp theo thời điểm bắt đầu: database không hứa thứ tự, mà toàn bộ
@@ -87,6 +97,7 @@ final readonly class DayTimeline
         $phien = [];
         $khe = [];
         $lamViec = 0;
+        $coThaoTac = 0;
         $ngoiKhong = 0;
         $nghiTrua = 0;
         $ketThucTruoc = null;
@@ -101,9 +112,17 @@ final readonly class DayTimeline
                 'start' => self::gio($m['tu']),
                 'end' => self::gio($m['den']),
                 'minutes' => $soPhut,
+                // Có thao tác thật, hay chỉ để tab mở. Cả hai đều tính vào giờ
+                // công; khác nhau ở chỗ giao diện vẽ hai màu, để người xem
+                // phân biệt được "ngồi làm" với "để đó" mà không cần đoán.
+                'interactive' => $m['co'],
             ];
 
             $lamViec += $soPhut;
+
+            if ($m['co']) {
+                $coThaoTac += $soPhut;
+            }
 
             if ($ketThucTruoc !== null && $m['tu'] > $ketThucTruoc) {
                 $keDai = self::phutGiua($ketThucTruoc, $m['tu']);
@@ -147,6 +166,7 @@ final readonly class DayTimeline
             sessions: $phien,
             gaps: $khe,
             workedMinutes: $lamViec,
+            interactiveMinutes: $coThaoTac,
             idleMinutes: $ngoiKhong,
             lunchMinutes: $nghiTrua,
             firstSeen: $phien === [] ? null : $phien[0]['start'],

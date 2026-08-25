@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**706 test xanh** (4731 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**713 test xanh** (4755 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 69 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -3156,6 +3156,57 @@ Phần ghi tách sang `DepartmentAdminController`. Không phải để ngăn n�
 #### Chưa có
 
 **Nhật ký kiểm toán cho thao tác trên cây.** `user_activities` khoá theo `user_id` nên không dùng lại được cho phòng ban; muốn có phải thêm bảng. Đáng làm, vì chuyển một phòng ban đổi phạm vi xem lương của người khác — nhưng nó là một quyết định riêng, không phải phần đuôi của mục này.
+
+---
+
+### Chấm công theo sự có mặt ✅ Đã xong
+
+Cách cũ chỉ ghi nhịp khi có **thao tác thật** trên Explus và tab đang hiển thị. Với lập trình viên đó là đo sai người: họ sống trong IDE và terminal, cả buổi sáng viết code xong hệ thống hiện số 0.
+
+**Đo hụt người làm thật tệ hơn hẳn đếm dư người treo máy.** Cái thứ nhất làm người ta mất niềm tin vào bảng công; cái thứ hai nhìn dòng thời gian là thấy, và còn bị trần ngày chặn.
+
+Giờ **mở tab là tính** — không cần thao tác, không cần tab đang hiển thị. Tab nằm sau cửa sổ VS Code chính là tình huống cần đo, không phải tình huống cần bỏ qua.
+
+#### Không vứt tín hiệu cũ đi
+
+Mỗi nhịp vẫn mang cờ `active`, và phiên bị **cắt khi cờ đổi**. Tổng giờ cộng cả hai loại, nhưng dòng thời gian vẽ được bốn màu:
+
+| Màu | Nghĩa |
+|---|---|
+| Sắc miền **đậm** | Đang thao tác trên Explus |
+| Sắc miền **nhạt** | Mở Explus, làm việc ở nơi khác |
+| Vàng | Không mở Explus — máy tắt, đóng trình duyệt, mất mạng |
+| Xám | Ngoài khoảng đã ghi nhận |
+
+Hai sắc đầu **đều là giờ công**. Đổi cái thứ hai sang vàng sẽ nói sai một điều quan trọng: lập trình viên ngồi cả buổi trong IDE là chuyện bình thường, không phải dấu hiệu cần để mắt. Nhạt hơn là đủ để phân biệt mà không hàm ý phán xét.
+
+Bỏ hẳn cờ này thì đổi cách tính đồng nghĩa với **mất luôn** khả năng phân biệt "ngồi làm" với "để đó" — và khi có tranh cãi về một ngày công cụ thể thì không còn gì để nhìn.
+
+#### Trần giờ mỗi ngày là thứ thay chỗ cho điều kiện thao tác
+
+Khi tab mở là tính, một tab quên đóng qua đêm ghi thẳng **16 tiếng công**. Vài lần như vậy là không ai còn tin bảng công — mà mất niềm tin thì cả hệ thống chấm công thành vô dụng, chứ không chỉ sai vài con số.
+
+Mặc định **600 phút (10 tiếng)**, đổi được trong Cài đặt trang. Rộng hơn ca chuẩn 465 phút một quãng đủ để tăng ca thật mà vẫn chặn được tab bỏ quên. Chạm trần thì nhịp ngừng được ghi và giao diện nói thẳng "đã đạt trần" — con số đứng im mà không có dấu hiệu gì thì người dùng tưởng hệ thống hỏng.
+
+Trần **không chặn quãng nhập tay**: nó đã đi qua một con người rồi.
+
+#### Ngưỡng 10 phút đổi ý nghĩa
+
+Trước đây nó phân biệt "làm" với "không làm". Giờ tab mở thì nhịp về đều mỗi phút, nên nó chuyển thành thứ đo **máy còn sống hay không**: đóng trình duyệt, sập nắp laptop, mất mạng, hết pin đều làm nhịp ngừng và phiên đóng lại tại đó.
+
+#### Một test chập chờn có sẵn từ trước, lộ ra nhờ thay đổi này
+
+`HeartbeatCostTest` khoá số truy vấn của đường nóng nhất hệ thống (≈96.000 lượt/ngày). Thêm truy vấn đếm trần làm nó đỏ — đúng như thiết kế, nó buộc người sửa phải viết ra lý do.
+
+Nhưng khi sửa số thì lộ ra điều khác: **test đó vốn đã chập chờn**. Hai nhịp liên tiếp rơi cùng một giây làm `ended_at` không đổi, Eloquent thấy model không bẩn và **bỏ hẳn lệnh UPDATE** — đếm ra một con số. Khi hai nhịp vắt qua ranh giới giây thì UPDATE chạy — đếm ra con số khác. Chạy song song 16 tiến trình thì đủ bận để cả hai đều xảy ra.
+
+In thẳng danh sách truy vấn ra mới thấy: bốn truy vấn đo được **không có lệnh ghi nào**. Thêm `travelTo(now()->addMinute())` thì nhịp đo được luôn nối dài phiên, và con số về đúng một giá trị: **5**.
+
+Một test lúc xanh lúc đỏ còn tệ hơn test đỏ hẳn — người ta chạy lại lần nữa thấy xanh rồi đi tiếp, và cái nó canh mất tác dụng.
+
+#### Giới hạn còn lại, nói thẳng
+
+Trình duyệt **đóng băng hẳn** tab (Chrome Memory Saver, iOS Safari để nền lâu) thì nhịp ngừng và phiên đóng — đo hụt chứ không đo dư. Đây là giới hạn thật của mọi cách đo từ phía trang web, không vá được.
 
 ---
 

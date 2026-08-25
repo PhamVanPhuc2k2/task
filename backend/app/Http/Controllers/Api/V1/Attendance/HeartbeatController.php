@@ -14,9 +14,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 
 /**
- * Nhịp tim từ giao diện: "người này vừa thao tác thật".
+ * Nhịp tim từ giao diện: "người này đang mở Explus".
  *
- * Giao diện gửi mỗi phút, chỉ khi có tương tác thật và tab đang hiển thị. Đây
+ * Giao diện gửi mỗi phút chừng nào tab còn mở, kèm cờ `active` nói phút đó có
+ * thao tác thật hay chỉ để đó. Đây
  * là đường được gọi nhiều nhất trong cả hệ thống — hai trăm nhân sự × tám tiếng
  * ≈ 96.000 lượt mỗi ngày, nên nó cố tình làm ít việc: một truy vấn tìm phiên
  * gần nhất, một truy vấn ghi.
@@ -36,7 +37,12 @@ final class HeartbeatController
         /** @var User $actor */
         $actor = $request->user();
 
-        $phien = $ghiNhip->execute($actor);
+        // `active` vắng mặt = coi như CÓ thao tác.
+        //
+        // Bản giao diện cũ chỉ gửi nhịp khi thật sự có thao tác, nên với nó
+        // mặc định `true` là đúng. Mặc định `false` sẽ gắn nhãn sai cho mọi
+        // phiên sinh ra trong quãng người dùng chưa tải lại trang sau deploy.
+        $phien = $ghiNhip->execute($actor, $request->boolean('active', default: true));
 
         /** @var CarbonImmutable $bayGio */
         $bayGio = Date::now();
@@ -49,7 +55,11 @@ final class HeartbeatController
             'data' => [
                 'work_date' => $homNay,
                 'today_minutes' => $ngay?->effectiveMinutes() ?? 0,
-                'session_started_at' => $phien->started_at->toIso8601String(),
+                // Null khi đã chạm trần giờ trong ngày. Giao diện đọc cờ này
+                // để nói thẳng "đã đạt trần" thay vì im lặng đứng yên ở một
+                // con số không nhúc nhích — người dùng sẽ tưởng hệ thống hỏng.
+                'capped' => $phien === null,
+                'session_started_at' => $phien?->started_at->toIso8601String(),
             ],
         ]);
     }

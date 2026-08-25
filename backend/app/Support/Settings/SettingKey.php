@@ -41,6 +41,7 @@ enum SettingKey: string
     case ShiftEnd = 'shift_end';
     case ShiftGraceMinutes = 'shift_grace_minutes';
     case MinWorkedMinutes = 'min_worked_minutes';
+    case MaxDailyMinutes = 'max_daily_minutes';
 
     // ── Báo cáo ngày ─────────────────────────────────────────────────────
     case ReportReminderEnabled = 'report_reminder_enabled';
@@ -64,6 +65,7 @@ enum SettingKey: string
             self::ShiftEnd => 'attendance.shift.end',
             self::ShiftGraceMinutes => 'attendance.shift.grace_minutes',
             self::MinWorkedMinutes => 'attendance.min_worked_minutes',
+            self::MaxDailyMinutes => 'attendance.max_daily_minutes',
 
             self::ReportReminderEnabled => 'reports.reminder.enabled',
             self::ReportReminderAt => 'reports.reminder.at',
@@ -80,6 +82,7 @@ enum SettingKey: string
         return match ($this) {
             self::ShiftGraceMinutes,
             self::MinWorkedMinutes,
+            self::MaxDailyMinutes,
             self::ReportBackfillDays,
             self::LeaveBackdateDays,
             self::LeaveFutureDays,
@@ -131,6 +134,7 @@ enum SettingKey: string
             self::ShiftEnd => 'Giờ tan làm',
             self::ShiftGraceMinutes => 'Số phút châm chước trước khi tính muộn',
             self::MinWorkedMinutes => 'Số phút tối thiểu để coi là có đi làm',
+            self::MaxDailyMinutes => 'Trần giờ công tự động mỗi ngày (phút)',
 
             self::ReportReminderEnabled => 'Nhắc nộp báo cáo cuối ngày',
             self::ReportReminderAt => 'Giờ gửi nhắc',
