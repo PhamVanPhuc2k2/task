@@ -3552,6 +3552,33 @@ Token GHCR đi qua **stdin**, không qua tham số dòng lệnh (tham số hiệ
 
 Thiếu bất kỳ cái nào thì job dừng ngay ở bước đầu kèm tên biến còn thiếu. **Không bỏ qua êm**: một job xanh vì nó không làm gì cả là thứ nguy hiểm nhất trong cả đường ống — nó dạy người đọc rằng dấu tích nghĩa là đã deploy.
 
+### Nạp lại nginx sau mỗi lần đổi container
+
+nginx phân giải `app` và `frontend` qua DNS nội bộ của Docker **một lần duy nhất, lúc nạp cấu hình**, rồi giữ nguyên IP đó.
+
+`docker compose up -d app frontend nginx` tạo lại app và frontend, nhưng thấy cấu hình nginx không đổi nên **để nguyên nó** — log in ra `Container explus-nginx-1 Running`. Container mới thường nhận lại đúng IP cũ, nên mọi thứ vẫn chạy. **Thường, không phải luôn luôn.**
+
+Ngày 25/08 nó không nhận lại: app lấy `.5`, frontend lấy `.4`, nginx vẫn giữ cặp IP của lần trước. Kết quả:
+
+```
+app       running (healthy)
+frontend  running (healthy)
+nginx     running
+mysql     running (healthy)
+redis     running (healthy)
+                                    ← và extask.us trả 502
+```
+
+**Sáu container đều báo khoẻ, trang chết hoàn toàn.** Health check của deploy.sh bắt được và dừng đúng chỗ, nhưng nó chỉ nói "không xanh sau 60 giây" — không nói vì sao.
+
+Ba lần deploy trước đó đều xanh vì container tình cờ nhận lại đúng IP. Nghĩa là **mỗi lần deploy là một lần tung đồng xu**, và không có gì trong log gợi ý điều đó.
+
+Giờ cả `deploy.sh` lẫn `rollback.sh` đều chạy `nginx -s reload` ngay sau khi đổi container. Reload phân giải lại DNS mà không rơi một request nào — tiến trình cũ phục vụ nốt việc đang dở rồi mới tắt.
+
+Ở `rollback.sh` nó còn quan trọng hơn: người ta chạy rollback đúng lúc đang hoảng, và một lần quay lui "thành công" mà trang vẫn 502 sẽ đẩy họ đi tìm sai hướng.
+
+Thông báo khi health check đỏ cũng được sửa để nói rõ **hệ thống đang ở trạng thái nào**: app và giao diện đã sang bản mới, worker vẫn ở bản cũ vì bước 5 chưa chạy. Lần này tôi phải tự tay đổi worker sau khi deploy dừng giữa chừng, và log cũ không hề nhắc tới chuyện đó.
+
 ### Quay lui
 
 `deploy.sh` ghi **cả hai** image đang chạy vào `.last-known-good` trước khi đổi:

@@ -181,6 +181,31 @@ echo "→ [4/5] Đổi container web..."
 APP_IMAGE="$IMAGE" FRONTEND_IMAGE="$FRONTEND_IMAGE" \
     $COMPOSE up -d --no-deps app frontend nginx
 
+# ── Nạp lại nginx. KHÔNG bỏ dòng này ─────────────────────────────────────────
+#
+# nginx phân giải `app` và `frontend` qua DNS nội bộ của Docker **một lần duy
+# nhất, lúc nạp cấu hình**, rồi giữ nguyên địa chỉ IP đó.
+#
+# Dòng `up -d` ở trên tạo lại container app và frontend, và container mới
+# thường — nhưng KHÔNG phải luôn luôn — nhận lại đúng IP cũ. Compose thấy cấu
+# hình nginx không đổi nên để nguyên nó ("Container explus-nginx-1 Running").
+# Khi IP đổi, nginx vẫn chuyển tiếp tới hai địa chỉ đã chết: **toàn bộ trang
+# trả 502 trong khi cả sáu container đều báo healthy.**
+#
+# Đây không phải giả thuyết. Nó đã xảy ra ngày 25/08: app nhận .5, frontend
+# nhận .4, nginx vẫn giữ cặp IP của lần trước, health check đỏ sau 60 giây, và
+# extask.us trả 502 cho tới khi nạp lại nginx bằng tay.
+#
+# Ba lần deploy trước đó đều xanh — vì container tình cờ nhận lại đúng IP cũ.
+# Nghĩa là mỗi lần deploy là một lần tung đồng xu, và không có gì trong log gợi
+# ý điều đó.
+#
+# `nginx -s reload` phân giải lại DNS mà không rơi một request nào: tiến trình
+# cũ phục vụ nốt việc đang dở rồi mới tắt. Rẻ hơn hẳn `restart`, vốn có một
+# khoảng ngắn không ai phục vụ.
+echo "   Nạp lại nginx để nó phân giải lại địa chỉ app và frontend..."
+$COMPOSE exec -T nginx nginx -s reload || $COMPOSE restart nginx
+
 echo "   Chờ health check..."
 for i in $(seq 1 30); do
     # Kiểm CẢ HAI: API và giao diện.
@@ -195,7 +220,18 @@ for i in $(seq 1 30); do
     fi
     if [ "$i" -eq 30 ]; then
         echo "   ✘ Health check KHÔNG xanh sau 60 giây." >&2
-        echo "     Chạy ./scripts/rollback.sh để quay lui." >&2
+        echo "" >&2
+        # Nói rõ hệ thống đang ở trạng thái nào.
+        #
+        # Script dừng ở đây nên BƯỚC 5 CHƯA CHẠY: app và giao diện đã sang bản
+        # mới, còn worker vẫn ở bản cũ. Không nói ra thì người đọc log tưởng
+        # deploy chưa đụng gì cả, rồi mất thêm một lúc mới hiểu vì sao job chạy
+        # nền vẫn hành xử theo mã cũ.
+        echo "     Trạng thái hiện tại: app và giao diện ĐÃ sang ${TAG}," >&2
+        echo "     worker vẫn ở bản cũ (bước 5 chưa chạy)." >&2
+        echo "" >&2
+        echo "     Quay lui:  ./scripts/rollback.sh" >&2
+        echo "     Xem log:   $COMPOSE logs --tail=50 app nginx frontend" >&2
         exit 1
     fi
     sleep 2

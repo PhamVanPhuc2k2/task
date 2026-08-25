@@ -85,6 +85,18 @@ else
     APP_IMAGE="$APP_IMAGE" $COMPOSE up -d --no-deps app nginx
 fi
 
+# Nạp lại nginx — lý do đầy đủ ở scripts/deploy.sh, cùng chỗ này.
+#
+# Tóm tắt: nginx giữ nguyên IP đã phân giải lúc nạp cấu hình. Container app và
+# frontend vừa được tạo lại có thể mang IP khác, và khi đó nginx chuyển tiếp
+# tới địa chỉ đã chết — trang trả 502 trong khi mọi container đều healthy.
+#
+# Ở đây còn quan trọng hơn ở deploy.sh: người ta chạy rollback đúng lúc đang
+# hoảng. Một lần quay lui "thành công" mà trang vẫn 502 sẽ đẩy họ đi tìm sai
+# hướng — tưởng bản cũ cũng hỏng nốt.
+echo "→ Nạp lại nginx..."
+$COMPOSE exec -T nginx nginx -s reload || $COMPOSE restart nginx
+
 echo "→ Chờ health check..."
 for i in $(seq 1 30); do
     # Kiểm CẢ HAI, giống deploy.sh.
