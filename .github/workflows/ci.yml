@@ -289,6 +289,11 @@ jobs:
         env:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_HOST: ${{ secrets.VPS_HOST }}
+          # Đưa qua biến môi trường chứ không nội suy thẳng vào dòng lệnh:
+          # `${{ }}` được thay TRƯỚC khi shell chạy, nên giá trị nào chứa ký tự
+          # shell hiểu được sẽ thành một phần của câu lệnh. Ở đây giá trị là an
+          # toàn, nhưng thói quen nội suy thẳng thì không.
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Token đi qua stdin, không qua tham số dòng lệnh: tham số hiện trong
           # `ps` cho mọi tiến trình trên máy chủ đọc được.
@@ -296,7 +301,7 @@ jobs:
           # Khoá này bị trói vào scripts/ci-deploy.sh bằng `command=` trong
           # authorized_keys, nên chuỗi dưới đây chỉ là dữ liệu cho script đó
           # đọc — không mở được shell.
-          printf '%s\n' "${{ secrets.GITHUB_TOKEN }}" \
+          printf '%s\n' "$GHCR_TOKEN" \
             | ssh -i ~/.ssh/id_ci \
                   -o BatchMode=yes \
                   -o StrictHostKeyChecking=yes \

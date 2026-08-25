@@ -1,0 +1,36 @@
+# Docker tìm .dockerignore Ở GỐC CONTEXT, mà context của image frontend là
+# thư mục này chứ không phải gốc repo — nên .dockerignore ngoài kia không có
+# hiệu lực ở đây. Thiếu file này thì không có gì bị loại trừ cả.
+#
+# ── Vì sao nó quan trọng hơn vẻ ngoài ────────────────────────────────────────
+#
+# Dockerfile.prod làm đúng thứ tự này:
+#
+#     COPY --from=deps /app/node_modules ./node_modules   ← bản cài sạch từ lock
+#     COPY . .                                            ← toàn bộ context
+#
+# Không loại `node_modules` ra thì dòng thứ hai **ghi đè bản sạch bằng bản đang
+# nằm trên đĩa máy build**. Trên CI thì vô hại vì checkout luôn mới, nhưng trên
+# máy dev — nơi `./scripts/deploy.sh` không có `--pull` vẫn build được — image
+# sinh ra mang theo cây phụ thuộc của máy đó, gồm cả những gói cài tay chưa bao
+# giờ vào package-lock.
+#
+# Hai máy build cùng một commit ra hai image khác nhau, và không có gì báo.
+node_modules
+.next
+out
+
+# Biến môi trường. NEXT_PUBLIC_* được nhúng thẳng vào mã lúc build, nên một tệp
+# .env lọt vào context là một tệp .env đi vào image.
+.env
+.env.*
+!.env.example
+
+# Không dùng tới lúc build, chỉ làm context nặng thêm.
+.git
+.gitignore
+Dockerfile*
+.dockerignore
+npm-debug.log*
+.eslintcache
+coverage
