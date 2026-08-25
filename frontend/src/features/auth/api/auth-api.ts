@@ -132,6 +132,35 @@ export function useResetPassword(): UseMutationResult<
   });
 }
 
+export interface ChangePasswordInput {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}
+
+/**
+ * Người đang đăng nhập tự đổi mật khẩu của mình.
+ *
+ * Khác `useResetPassword` ở chỗ **không cần token qua email**: người dùng đã
+ * ngồi trong phiên rồi, nên thứ chứng minh danh tính là mật khẩu HIỆN TẠI.
+ * Backend kiểm bằng rule `current_password` của Laravel.
+ *
+ * Không gọi `fetchCsrfCookie()` như hai hook kia: chúng chạy lúc CHƯA đăng
+ * nhập nên có thể chưa có cookie nào; ở đây phiên đã có sẵn cookie CSRF từ lúc
+ * đăng nhập, và `apiFetch` tự gửi kèm nó ở mỗi request ghi.
+ *
+ * Trả về 204, không có thân phản hồi.
+ */
+export function useChangePassword(): UseMutationResult<
+  void,
+  ApiError,
+  ChangePasswordInput
+> {
+  return useMutation({
+    mutationFn: (input) => api.patch<void>("/auth/password", input),
+  });
+}
+
 export function useTwoFactorSetup(): UseMutationResult<
   TwoFactorSetupData,
   ApiError,

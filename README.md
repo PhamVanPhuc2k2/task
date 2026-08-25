@@ -3159,6 +3159,44 @@ Phần ghi tách sang `DepartmentAdminController`. Không phải để ngăn n�
 
 ---
 
+### Tự đổi mật khẩu ✅ Đã xong
+
+`PATCH /auth/password` đã có từ lâu, đã kiểm mật khẩu hiện tại bằng rule `current_password`, đã có ba test — nhưng **không có chỗ nào trong giao diện gọi tới nó**. Không hook, không trang, không liên kết.
+
+Nghĩa là đường duy nhất để một nhân viên đổi mật khẩu là: đăng xuất → "Quên mật khẩu" → mở email → bấm link.
+
+Ghép với việc hệ thống không bắt đổi mật khẩu ở lần đăng nhập đầu, chuỗi hỏng ra thế này:
+
+```
+HR đọc mật khẩu tạm cho nhân viên
+   → nhân viên đăng nhập được
+   → không có gì nhắc đổi
+   → mà muốn đổi cũng không tìm thấy chỗ nào
+   → mật khẩu HR biết, có thể còn nằm trong Zalo, sống mãi
+```
+
+Đây đúng loại lỗ mà không test nào bắt được: backend xanh, endpoint hoạt động hoàn hảo, chỉ là **không ai tới được nó**.
+
+Đã thêm `/settings/password`, vào từ menu tài khoản. Ba ô: mật khẩu hiện tại, mật khẩu mới, nhập lại.
+
+#### Vì sao vẫn hỏi mật khẩu hiện tại
+
+Người dùng đã ngồi trong phiên rồi nên nghe như thừa. Nhưng nó chặn đúng một tình huống: máy bỏ quên không khoá màn hình. Không có ô đó thì ai đi ngang cũng đổi được mật khẩu và chiếm luôn tài khoản — nạn nhân chỉ phát hiện ở lần đăng nhập sau.
+
+#### Xoá sạch ba ô ngay khi lưu xong
+
+Để mật khẩu nằm lại trong form sau khi đã lưu là để nó nằm trên một màn hình có thể không khoá.
+
+#### Liên kết đứng TRƯỚC "Cài đặt thông báo"
+
+Và không kèm điều kiện quyền nào. Ai cũng đổi được mật khẩu của mình, và với người đang dùng mật khẩu tạm thì đây là việc cần làm ngay trong ngày đầu. Chôn nó xuống dưới là chôn đúng thứ cần thấy.
+
+#### Vẫn còn thiếu
+
+**Không có gì BẮT đổi mật khẩu tạm.** Giờ đã có chỗ để đổi, nhưng vẫn tuỳ người dùng nhớ. Xem "Câu hỏi còn mở" mục 0 — cần thêm cột `password_set_at` và một middleware chặn.
+
+---
+
 ### Thanh bên chia theo vai ✅ Đã xong
 
 Mười hai mục xếp phẳng không nói được mục nào là việc của nhân viên, mục nào là công cụ quản lý. Giám đốc mở ra thấy "Chấm công" nằm ngay cạnh "Nhân sự", không có gì gợi ý rằng một cái là bảng công của chính mình còn cái kia là quản trị cả công ty.

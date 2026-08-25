@@ -97,6 +97,15 @@ export function UserMenu({ user }: { user: AuthUser }) {
 
           {/* Chỉ liệt kê trang có thật. Menu tài khoản mà bấm vào ra 404 thì
               người dùng mất tin vào cả phần còn lại của menu. */}
+
+          {/* Đứng TRƯỚC cài đặt thông báo, và không kèm điều kiện quyền nào:
+              ai cũng đổi được mật khẩu của chính mình, và với người đang dùng
+              mật khẩu tạm do quản trị viên cấp thì đây là việc cần làm ngay
+              trong ngày đầu. Chôn nó xuống dưới là chôn đúng thứ cần thấy. */}
+          <MucLink href="/settings/password" onClick={dong}>
+            Đổi mật khẩu
+          </MucLink>
+
           <MucLink href="/settings/notifications" onClick={dong}>
             Cài đặt thông báo
           </MucLink>
