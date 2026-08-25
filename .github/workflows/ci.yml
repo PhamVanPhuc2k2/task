@@ -339,13 +339,46 @@ jobs:
           HOST_KEY: ${{ secrets.VPS_HOST_KEY }}
         run: |
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$KHOA" > ~/.ssh/id_ci
+
+          # `tr -d '\r'` không phải để cho chắc.
+          #
+          # Khoá riêng nằm trong một tệp trên máy Windows. Mở bằng Notepad hay
+          # nhiều trình soạn thảo rồi bôi đen chép đi là mang theo ký tự CR ở
+          # cuối MỖI dòng. GitHub cất nguyên văn, và OpenSSH từ chối cả khoá vì
+          # đúng những ký tự vô hình đó.
+          #
+          # Điều làm nó khó truy: thông báo lỗi là "error in libcrypto" hoặc
+          # "invalid format" — không có chữ nào nhắc tới ký tự xuống dòng, và
+          # nhìn secret trên giao diện GitHub thì không thấy gì bất thường vì
+          # giá trị bị che.
+          printf '%s\n' "$KHOA" | tr -d '\r' > ~/.ssh/id_ci
           chmod 600 ~/.ssh/id_ci
+
           # Ghim host key thay vì chấp nhận bừa lần đầu. Không có dòng này thì
           # mỗi lần chạy là một lần tin người lạ, và một kẻ đứng giữa chỉ cần
           # đúng một lần chạy để nhận được token GHCR.
-          printf '%s\n' "$HOST_KEY" > ~/.ssh/known_hosts
+          printf '%s\n' "$HOST_KEY" | tr -d '\r' > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+
+          # Hỏng thì hỏng NGAY ĐÂY, kèm câu nói rõ phải sửa gì.
+          #
+          # Không có bước này, một khoá sai làm `ssh` ở bước sau thất bại với
+          # một dòng lỗi chung chung, và người đọc log không phân biệt được
+          # "khoá hỏng" với "máy chủ từ chối" hay "mạng không thông".
+          #
+          # Vân tay in ra để đối chiếu với khoá đã cài trên máy chủ:
+          #   ssh-keygen -lf ~/.ssh/explus-ci-deploy.pub
+          echo "── Vân tay khoá CI đọc được từ secret ──"
+          if ! ssh-keygen -lf ~/.ssh/id_ci; then
+              echo "::error::VPS_SSH_KEY không đọc được. Kiểm: đã dán ĐỦ cả dòng BEGIN và END chưa, và tệp có phải OpenSSH format không."
+              exit 1
+          fi
+
+          echo "── Host key đã ghim ──"
+          ssh-keygen -lf ~/.ssh/known_hosts || {
+              echo "::error::VPS_HOST_KEY không đọc được. Lấy lại bằng: ssh-keyscan -t ed25519 <ip>"
+              exit 1
+          }
 
       - name: Chạy deploy trên máy chủ
         env:
