@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\Department;
 use App\Domain\Identity\Models\User;
 use App\Domain\Report\Enums\DailyReportStatus;
 use App\Domain\Report\Models\DailyReport;
+use App\Domain\Task\Models\Task;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\JsonResponse;
@@ -196,4 +197,20 @@ function daNopBaoCao(User $u, string $ngay): DailyReport
 function nhip(User $u): TestResponse
 {
     return test()->actingAs($u)->postJson('/api/v1/attendance/heartbeat');
+}
+
+/**
+ * Giao cho người này một việc, để họ thuộc diện phải nộp báo cáo ngày.
+ *
+ * `reports:remind` chỉ nhắc người **đã từng được giao ít nhất một task** — đó
+ * là cách phân biệt người đã thật sự bắt đầu làm việc với người vừa được tạo
+ * tài khoản. Xem RemindMissingReportsCommand::daTungCoViec().
+ *
+ * Ở tests/Pest.php chứ không trong một file test: ba file dùng tới nó, và hàm
+ * khai trong một file test chỉ tồn tại khi file đó được nạp — chạy riêng file
+ * kia sẽ đỏ với "undefined function" trong khi chạy cả bộ vẫn xanh.
+ */
+function coViecDuocGiao(User $u): Task
+{
+    return Task::factory()->create(['assignee_id' => $u->id]);
 }

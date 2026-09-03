@@ -155,6 +155,9 @@ it('lệnh nhắc 17h30 bỏ qua người đang nghỉ phép', function (): void
 
     $u = User::factory()->create();
     $u->assignRole(Role::NhanVien->value);
+    // Diện phải nộp báo cáo đòi đã từng được giao việc — thiếu dòng này
+    // thì test dưới xanh vì lệnh không nhắc ai, tức là xanh vì lý do sai.
+    coViecDuocGiao($u);
 
     coGioLam($u, '2026-08-12', 300);
     donDaDuyet($u, '2026-08-12', '2026-08-12');
@@ -170,6 +173,9 @@ it('vẫn nhắc người KHÔNG có đơn nghỉ', function (): void {
 
     $u = User::factory()->create();
     $u->assignRole(Role::NhanVien->value);
+    // Diện phải nộp báo cáo đòi đã từng được giao việc — thiếu dòng này
+    // thì test dưới xanh vì lệnh không nhắc ai, tức là xanh vì lý do sai.
+    coViecDuocGiao($u);
 
     coGioLam($u, '2026-08-12', 300);
 

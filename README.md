@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**721 test xanh** (4787 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**728 test xanh** (4804 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -44,7 +44,7 @@
 | **Giao diện làm lại** — nền trung tính có chiều sâu, icon điều hướng, avatar màu theo tên | ✅ Mục [1.7](#17-giao-diện--đã-xong) |
 | **Mã OTP gửi qua hàng đợi** — đăng nhập từ ~4,3 giây xuống ~0,5 giây | ✅ Mục [1.2b](#12b-xác-thực-hai-lớp-otp--đã-xong) |
 | **Presigned URL cho tệp đính kèm** — chọn kiểu URL theo ổ đĩa giữ tệp | ✅ [Đường dẫn tệp đính kèm](#đường-dẫn-tệp-đính-kèm-và-cloudflare-r2) |
-| **Nhắc nộp báo cáo 17h30** — chỉ nhắc người hôm nay thật sự có giờ làm | ✅ [Đợt 2](#nhắc-nộp-báo-cáo-cuối-ngày) |
+| **Nhắc nộp báo cáo 17h30** — theo lịch làm việc, không theo giờ công đo được | ✅ [Đợt 2](#nhắc-nộp-báo-cáo-cuối-ngày) |
 | **Đối chiếu giờ công với báo cáo ngày** — bốn tình huống có tên, chỉ một cần người nhìn | ✅ [Đợt 3](#đối-chiếu-giờ-công-với-báo-cáo-ngày) |
 | **Health check hạ tầng** — `GET /api/v1/health`, ba mức ok/degraded/down | ✅ [Kiểm tra tình trạng hạ tầng](#kiểm-tra-tình-trạng-hạ-tầng) |
 
@@ -2110,7 +2110,7 @@ Thêm **28 test** trong `tests/Feature/Http/Auth/EmployeeEditTest.php`.
 - [x] Đọc và nhận xét, có thông báo khi nhận xét thật
 - [x] Nối vào chấm công: cờ `has_report` trên bảng công tháng + trạng thái báo cáo trong chi tiết ngày
 - [ ] **Ảnh minh chứng** — công ty chọn chờ Cloudflare R2 (mục 1.10) rồi mới bật
-- [x] **Nhắc lúc 17h30 nếu chưa nộp** — `php artisan reports:remind`, chạy tự động ngày làm việc. Xem [Nhắc nộp báo cáo](#nhắc-nộp-báo-cáo-cuối-ngày)
+- [x] **Nhắc lúc 17h30 nếu chưa nộp** — `php artisan reports:remind`, chạy tự động ngày làm việc. Nhắc theo **lịch làm việc** chứ không theo giờ công đo được, nên người đi gặp khách hay họp cả ngày không còn bị bỏ sót. Xem [Nhắc nộp báo cáo](#nhắc-nộp-báo-cáo-cuối-ngày)
 - [ ] **Tích hợp Zalo OA hoặc Telegram** cho thông báo — chờ biết công ty có Zalo OA không (câu hỏi mở số 2)
 
 #### Nộp bù được bao nhiêu ngày
@@ -2144,15 +2144,50 @@ php artisan reports:remind --dry-run          # chỉ liệt kê, không gửi
 
 Chạy tự động **17h30 các ngày làm việc** (`REPORT_REMINDER_AT`, giờ Việt Nam). Tắt bằng `REPORT_REMINDER_ENABLED=false`.
 
-##### Chỉ nhắc người thật sự có giờ làm hôm nay
+##### Nghĩa vụ báo cáo đến từ LỊCH LÀM VIỆC, không đến từ phép đo
 
-Đây là quyết định quan trọng nhất của phần này. Nhắc toàn bộ nhân sự thì người nghỉ phép, nghỉ ốm, đi công tác đều nhận — và **chỉ cần vài lần như thế là cả công ty coi thông báo của hệ thống là tiếng ồn**, kể cả loại quan trọng.
+Bản đầu chỉ nhắc người **có giờ làm đo được trên hệ thống**. Cách đó bỏ sót đúng nhóm cần nhắc nhất: người đi gặp khách, đi họp với đối tác, hướng dẫn khách vận hành website. Họ không thể treo trình duyệt để có giờ, nhưng vẫn phải báo cáo — và thường là báo cáo đáng đọc nhất trong ngày.
 
-Đánh đổi đã biết và chấp nhận có chủ ý: người làm việc **ngoài hệ thống** cả ngày sẽ không có giờ nên **không được nhắc**, dù họ vẫn cần báo cáo. Nhắc nhầm gây hại nhiều hơn nhắc sót, và bảng đối chiếu ở trang Chấm công vẫn hiện ngày trống cho quản lý thấy. Có quỹ phép ở đợt 4 rồi thì mở rộng được — lúc đó mới phân biệt được "không làm" với "nghỉ có phép".
+Đó là **cùng một lỗi mà miền Attendance đã sửa một lần rồi**: lấy một dấu vết kỹ thuật làm đại diện cho một sự thật nghiệp vụ. Chấm công từng đo "thời gian có thao tác trên Explus" rồi bỏ vì nó đo sai người. Ở đây cũng vậy — giờ công trả lời câu hỏi *làm việc thế nào*, còn nghĩa vụ báo cáo là câu hỏi *hôm nay có phải ngày làm việc của người này không*. Hai câu hỏi khác nhau, và câu thứ hai không đọc được từ nhịp tim trình duyệt.
+
+Giờ công **không còn tham gia** vào việc quyết định ai bị nhắc. Nó chỉ còn dùng để chọn câu chữ.
+
+**Diện phải nộp báo cáo** — thoả tất cả:
+
+| Điều kiện | Vì sao |
+|---|---|
+| Tài khoản đang hoạt động | |
+| `joined_at` đã tới | Chưa đi làm thì chưa có gì để báo cáo. Để trống nghĩa là **vẫn tính** — nhân sự nhập từ CSV có thể thiếu cột này, và một luật im lặng ngừng nhắc cả nhóm đó thì không ai phát hiện ra |
+| Đã từng được giao ít nhất một task | Phân biệt người đã thật sự bắt đầu làm việc với người vừa được tạo tài khoản |
+| Không có đơn nghỉ đã duyệt | |
+| Chưa nộp, chưa được nhắc | |
+| Không phải ngày lễ | |
+
+##### "ĐÃ TỪNG được giao việc", không phải "hôm nay có task"
+
+Ràng buộc theo "hôm nay có task" nghe hợp lý hơn nhưng hỏng ở ba chỗ: người đi gặp khách mà việc đó không được tạo thành task sẽ bị bỏ sót — **đúng lỗi mà bản này sinh ra để sửa**; người vừa đóng hết task và đang chờ giao tiếp cũng bị bỏ sót; và tệ nhất là nếu quản lý lười tạo task thì lời nhắc **tự tắt dần mà không có gì báo**.
+
+Vế "đã từng" chỉ làm đúng một việc: phân biệt người đã bắt đầu làm việc với người mới có tài khoản. Nó không suy đoán hôm nay ai bận gì — và không suy đoán thì không suy đoán sai được. Dùng `withTrashed()`: task bị xoá sau đó không làm cho người ta chưa từng đi làm.
+
+##### Ngày lễ phải kiểm tường minh kể từ bản này
+
+Trước đây không cần: điều kiện "phải có giờ làm" tự nó đã lọc ngày lễ, vì cả công ty nghỉ thì không ai có giờ. Bỏ điều kiện đó là **mất luôn lá chắn ấy** — hậu quả là nhắc cả công ty nộp báo cáo vào mùng 1 Tết.
+
+Đúng loại hệ quả không nhìn thấy khi đọc diff: dòng bị xoá nằm ở một chỗ, còn thứ nó vô tình bảo vệ nằm ở chỗ khác. Có test riêng cho cả `date` lẫn `observed_date`.
+
+##### Không bao giờ nói "0 phút"
+
+Người nhận giờ có thể là người hệ thống không đo được phút nào. Với họ, câu *"Hệ thống ghi nhận 0 phút làm việc hôm nay"* đọc như một lời buộc tội cho đúng cái ngày họ làm việc vất vả nhất. Nên thông báo có hai biến thể, và biến thể không-có-giờ nói thẳng rằng làm việc bên ngoài vẫn cần báo cáo.
+
+Đây là loại lỗi không có gì báo: thông báo vẫn gửi, vẫn đúng người, chỉ là câu chữ xúc phạm người đọc. Có test khoá.
+
+##### Đánh đổi còn lại, nói thẳng
+
+Người vắng mặt **không phép** vẫn bị nhắc. Không có tín hiệu nào phân biệt được "nghỉ không phép" với "đi làm ở ngoài", nên phải chọn một phía để sai: bỏ sót một người đi làm thật thì mất hẳn một báo cáo, còn nhắc dư một người nghỉ không phép thì họ nhận một dòng nhắc — mà họ đang nợ công ty một trong hai thứ, báo cáo hoặc đơn nghỉ.
 
 ##### Là lệnh Artisan chứ không phải Job, vì lý do kiến trúc
 
-Việc này đọc cả miền Attendance (giờ làm) lẫn miền Report (báo cáo), mà hai miền nghiệp vụ **không được gọi nhau** — deptrac chặn. Tầng `Console` là một trong hai chỗ được phép biết nhiều miền cùng lúc (chỗ kia là `Http`). Đặt vào `Domain/Report/Jobs` là vi phạm ngay từ dòng `use` đầu tiên.
+Việc này đọc bốn miền cùng lúc — Attendance, Leave, Task, Report — mà các miền nghiệp vụ **không được gọi nhau**, deptrac chặn. Tầng `Console` là một trong hai chỗ được phép biết nhiều miền cùng lúc (chỗ kia là `Http`). Đặt vào `Domain/Report/Jobs` là vi phạm ngay từ dòng `use` đầu tiên.
 
 Lệnh không gửi email đồng bộ: `PreferenceAwareNotification` đã là `ShouldQueue` nên mỗi thông báo chỉ được đẩy vào hàng đợi.
 

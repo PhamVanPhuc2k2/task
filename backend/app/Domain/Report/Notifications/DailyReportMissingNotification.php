@@ -12,13 +12,24 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Cuối ngày mà chưa nộp báo cáo.
  *
- * **Chỉ gửi cho người hôm nay thật sự có giờ làm.** Nhắc cả những người nghỉ
- * phép hay nghỉ ốm là cách nhanh nhất để mọi người coi thông báo của hệ thống
- * là tiếng ồn — và khi đó thông báo thật sự quan trọng cũng trôi qua.
+ * Gửi cho người **thuộc diện phải nộp báo cáo hôm nay** mà chưa nộp — xem
+ * `RemindMissingReportsCommand` để biết diện đó gồm những ai. Người có đơn nghỉ
+ * đã duyệt và ngày lễ đều đã bị loại từ trước khi tới đây.
  *
  * Câu chữ cố ý không mang giọng khiển trách. Đại đa số trường hợp chỉ là quên,
  * và một dòng nhắc gọn thì người ta mở lên viết; một dòng trách móc thì người
  * ta viết cho xong.
+ *
+ * ## Hai câu chữ, và vì sao KHÔNG bao giờ nói "0 phút"
+ *
+ * Từ khi lời nhắc không còn dựa vào giờ công, người nhận có thể là người hệ
+ * thống không đo được phút nào — đi gặp khách, họp với đối tác, hướng dẫn khách
+ * vận hành. Với họ, câu "Hệ thống ghi nhận 0 phút làm việc hôm nay" đọc như một
+ * lời buộc tội cho đúng cái ngày họ làm việc vất vả nhất.
+ *
+ * Nên có hai biến thể. Có giờ thì nói ra con số, vì nó giúp người đọc nhớ lại
+ * hôm nay mình đã làm gì. Không có giờ thì không nhắc tới giờ một chữ nào, và
+ * nói thẳng rằng làm việc bên ngoài vẫn cần báo cáo.
  */
 final class DailyReportMissingNotification extends PreferenceAwareNotification
 {
@@ -41,6 +52,12 @@ final class DailyReportMissingNotification extends PreferenceAwareNotification
 
     public function message(User $notifiable): string
     {
+        if ($this->soPhut <= 0) {
+            return 'Hôm nay chưa thấy báo cáo của bạn. Viết vài dòng về việc đã '
+                .'làm — kể cả khi hôm nay bạn làm việc bên ngoài — để quản lý '
+                .'nắm được tiến độ.';
+        }
+
         $gio = intdiv($this->soPhut, 60);
         $phut = $this->soPhut % 60;
 
