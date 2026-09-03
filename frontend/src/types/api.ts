@@ -1854,9 +1854,13 @@ export interface components {
                 shift_lunch_start?: string;
                 shift_lunch_end?: string;
                 shift_end?: string;
+                shift_half_end?: string;
                 shift_grace_minutes?: number;
                 min_worked_minutes?: number;
                 max_daily_minutes?: number;
+                max_daily_minutes_half?: number;
+                work_days_full?: string;
+                work_days_half?: string;
                 report_reminder_enabled?: boolean;
                 report_reminder_at?: string;
                 report_backfill_days?: number;
@@ -2166,6 +2170,7 @@ export interface operations {
                                 start: string;
                                 end: string;
                             };
+                            is_working_day: boolean;
                             shift: {
                                 morning_start: string;
                                 lunch_start: string;

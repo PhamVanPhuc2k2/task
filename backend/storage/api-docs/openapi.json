@@ -305,6 +305,9 @@
                                                         "end"
                                                     ]
                                                 },
+                                                "is_working_day": {
+                                                    "type": "boolean"
+                                                },
                                                 "shift": {
                                                     "type": "object",
                                                     "properties": {
@@ -456,6 +459,7 @@
                                             "required": [
                                                 "date",
                                                 "range",
+                                                "is_working_day",
                                                 "shift",
                                                 "rows"
                                             ]
@@ -9950,6 +9954,9 @@
                             "shift_end": {
                                 "type": "string"
                             },
+                            "shift_half_end": {
+                                "type": "string"
+                            },
                             "shift_grace_minutes": {
                                 "type": "integer",
                                 "minimum": 0,
@@ -9963,6 +9970,21 @@
                             "max_daily_minutes": {
                                 "type": "integer",
                                 "minimum": 0
+                            },
+                            "max_daily_minutes_half": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 1440
+                            },
+                            "work_days_full": {
+                                "type": "string",
+                                "pattern": "^$|^[0-6](,[0-6])*$",
+                                "maxLength": 20
+                            },
+                            "work_days_half": {
+                                "type": "string",
+                                "pattern": "^$|^[0-6](,[0-6])*$",
+                                "maxLength": 20
                             },
                             "report_reminder_enabled": {
                                 "type": "boolean"

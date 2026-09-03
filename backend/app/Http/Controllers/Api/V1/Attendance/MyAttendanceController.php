@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Attendance;
 use App\Domain\Attendance\Actions\SummariseAttendanceAction;
 use App\Domain\Attendance\Data\DailyAttendance;
 use App\Domain\Attendance\Data\WorkShift;
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Identity\Models\User;
 use App\Http\Concerns\ReconcilesWithDailyReports;
 use App\Http\Concerns\ResolvesApprovedLateArrivals;
@@ -60,7 +61,7 @@ final class MyAttendanceController
         // leaveOnlyDays(). Chạy SAU reportOnlyDays để không sinh ô trùng.
         $ngay = $ngay->values()->concat($this->leaveOnlyDays($ngayNghi, $actor->id, $coO()));
 
-        $ca = WorkShift::fromConfig();
+        $tuan = WorkWeek::fromConfig();
         $o = [];
         $thieuBaoCao = 0;
 
@@ -82,8 +83,8 @@ final class MyAttendanceController
                 $d,
                 $this->hasSubmittedReport($daBaoCao, $actor->id, $d->workDate),
                 $doiChieu,
-                $ca,
-                $this->isLateExcused($diMuon, $ca, $actor->id, $d->workDate, $d->firstSeenAt),
+                $tuan->shiftFor($d->workDate),
+                $this->isLateExcused($diMuon, $tuan->shiftFor($d->workDate), $actor->id, $d->workDate, $d->firstSeenAt),
             );
         }
 
@@ -107,9 +108,14 @@ final class MyAttendanceController
     }
 
     /**
+     * @param  WorkShift|null  $ca  Ca của đúng ngày đó. `null` = ngày nghỉ, và
+     *                              ngày nghỉ thì KHÔNG tính đi muộn: người làm
+     *                              chủ nhật vẫn được tính đủ giờ, nhưng so giờ
+     *                              vào của họ với một ca không tồn tại thì ra
+     *                              "muộn mấy tiếng" — vô nghĩa và gây hiểu lầm.
      * @return array<string, mixed>
      */
-    private function veO(DailyAttendance $d, bool $coBaoCao, ReportMatch $doiChieu, WorkShift $ca, bool $duocMien): array
+    private function veO(DailyAttendance $d, bool $coBaoCao, ReportMatch $doiChieu, ?WorkShift $ca, bool $duocMien): array
     {
         return [
             'minutes' => $d->effectiveMinutes(),
@@ -125,7 +131,7 @@ final class MyAttendanceController
             'has_report' => $coBaoCao,
             'report_match' => $doiChieu->value,
             'report_match_label' => $doiChieu->label(),
-            'late_minutes' => $ca->lateMinutes($d->firstSeenAt),
+            'late_minutes' => $ca?->lateMinutes($d->firstSeenAt) ?? 0,
             'late_excused' => $duocMien,
         ];
     }

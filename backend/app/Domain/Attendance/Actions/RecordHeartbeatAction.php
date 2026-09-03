@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Attendance\Actions;
 
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Attendance\Models\WorkSession;
 use App\Domain\Identity\Models\User;
 use App\Support\Time\WorkDate;
@@ -101,10 +102,15 @@ final class RecordHeartbeatAction
      *
      * Chỉ đếm phiên `heartbeat`. Quãng do người quản lý nhập tay không nên bị
      * một cái trần tự động chặn: nó đã đi qua một con người rồi.
+     *
+     * **Trần phụ thuộc ngày.** Ngày nửa buổi có trần riêng, thấp hơn: trần 600
+     * phút áp lên một buổi sáng 225 phút nghĩa là tab quên đóng chiều thứ bảy
+     * vẫn ghi thẳng 10 tiếng. Ngày nghỉ cũng dùng trần thấp đó — xem
+     * `WorkWeek::maxDailyMinutesFor()`.
      */
     private function chamTran(User $user, string $homNay): bool
     {
-        $tran = (int) config('attendance.max_daily_minutes');
+        $tran = WorkWeek::fromConfig()->maxDailyMinutesFor($homNay);
 
         if ($tran <= 0) {
             return false;

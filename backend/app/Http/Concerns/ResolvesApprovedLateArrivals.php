@@ -58,11 +58,18 @@ trait ResolvesApprovedLateArrivals
      */
     protected function isLateExcused(
         array $daDuyet,
-        WorkShift $ca,
+        ?WorkShift $ca,
         int $userId,
         string $ngay,
         ?string $firstSeenAtUtc,
     ): bool {
+        // Ngày nghỉ không có ca, nên không có cái gì để miễn. Trả false chứ
+        // không true: "được miễn đi muộn" trên một ngày không tính đi muộn là
+        // một nhãn vô nghĩa hiện lên bảng công.
+        if ($ca === null) {
+            return false;
+        }
+
         $gioHen = $daDuyet[$userId.':'.$ngay] ?? null;
 
         if ($gioHen === null) {

@@ -22,12 +22,25 @@ use Illuminate\Support\Facades\Config;
  * đi**: tổng số phút vẫn là thứ chính để đối chiếu với báo cáo ngày. Giờ vào
  * làm là một cột thông tin thêm bên cạnh, không phải thứ thay thế.
  *
+ * ## Đây là ca của MỘT NGÀY, không phải của cả tuần
+ *
+ * Từ khi công ty làm sáng thứ bảy, mỗi ngày có thể có ca khác nhau. Câu hỏi
+ * "ngày này có ca không, và là ca nào" thuộc về `WorkWeek`; lớp này chỉ giữ
+ * bốn mốc giờ của đúng một ngày.
+ *
+ * `fromConfig()` trả về ca của **ngày làm cả ngày**. Đừng dùng nó để tính đi
+ * muộn cho một ngày cụ thể — đi qua `WorkWeek::shiftFor()`, vì chỉ nó biết hôm
+ * đó có phải ngày nghỉ hay không. Dùng thẳng `fromConfig()` là đúng ở những chỗ
+ * chỉ cần mốc giờ vào làm, ví dụ đơn xin đi muộn: giờ vào làm giống nhau ở mọi
+ * ngày có ca.
+ *
  * ## Vì sao là config chứ chưa phải bảng
  *
- * Cả công ty đang chung một ca. Dựng sẵn bảng `work_shifts` với ca theo phòng,
- * theo người, có hiệu lực từ ngày nào — trong khi chỉ có đúng một ca — là dựng
- * một cỗ máy để giải bài toán chưa tồn tại. Khi nào có phòng thật sự làm giờ
- * khác thì đổi, và `fromConfig()` là chỗ duy nhất phải sửa.
+ * Cả công ty vẫn đang chung một lịch tuần. Dựng sẵn bảng `work_shifts` với ca
+ * theo phòng, theo người, có hiệu lực từ ngày nào — trong khi chỉ có đúng một
+ * lịch — là dựng một cỗ máy để giải bài toán chưa tồn tại. Khi nào có phòng
+ * thật sự làm giờ khác thì đổi, và `WorkWeek::fromConfig()` là chỗ duy nhất
+ * phải sửa.
  */
 final readonly class WorkShift
 {
@@ -55,6 +68,26 @@ final readonly class WorkShift
             lunchEnd: Config::string('attendance.shift.lunch_end'),
             end: Config::string('attendance.shift.end'),
             graceMinutes: Config::integer('attendance.shift.grace_minutes'),
+        );
+    }
+
+    /**
+     * Ca của một ngày nửa buổi: vào lúc `morning_start`, tan lúc `half_end`.
+     *
+     * Ba mốc còn lại đều đặt bằng giờ tan, và đó không phải mẹo vặt: ngày nửa
+     * buổi tan TRƯỚC giờ nghỉ trưa nên không có nghỉ trưa nào để khai. Nhờ cách
+     * đặt này, `expectedMinutes()` ra đúng số phút buổi sáng — sáng cộng chiều,
+     * mà chiều bằng không — nên `WorkShift` không cần thêm một nhánh `if` nào,
+     * và mọi chỗ đang dùng nó không phải biết ngày nửa buổi tồn tại.
+     */
+    public static function halfDay(string $morningStart, string $end, int $graceMinutes): self
+    {
+        return new self(
+            morningStart: $morningStart,
+            lunchStart: $end,
+            lunchEnd: $end,
+            end: $end,
+            graceMinutes: $graceMinutes,
         );
     }
 

@@ -33,10 +33,18 @@ import {
  * và cũng khớp với cách người ta nghĩ về ngày làm việc.
  */
 export function DayTimeline({ data }: { data: DayTimelineData }) {
-  const trua = {
-    tu: toMinutes(data.shift.lunch_start),
-    den: toMinutes(data.shift.lunch_end),
-  };
+  /*
+  | Ngày nghỉ không có nghỉ trưa để vẽ — dải rộng bằng không thì không hiện gì.
+  |
+  | Ngày làm nửa buổi cũng tự ra như vậy mà không cần luật riêng: backend gửi
+  | lunch_start = lunch_end = giờ tan, vì ca nửa buổi tan trước giờ nghỉ trưa.
+  */
+  const trua = data.is_working_day
+    ? {
+        tu: toMinutes(data.shift.lunch_start),
+        den: toMinutes(data.shift.lunch_end),
+      }
+    : { tu: 0, den: 0 };
 
   const dau = toMinutes(data.range.start);
   const cuoi = toMinutes(data.range.end);

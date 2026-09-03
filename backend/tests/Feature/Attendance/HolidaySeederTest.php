@@ -61,7 +61,9 @@ it('nhảy qua CẢ hai ngày cuối tuần chứ không chỉ một', function 
     | ra chủ nhật — vẫn là ngày nghỉ, và người lao động mất một ngày nghỉ bù mà
     | bảng công không nói gì.
     */
-    config()->set('attendance.weekly_rest_days', [0, 6]);
+    // Công ty nghỉ cả thứ bảy: không ngày nào làm nửa buổi.
+    config()->set('attendance.work_days_full', '1,2,3,4,5');
+    config()->set('attendance.work_days_half', '');
 
     Holiday::query()->delete();
     $this->seed(HolidaySeeder::class);
@@ -89,7 +91,8 @@ it('chạy lại không nhân đôi dữ liệu', function (): void {
 });
 
 it('công ty làm 6 ngày một tuần thì chỉ nhảy qua chủ nhật', function (): void {
-    config()->set('attendance.weekly_rest_days', [0]);
+    config()->set('attendance.work_days_full', '1,2,3,4,5,6');
+    config()->set('attendance.work_days_half', '');
 
     Holiday::query()->delete();
     $this->seed(HolidaySeeder::class);
@@ -101,5 +104,37 @@ it('công ty làm 6 ngày một tuần thì chỉ nhảy qua chủ nhật', func
     // Ngày lễ rơi thứ bảy thì công ty 6 ngày vẫn đi làm, không nghỉ bù.
     foreach (Holiday::query()->get() as $h) {
         expect(CarbonImmutable::parse($h->observed_date)->dayOfWeek)->not->toBe(0);
+    }
+});
+
+it('ngày làm nửa buổi KHÔNG phải ngày nghỉ, nên không sinh nghỉ bù', function (): void {
+    /*
+    | Đây là lịch công ty đang dùng từ tháng 9/2026: thứ bảy làm buổi sáng.
+    |
+    | Lễ rơi vào thứ bảy thì người lao động đã được nghỉ đúng một buổi đáng lẽ
+    | phải làm — không sinh nghỉ bù. Coi ngày nửa buổi là ngày nghỉ thì mỗi lễ
+    | rơi thứ bảy lại đẻ thêm một ngày nghỉ mà luật không cho.
+    */
+    config()->set('attendance.work_days_full', '1,2,3,4,5');
+    config()->set('attendance.work_days_half', '6');
+
+    Holiday::query()->delete();
+    $this->seed(HolidaySeeder::class);
+
+    foreach (Holiday::query()->get() as $h) {
+        // Chỉ chủ nhật mới bị đẩy. Thứ bảy giữ nguyên vì vẫn là ngày làm việc.
+        expect(CarbonImmutable::parse($h->observed_date)->dayOfWeek)->not->toBe(0);
+    }
+
+    // Và ít nhất một ngày lễ phải THẬT SỰ rơi vào thứ bảy mà vẫn đứng yên,
+    // nếu không thì test trên xanh mà chẳng kiểm được gì.
+    $thuBay = Holiday::query()->get()->filter(
+        fn (Holiday $h): bool => CarbonImmutable::parse($h->date)->dayOfWeek === 6,
+    );
+
+    expect($thuBay)->not->toBeEmpty();
+
+    foreach ($thuBay as $h) {
+        expect($h->observed_date)->toBe($h->date);
     }
 });

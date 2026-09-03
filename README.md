@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**728 test xanh** (4804 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**748 test xanh** (4893 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -2484,6 +2484,8 @@ Vẫn có mốc: không có thì nộp được đơn nghỉ cho năm 2020, và 
 
 **8h15–12h, 13h30–17h30** — 465 phút một ngày. Công ty chốt tháng 8/2026.
 
+Từ tháng 9/2026 lịch tuần có thêm **thứ bảy làm buổi sáng** — xem [Lịch làm việc trong tuần](#lịch-làm-việc-trong-tuần--đã-xong).
+
 - [x] `attendance.shift` — giờ ca trong config, kèm `grace_minutes` (mặc định 0)
 - [x] `WorkShift` — quy UTC sang giờ Việt Nam rồi mới so, không so chuỗi thẳng
 - [x] Bảng công có `late_minutes` và `late_excused`, hiện bằng chấm ở góc trái ô
@@ -2533,7 +2535,67 @@ Có một test khoá riêng đúng tình huống này. Helper test `coGioLamTu()
 
 #### Chưa làm
 
-Không có **về sớm**, không có **muộn buổi chiều** (sau giờ nghỉ trưa), không có ca theo phòng ban. Bảng `work_shifts` vẫn hoãn: cả công ty đang chung một ca, và dựng sẵn cơ chế ca theo phòng / theo người / có hiệu lực từ ngày nào là dựng một cỗ máy cho bài toán chưa tồn tại. Khi nào có phòng thật sự làm giờ khác thì `WorkShift::fromConfig()` là chỗ duy nhất phải sửa.
+Không có **về sớm**, không có **muộn buổi chiều** (sau giờ nghỉ trưa), không có ca theo phòng ban. Bảng `work_shifts` vẫn hoãn: cả công ty đang chung một lịch tuần, và dựng sẵn cơ chế ca theo phòng / theo người / có hiệu lực từ ngày nào là dựng một cỗ máy cho bài toán chưa tồn tại. Khi nào có phòng thật sự làm giờ khác thì `WorkWeek::fromConfig()` là chỗ duy nhất phải sửa.
+
+---
+
+### Lịch làm việc trong tuần ✅ Đã xong
+
+Công ty chuyển sang **làm buổi sáng thứ bảy** từ tháng 9/2026. Trước thay đổi này, hệ thống không có khái niệm "ngày nào là ngày làm việc" — một ca duy nhất áp cho cả bảy ngày.
+
+#### Hệ quả nếu không sửa gì: bảng công đầy dấu đỏ cho người làm đúng giờ
+
+`lateMinutes()` không hề kiểm hôm đó là thứ mấy. Người được phân làm chiều thứ bảy, bắt đầu 13h30, bị tính **muộn 315 phút** — so với một ca 8h15 mà hôm đó họ không hề phải theo. Dấu đi muộn không tự biến mất; nó chỉ đổi màu khi có đơn xin đi muộn được duyệt.
+
+Vài tuần như vậy là cột đi muộn mất hết ý nghĩa, và người ta thôi đọc nó. Đây là kiểu hỏng tệ hơn cả hỏng hẳn: hệ thống vẫn chạy, vẫn cho ra số, chỉ là số đó nói sai.
+
+#### `WorkWeek` — lớp trả lời câu hỏi đứng trước `WorkShift`
+
+`WorkShift` vẫn là ca của **một ngày**. `WorkWeek` trả lời câu hỏi trước đó: ngày này có ca không, và là ca nào.
+
+| | |
+|---|---|
+| Thứ hai → thứ sáu | 08:15–12:00 · 13:30–17:30 — 465 phút |
+| Thứ bảy | 08:15–12:00 — 225 phút, không nghỉ trưa |
+| Chủ nhật | Không có ca |
+
+`shiftFor()` trả `null` cho ngày nghỉ chứ không trả một ca rỗng: chỗ gọi **buộc phải** nghĩ tới trường hợp đó thay vì vô tình tính đi muộn so với một ca không tồn tại. Đó đúng là lỗi lớp này sinh ra để chặn.
+
+#### Ngày nghỉ vẫn KHÔNG cắt giờ của ai
+
+Ranh giới này giữ nguyên từ đầu. Người làm chủ nhật vẫn được tính đủ số phút — công ty làm remote với giờ giấc linh hoạt. Lịch tuần chỉ quyết định ba thứ: hôm đó có tính đi muộn không, có nhắc nộp báo cáo không, và ngày lễ trùng ngày nghỉ thì nghỉ bù vào đâu.
+
+#### Ca nửa buổi không cần thêm một nhánh `if` nào
+
+`WorkShift::halfDay()` đặt cả ba mốc còn lại bằng giờ tan. Ngày nửa buổi tan **trước** giờ nghỉ trưa nên không có nghỉ trưa để khai, và nhờ cách đặt này `expectedMinutes()` — sáng cộng chiều, mà chiều bằng không — ra đúng 225 phút. Mọi chỗ đang dùng `WorkShift` không phải biết ngày nửa buổi tồn tại.
+
+Giao diện cũng hưởng theo: dòng thời gian vẽ dải nghỉ trưa từ `lunch_start` tới `lunch_end`, hai mốc bằng nhau thì dải rộng bằng không và không hiện gì.
+
+#### Trần giờ riêng cho ngày nửa buổi
+
+360 phút thay vì 600. Trần ngày thường áp lên một buổi sáng 225 phút nghĩa là cái tab quên đóng chiều thứ bảy vẫn ghi thẳng 10 tiếng công — đúng con số làm người ta hết tin bảng công. Ngày nghỉ dùng chung trần thấp đó: bỏ trần hẳn thì tab quên đóng tối thứ bảy chạy suốt chủ nhật ghi hai mươi bốn tiếng.
+
+#### Lịch tuần chỉ có MỘT nguồn sự thật
+
+`routes/console.php` từng khai `->weekdays()` cho lịch nhắc báo cáo — tức là một bản sao thứ hai của lịch làm việc công ty, nằm cứng trong mã. Đổi chính sách sang làm thứ bảy mà quên bản sao đó thì lời nhắc thứ bảy **im lặng không bao giờ bắn**: không lỗi, không log, không ai biết.
+
+Giờ lệnh chạy mỗi ngày và tự hỏi `WorkWeek`. Cùng lý do, `HolidaySeeder` bỏ hẳn `weekly_rest_days` và suy ngày nghỉ từ chính lịch tuần — hai danh sách song song thì đổi một bên quên bên kia, và hậu quả là ngày nghỉ bù rơi vào đúng ngày công ty đang làm việc.
+
+#### Ngày nửa buổi không phải ngày nghỉ
+
+Quyết định này chảy thẳng vào khoản 3 Điều 112: lễ rơi vào thứ bảy làm việc thì **không** sinh nghỉ bù, vì người lao động đã được nghỉ đúng một buổi đáng lẽ phải làm. Coi ngày nửa buổi là ngày nghỉ thì mỗi lễ rơi thứ bảy lại đẻ thêm một ngày nghỉ mà luật không cho.
+
+#### Giám đốc tự đổi được, và bảng bấm chứ không phải ô chữ
+
+Cài đặt trang → **Lịch làm việc trong tuần**: mỗi thứ chọn một trong ba — Nghỉ / Cả ngày / Nửa buổi.
+
+Backend lưu hai danh sách (`work_days_full`, `work_days_half`) nhưng người dùng nghĩ theo từng ngày. Để form tự dựng như các cài đặt khác thì giám đốc nhận hai ô chữ và phải tự biết `1` là thứ hai, `0` là chủ nhật — và ô chữ đó mời đúng hai lỗi: gõ trùng một ngày vào cả hai ô, hoặc xoá sạch cả hai. Bảng bấm làm cả hai trở nên bất khả, và validate vẫn chặn ở tầng dưới vì API gọi thẳng được.
+
+#### Hai cái bẫy gặp khi làm
+
+**`ConvertEmptyStringsToNull` nuốt mất "không có ngày nửa buổi nào".** Middleware mặc định của Laravel biến chuỗi rỗng thành `null`, mà bỏ trống ô đó chính là cách nói "công ty không làm nửa buổi ngày nào". Hỏng ở hai tầng cùng lúc: luật `string` từ chối `null`, và nếu lọt qua thì `apDungVaoConfig()` **bỏ qua** giá trị null — config giữ nguyên giá trị CŨ. Giám đốc bấm lưu, thấy báo thành công, và thứ bảy vẫn là ngày làm việc. Đã vá bằng `prepareForValidation()`.
+
+**Bỏ điều kiện giờ công khỏi lệnh nhắc là mất lá chắn ngày lễ.** Xem [Nhắc nộp báo cáo](#nhắc-nộp-báo-cáo-cuối-ngày) — cùng một khuôn mẫu: một dòng bị xoá ở đây, thứ nó vô tình bảo vệ nằm ở chỗ khác.
 
 ---
 

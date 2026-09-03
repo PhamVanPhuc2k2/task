@@ -280,3 +280,69 @@ it('không đặt được đường dẫn ảnh qua form cài đặt', function
     expect(app(SiteSettings::class)->get(SettingKey::LogoPath))->toBeNull()
         ->and(app(SiteSettings::class)->get(SettingKey::IconPath))->toBeNull();
 });
+
+/*
+|--------------------------------------------------------------------------
+| Lịch làm việc trong tuần
+|--------------------------------------------------------------------------
+|
+| Cả hai luật dưới đây chặn một cách hỏng IM LẶNG — hệ thống vẫn chạy, vẫn xanh,
+| chỉ là làm sai. Đó là lý do chúng nằm ở tầng validate chứ không phải ở chú
+| thích.
+|
+*/
+
+it('giám đốc đổi được lịch tuần', function (): void {
+    $this->actingAs(giamDoc())
+        ->putJson('/api/v1/settings', [
+            'values' => [
+                'work_days_full' => '1,2,3,4,5,6',
+                'work_days_half' => '',
+            ],
+        ])
+        ->assertOk();
+
+    $s = app(SiteSettings::class);
+
+    expect($s->get(SettingKey::WorkDaysFull))->toBe('1,2,3,4,5,6')
+        ->and($s->get(SettingKey::WorkDaysHalf))->toBe('');
+});
+
+it('từ chối một ngày vừa làm cả ngày vừa làm nửa buổi', function (): void {
+    // WorkWeek lấy nhánh "cả ngày" trước, nên cấu hình này chạy được — người
+    // đặt tưởng mình khai nửa buổi và chỉ biết khi nhân viên thắc mắc sao thứ
+    // bảy vẫn tính muộn tới 17h30.
+    $this->actingAs(giamDoc())
+        ->putJson('/api/v1/settings', [
+            'values' => [
+                'work_days_full' => '1,2,3,4,5,6',
+                'work_days_half' => '6',
+            ],
+        ])
+        ->assertJsonValidationErrors('values.work_days_half');
+});
+
+it('từ chối tuần không có ngày làm việc nào', function (): void {
+    // Cả công ty không bao giờ bị tính đi muộn, không bao giờ được nhắc nộp báo
+    // cáo, và mọi ngày đều là ngày nghỉ. Hệ thống vẫn xanh, chỉ là ngừng làm
+    // việc của nó.
+    $this->actingAs(giamDoc())
+        ->putJson('/api/v1/settings', [
+            'values' => ['work_days_full' => '', 'work_days_half' => ''],
+        ])
+        ->assertJsonValidationErrors('values.work_days_full');
+});
+
+it('từ chối thứ không có thật', function (): void {
+    $this->actingAs(giamDoc())
+        ->putJson('/api/v1/settings', ['values' => ['work_days_full' => '1,2,9']])
+        ->assertJsonValidationErrors('values.work_days_full');
+});
+
+it('từ chối giờ tan nửa buổi trước giờ vào làm', function (): void {
+    // Không chặn thì `expectedMinutes()` ra số âm và mọi phép tính sau đó vô
+    // nghĩa, im lặng — cùng họ với ca làm vô lý ở trên.
+    $this->actingAs(giamDoc())
+        ->putJson('/api/v1/settings', ['values' => ['shift_half_end' => '07:00']])
+        ->assertJsonValidationErrors('values.shift_half_end');
+});

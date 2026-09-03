@@ -40,9 +40,13 @@ enum SettingKey: string
     case ShiftLunchStart = 'shift_lunch_start';
     case ShiftLunchEnd = 'shift_lunch_end';
     case ShiftEnd = 'shift_end';
+    case ShiftHalfEnd = 'shift_half_end';
     case ShiftGraceMinutes = 'shift_grace_minutes';
     case MinWorkedMinutes = 'min_worked_minutes';
     case MaxDailyMinutes = 'max_daily_minutes';
+    case MaxDailyMinutesHalf = 'max_daily_minutes_half';
+    case WorkDaysFull = 'work_days_full';
+    case WorkDaysHalf = 'work_days_half';
 
     // ── Báo cáo ngày ─────────────────────────────────────────────────────
     case ReportReminderEnabled = 'report_reminder_enabled';
@@ -65,9 +69,13 @@ enum SettingKey: string
             self::ShiftLunchStart => 'attendance.shift.lunch_start',
             self::ShiftLunchEnd => 'attendance.shift.lunch_end',
             self::ShiftEnd => 'attendance.shift.end',
+            self::ShiftHalfEnd => 'attendance.shift.half_end',
             self::ShiftGraceMinutes => 'attendance.shift.grace_minutes',
             self::MinWorkedMinutes => 'attendance.min_worked_minutes',
             self::MaxDailyMinutes => 'attendance.max_daily_minutes',
+            self::MaxDailyMinutesHalf => 'attendance.max_daily_minutes_half',
+            self::WorkDaysFull => 'attendance.work_days_full',
+            self::WorkDaysHalf => 'attendance.work_days_half',
 
             self::ReportReminderEnabled => 'reports.reminder.enabled',
             self::ReportReminderAt => 'reports.reminder.at',
@@ -85,6 +93,7 @@ enum SettingKey: string
             self::ShiftGraceMinutes,
             self::MinWorkedMinutes,
             self::MaxDailyMinutes,
+            self::MaxDailyMinutesHalf,
             self::ReportBackfillDays,
             self::LeaveBackdateDays,
             self::LeaveFutureDays,
@@ -135,9 +144,13 @@ enum SettingKey: string
             self::ShiftLunchStart => 'Bắt đầu nghỉ trưa',
             self::ShiftLunchEnd => 'Hết nghỉ trưa',
             self::ShiftEnd => 'Giờ tan làm',
+            self::ShiftHalfEnd => 'Giờ tan ngày nửa buổi',
             self::ShiftGraceMinutes => 'Số phút châm chước trước khi tính muộn',
             self::MinWorkedMinutes => 'Số phút tối thiểu để coi là có đi làm',
             self::MaxDailyMinutes => 'Trần giờ công tự động mỗi ngày (phút)',
+            self::MaxDailyMinutesHalf => 'Trần giờ công ngày nửa buổi (phút)',
+            self::WorkDaysFull => 'Ngày làm cả ngày',
+            self::WorkDaysHalf => 'Ngày làm nửa buổi',
 
             self::ReportReminderEnabled => 'Nhắc nộp báo cáo cuối ngày',
             self::ReportReminderAt => 'Giờ gửi nhắc',
