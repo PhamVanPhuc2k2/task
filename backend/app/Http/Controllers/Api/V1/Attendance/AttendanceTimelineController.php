@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Attendance;
 
 use App\Domain\Attendance\Data\DayTimeline;
 use App\Domain\Attendance\Data\WorkShift;
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Attendance\Models\WorkSession;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
@@ -74,7 +75,20 @@ final class AttendanceTimelineController
 
         $theoNguoi = $this->phienTrongNgay($ids, $ngay);
 
-        $ca = WorkShift::fromConfig();
+        /*
+        | Hai biến, và tách chúng ra là có lý do.
+        |
+        | `$caHomDo` là ca THẬT của ngày đang xem — `null` nếu hôm đó nghỉ. Nó
+        | quyết định có tính đi muộn hay không.
+        |
+        | `$ca` chỉ để VẼ: lưới giờ và dải nghỉ trưa vẫn cần một khung tham
+        | chiếu kể cả ngày chủ nhật, nếu không thì mở dòng thời gian một ngày
+        | nghỉ ra sẽ thấy một khung trống không đọc được. Giao diện biết đó
+        | không phải ngày làm việc nhờ cờ `is_working_day`.
+        */
+        $tuan = WorkWeek::fromConfig();
+        $caHomDo = $tuan->shiftFor($ngay);
+        $ca = $caHomDo ?? WorkShift::fromConfig();
         $ngayNghi = $this->approvedLeaveDays($ids, $ngay, $ngay);
         $diMuon = $this->approvedLateArrivals($ids, $ngay, $ngay);
 
@@ -96,7 +110,7 @@ final class AttendanceTimelineController
                 $muonNhat = max($muonNhat, (int) substr($p['end'], 0, 2) + 1);
             }
 
-            $phutMuon = $ca->lateMinutes($dong->firstSeenUtc);
+            $phutMuon = $caHomDo?->lateMinutes($dong->firstSeenUtc) ?? 0;
 
             $hang[] = [
                 'user' => [
@@ -114,7 +128,9 @@ final class AttendanceTimelineController
                 'late_minutes' => $phutMuon,
                 'late_excused' => $this->isLateExcused(
                     $diMuon,
-                    $ca,
+                    // Ca THẬT, không phải ca dùng để vẽ: ngày nghỉ không tính
+                    // đi muộn nên cũng không có gì để miễn.
+                    $caHomDo,
                     $u->id,
                     $ngay,
                     $dong->firstSeenUtc,
@@ -130,6 +146,7 @@ final class AttendanceTimelineController
                     'start' => sprintf('%02d:00', min($somNhat, 23)),
                     'end' => sprintf('%02d:00', min($muonNhat, 24)),
                 ],
+                'is_working_day' => $caHomDo !== null,
                 'shift' => [
                     'morning_start' => $ca->morningStart,
                     'lunch_start' => $ca->lunchStart,

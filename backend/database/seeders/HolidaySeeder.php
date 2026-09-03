@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Attendance\Models\Holiday;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -125,8 +126,13 @@ final class HolidaySeeder extends Seeder
      */
     private function ngayNghiBu(string $ngay): string
     {
-        /** @var list<int> $ngayNghiTuan */
-        $ngayNghiTuan = config()->array('attendance.weekly_rest_days');
+        // Ngày nghỉ suy ra từ LỊCH TUẦN, không khai riêng. Hai danh sách song
+        // song thì đổi một bên quên bên kia, và hậu quả là ngày nghỉ bù rơi vào
+        // đúng ngày công ty đang làm việc.
+        //
+        // Ngày nửa buổi KHÔNG phải ngày nghỉ: lễ rơi vào thứ bảy làm việc thì
+        // không sinh nghỉ bù, vì người ta đã được nghỉ một buổi đáng lẽ phải làm.
+        $ngayNghiTuan = WorkWeek::fromConfig()->restDays();
 
         $moc = CarbonImmutable::parse($ngay);
 

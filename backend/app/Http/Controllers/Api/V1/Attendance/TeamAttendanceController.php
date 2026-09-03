@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Api\V1\Attendance;
 
 use App\Domain\Attendance\Actions\SummariseAttendanceAction;
 use App\Domain\Attendance\Data\DailyAttendance;
-use App\Domain\Attendance\Data\WorkShift;
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\Department;
 use App\Domain\Identity\Models\User;
@@ -80,7 +80,7 @@ final class TeamAttendanceController
 
         // Dựng một lần cho cả bảng, không dựng lại trong vòng lặp: bảng ba mươi
         // người một tháng là chín trăm ô, và mỗi lần dựng là năm lượt đọc config.
-        $ca = WorkShift::fromConfig();
+        $tuan = WorkWeek::fromConfig();
         $diMuon = $this->approvedLateArrivals($ids, $tuNgay, $denNgay);
 
         foreach ($nhanSu as $u) {
@@ -135,8 +135,11 @@ final class TeamAttendanceController
                     'has_report' => $this->hasSubmittedReport($daBaoCao, $u->id, $d->workDate),
                     'report_match' => $doiChieu->value,
                     'report_match_label' => $doiChieu->label(),
-                    'late_minutes' => $ca->lateMinutes($d->firstSeenAt),
-                    'late_excused' => $this->isLateExcused($diMuon, $ca, $u->id, $d->workDate, $d->firstSeenAt),
+                    // Ngày nghỉ không có ca nên không tính đi muộn. Người làm
+                    // chủ nhật vẫn được tính đủ giờ — chỉ là không có mốc nào
+                    // để mà muộn so với nó.
+                    'late_minutes' => $tuan->shiftFor($d->workDate)?->lateMinutes($d->firstSeenAt) ?? 0,
+                    'late_excused' => $this->isLateExcused($diMuon, $tuan->shiftFor($d->workDate), $u->id, $d->workDate, $d->firstSeenAt),
                 ];
             }
 

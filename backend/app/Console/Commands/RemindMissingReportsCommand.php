@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Domain\Attendance\Actions\SummariseAttendanceAction;
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Attendance\Models\Holiday;
 use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Models\LeaveRequest;
@@ -51,6 +52,7 @@ use Illuminate\Support\Facades\Notification;
  *
  * Người thoả **tất cả** những điều dưới đây:
  *
+ *   0. Hôm đó là ngày làm việc theo lịch tuần, và không phải ngày lễ
  *   1. Tài khoản đang hoạt động
  *   2. `joined_at` đã tới — chưa đi làm thì chưa có gì để báo cáo
  *   3. Đã từng được giao ít nhất một task — xem `daTungCoViec()`
@@ -58,7 +60,8 @@ use Illuminate\Support\Facades\Notification;
  *   5. Chưa nộp báo cáo cho ngày đó
  *   6. Chưa nhận lời nhắc cho ngày đó
  *
- * Và toàn bộ lệnh không chạy nếu hôm đó là ngày lễ.
+ * Ngày nghỉ hằng tuần và ngày lễ đều lọc trong lệnh chứ không ở lịch chạy:
+ * lịch làm việc của công ty chỉ nên có MỘT nguồn sự thật.
  *
  * ## Đánh đổi đã biết, nói thẳng
  *
@@ -92,6 +95,21 @@ final class RemindMissingReportsCommand extends Command
         */
         if ($this->laNgayLe($ngay)) {
             $this->info("Ngày {$ngay} là ngày lễ — không nhắc ai.");
+
+            return self::SUCCESS;
+        }
+
+        /*
+        | Ngày nghỉ hằng tuần lọc ở ĐÂY, không lọc ở lịch chạy.
+        |
+        | Trước đây `routes/console.php` khai `weekdays()`, tức là lịch làm việc
+        | của công ty nằm ở hai chỗ: một bản trong cấu hình chấm công, một bản
+        | cứng trong lịch chạy. Công ty chuyển sang làm sáng thứ bảy thì bản thứ
+        | hai không ai nhớ mà sửa, và lời nhắc thứ bảy im lặng không bao giờ
+        | bắn. Giờ lệnh chạy mỗi ngày và tự hỏi lịch tuần — một nguồn sự thật.
+        */
+        if (! WorkWeek::fromConfig()->isWorkingDay($ngay)) {
+            $this->info("Ngày {$ngay} không phải ngày làm việc — không nhắc ai.");
 
             return self::SUCCESS;
         }

@@ -113,8 +113,10 @@ final class SiteSettingController
             ], true) => 'branding',
 
             str_starts_with($k->value, 'shift_'),
+            str_starts_with($k->value, 'work_days_'),
             $k === SettingKey::MinWorkedMinutes,
-            $k === SettingKey::MaxDailyMinutes => 'attendance',
+            $k === SettingKey::MaxDailyMinutes,
+            $k === SettingKey::MaxDailyMinutesHalf => 'attendance',
 
             str_starts_with($k->value, 'report_') => 'report',
 

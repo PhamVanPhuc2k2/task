@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/field";
@@ -11,6 +11,7 @@ import {
   useUpdateSiteSettings,
 } from "@/features/settings/api/site-api";
 import { BrandingImageUploader } from "@/features/settings/components/branding-image-uploader";
+import { WorkWeekEditor } from "@/features/settings/components/work-week-editor";
 import {
   GROUP_HINTS,
   GROUP_LABELS,
@@ -25,6 +26,15 @@ import { cn } from "@/lib/cn";
  * chữ trong form. Backend cũng từ chối nhận chúng qua `PUT /settings`.
  */
 const KHOA_ANH = ["logo_path", "icon_path"];
+
+/**
+ * Khoá có giao diện RIÊNG, không dựng thành ô nhập tự động.
+ *
+ * Hai danh sách thứ trong tuần lưu dạng chuỗi `"1,2,3,4,5"`. Để form tự dựng
+ * thì giám đốc nhận hai ô chữ và phải tự biết 1 là thứ hai, 0 là chủ nhật —
+ * xem WorkWeekEditor để biết vì sao đó là ô nhập mời lỗi.
+ */
+const KHOA_LICH_TUAN = ["work_days_full", "work_days_half"];
 
 /**
  * Cài đặt trang.
@@ -105,37 +115,72 @@ export default function SiteSettingsPage() {
             ["branding", "attendance", "report", "leave"] as SettingGroup[]
           ).map((nhom) => {
             const truong = cai.data.fields.filter(
-              (f) => f.group === nhom && !KHOA_ANH.includes(f.key),
+              (f) =>
+                f.group === nhom &&
+                !KHOA_ANH.includes(f.key) &&
+                !KHOA_LICH_TUAN.includes(f.key),
             );
 
-            if (truong.length === 0) return null;
+            const chuoi = (khoa: string, mac: string): string => {
+              const v = nhap[khoa] ?? cai.data.values[khoa];
+
+              return v === null || v === undefined ? mac : String(v);
+            };
 
             return (
-              <section key={nhom} className="tone-card rounded-2xl p-5">
-                <h2 className="text-[0.95rem] font-semibold tracking-tight">
-                  {GROUP_LABELS[nhom]}
-                </h2>
-                <p className="text-ink-faint mt-1 mb-4 max-w-2xl text-[0.84rem] leading-relaxed">
-                  {GROUP_HINTS[nhom]}
-                </p>
+              <Fragment key={nhom}>
+                {/* Lịch tuần đứng TRƯỚC các mốc giờ: đọc từ trên xuống là
+                    "ngày nào làm" rồi mới tới "làm từ mấy giờ". Ngược lại thì
+                    người ta chỉnh giờ ca xong mới phát hiện thứ bảy đang nghỉ. */}
+                {nhom === "attendance" && (
+                  <WorkWeekEditor
+                    caNgay={chuoi("work_days_full", "")}
+                    nuaBuoi={chuoi("work_days_half", "")}
+                    gioTanNuaBuoi={chuoi("shift_half_end", "12:00")}
+                    loi={
+                      luu.error?.fieldError("values.work_days_full") ??
+                      luu.error?.fieldError("values.work_days_half") ??
+                      undefined
+                    }
+                    onChange={(caNgayMoi, nuaBuoiMoi) =>
+                      setNhap((truoc) => ({
+                        ...truoc,
+                        work_days_full: caNgayMoi,
+                        work_days_half: nuaBuoiMoi,
+                      }))
+                    }
+                  />
+                )}
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {truong.map((f) => (
-                    <OCaiDat
-                      key={f.key}
-                      field={f}
-                      giaTri={nhap[f.key] ?? cai.data.values[f.key] ?? null}
-                      daSua={f.key in nhap}
-                      loi={
-                        luu.error?.fieldError(`values.${f.key}`) ?? undefined
-                      }
-                      onChange={(v) =>
-                        setNhap((truoc) => ({ ...truoc, [f.key]: v }))
-                      }
-                    />
-                  ))}
-                </div>
-              </section>
+                {truong.length > 0 && (
+                  <section className="tone-card rounded-2xl p-5">
+                    <h2 className="text-[0.95rem] font-semibold tracking-tight">
+                      {GROUP_LABELS[nhom]}
+                    </h2>
+                    <p className="text-ink-faint mt-1 mb-4 max-w-2xl text-[0.84rem] leading-relaxed">
+                      {GROUP_HINTS[nhom]}
+                    </p>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {truong.map((f) => (
+                        <OCaiDat
+                          key={f.key}
+                          field={f}
+                          giaTri={nhap[f.key] ?? cai.data.values[f.key] ?? null}
+                          daSua={f.key in nhap}
+                          loi={
+                            luu.error?.fieldError(`values.${f.key}`) ??
+                            undefined
+                          }
+                          onChange={(v) =>
+                            setNhap((truoc) => ({ ...truoc, [f.key]: v }))
+                          }
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </Fragment>
             );
           })}
 

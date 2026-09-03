@@ -57,6 +57,14 @@ export interface DayTimeline {
    * thì phiên lúc 21h biến mất khỏi màn hình mà không có gì báo.
    */
   range: { start: string; end: string };
+  /**
+   * Hôm đó có phải ngày làm việc theo lịch tuần không.
+   *
+   * `false` với chủ nhật, hoặc ngày công ty đã bỏ khỏi lịch. Khi đó `shift`
+   * vẫn có giá trị — nó chỉ còn là khung tham chiếu để vẽ lưới giờ, không phải
+   * ca thật, và không có dải nghỉ trưa nào để hiện.
+   */
+  is_working_day: boolean;
   shift: {
     morning_start: string;
     lunch_start: string;

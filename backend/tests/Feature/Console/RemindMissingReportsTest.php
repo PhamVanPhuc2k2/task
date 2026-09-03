@@ -301,3 +301,45 @@ it('thông báo KHÔNG nói "0 phút" khi hệ thống không đo được giờ
         ->and($noiDung['message'])->not->toContain('Hệ thống ghi nhận')
         ->and($noiDung['message'])->toContain('làm việc bên ngoài');
 });
+
+it('CÓ nhắc vào thứ bảy — công ty làm buổi sáng thứ bảy', function (): void {
+    /*
+    | Lịch chạy từng khai `weekdays()`, tức là một bản sao thứ hai của lịch làm
+    | việc công ty nằm cứng trong routes/console.php. Đổi chính sách sang làm
+    | sáng thứ bảy mà quên bản sao đó thì lời nhắc thứ bảy IM LẶNG không bao giờ
+    | bắn — không lỗi, không log.
+    |
+    | Giờ lịch tuần chỉ có một nguồn, và lệnh tự hỏi nó.
+    */
+    Notification::fake();
+
+    $u = nhanVienCoGio(0, '2026-08-15');
+
+    $this->artisan('reports:remind --date=2026-08-15')->assertSuccessful();
+
+    Notification::assertSentTo($u, DailyReportMissingNotification::class);
+});
+
+it('không nhắc vào chủ nhật', function (): void {
+    Notification::fake();
+
+    nhanVienCoGio(300, '2026-08-16');
+
+    $this->artisan('reports:remind --date=2026-08-16')->assertSuccessful();
+
+    Notification::assertNothingSent();
+});
+
+it('bỏ làm thứ bảy thì thôi nhắc thứ bảy', function (): void {
+    // Đổi lịch tuần trong Cài đặt trang phải có tác dụng ngay tới lời nhắc,
+    // không phải chờ ai sửa lịch chạy.
+    Notification::fake();
+
+    config()->set('attendance.work_days_half', '');
+
+    nhanVienCoGio(300, '2026-08-15');
+
+    $this->artisan('reports:remind --date=2026-08-15')->assertSuccessful();
+
+    Notification::assertNothingSent();
+});

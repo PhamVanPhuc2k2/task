@@ -44,17 +44,17 @@ Schedule::job(new NotifyUpcomingDeadlinesJob, 'notifications')
     ->description('Nhắc task sắp tới hạn và task đã quá hạn');
 
 /*
- * Nhắc nộp báo cáo ngày, một lần mỗi ngày làm việc.
+ * Nhắc nộp báo cáo ngày — chạy MỖI NGÀY, lệnh tự bỏ qua ngày không phải ngày làm.
  *
- * `weekdays()` chứ không phải mỗi ngày: cuối tuần ai làm thêm thì làm, nhưng
- * một lời nhắc nghĩa vụ vào chiều thứ Bảy là thứ khiến người ta tắt thông báo.
+ * Từng khai `weekdays()` ở đây, và đó là một bản sao thứ hai của lịch làm việc
+ * công ty. Khi công ty chuyển sang làm sáng thứ bảy, bản sao đó không ai nhớ
+ * sửa — lời nhắc thứ bảy sẽ im lặng không bao giờ bắn, và không có gì báo.
+ *
+ * Giờ lịch tuần chỉ nằm ở `attendance.work_days_*`, và lệnh tự hỏi nó. Ngày lễ
+ * cũng lọc trong lệnh, cùng lý do.
  *
  * `timezone()` bắt buộc, cùng lý do với lịch quét deadline phía trên: ứng dụng
  * chạy UTC, không khai múi giờ thì "17:30" thành 00:30 sáng hôm sau.
- *
- * Ngày lễ **không lọc ở đây** mà lọc bằng chính dữ liệu: lệnh chỉ nhắc người có
- * giờ làm thật, nên ngày lễ cả công ty nghỉ thì không ai bị nhắc mà không cần
- * luật riêng nào.
  */
 /*
  * Dọn thông báo cũ, mỗi tuần một lần vào lúc vắng người.
@@ -72,7 +72,6 @@ Schedule::command('notifications:prune')
 
 Schedule::command('reports:remind')
     ->dailyAt(config()->string('reports.reminder.at'))
-    ->weekdays()
     ->timezone(config()->string('app.display_timezone'))
     ->withoutOverlapping()
     ->skip(fn (): bool => ! config()->boolean('reports.reminder.enabled'))

@@ -33,10 +33,12 @@ return [
     | VIỆT NAM, còn `work_sessions.started_at` lưu UTC; mọi so sánh phải đi qua
     | App\Domain\Attendance\Data\WorkShift chứ đừng so chuỗi thẳng.
     |
-    | Lưu ý về `weekly_rest_days` ngay bên dưới: nó vẫn KHÔNG dùng để tính giờ
-    | công. Làm cuối tuần vẫn được tính đủ, và người làm ngoài ca vẫn được tính
-    | đủ số phút. Ca chuẩn chỉ sinh ra thêm một thông tin — "hôm nay đến muộn
-    | bao nhiêu" — chứ không cắt của ai phút nào.
+    | Đây là ca của NGÀY LÀM CẢ NGÀY. Ngày nửa buổi dùng chung `morning_start`
+    | nhưng tan ở `half_end`; xem `work_days_half` bên dưới.
+    |
+    | Ca chuẩn KHÔNG cắt giờ của ai. Làm cuối tuần vẫn được tính đủ, người làm
+    | ngoài ca vẫn được tính đủ số phút. Nó chỉ sinh thêm một thông tin — "hôm
+    | nay đến muộn bao nhiêu" — và chỉ sinh vào những ngày có ca.
     |
     | `grace_minutes` = 0 theo đúng quyết định của công ty. Để sẵn thành cấu
     | hình vì đây là loại chính sách hay đổi.
@@ -49,27 +51,59 @@ return [
         'lunch_end' => env('ATTENDANCE_SHIFT_LUNCH_END', '13:30'),
         'end' => env('ATTENDANCE_SHIFT_END', '17:30'),
         'grace_minutes' => (int) env('ATTENDANCE_SHIFT_GRACE_MINUTES', 0),
+
+        /*
+        | Giờ tan của NGÀY NỬA BUỔI (mặc định thứ bảy).
+        |
+        | Ngày nửa buổi không có nghỉ trưa — tan trước giờ đó rồi. Giờ vào
+        | làm dùng chung `morning_start`: công ty đổi giờ vào làm thì đổi
+        | cho cả tuần, không ai muốn nhớ hai mốc khác nhau.
+        */
+        'half_end' => env('ATTENDANCE_SHIFT_HALF_END', '12:00'),
     ],
 
     /*
     |--------------------------------------------------------------------------
-    | Ngày nghỉ hằng tuần
+    | Lịch làm việc trong tuần
     |--------------------------------------------------------------------------
     |
-    | Dùng để tính nghỉ bù theo khoản 3 Điều 112 Bộ luật Lao động: ngày lễ trùng
-    | ngày nghỉ hằng tuần thì nghỉ bù vào ngày làm việc kế tiếp.
+    | Theo cách đánh số của Carbon: 0 = Chủ nhật … 6 = Thứ bảy. Ngày không nằm
+    | trong danh sách nào là ngày nghỉ.
     |
-    | Theo cách đánh số của Carbon: 0 = Chủ nhật, 6 = Thứ bảy. Mặc định nghỉ cả
-    | thứ bảy và chủ nhật — đúng với phần lớn văn phòng hiện nay. Công ty làm 6
-    | ngày một tuần thì đổi thành `[0]`.
+    | Chuỗi phân tách bằng dấu phẩy chứ không phải mảng PHP, vì hai giá trị này
+    | là **cài đặt giám đốc sửa được trên giao diện** — mà bảng `site_settings`
+    | lưu key/value dạng chuỗi. Một chỗ khai duy nhất, không có bản mảng song
+    | song để lệch nhau. Việc phân tách nằm ở App\Domain\Attendance\Data\WorkWeek.
     |
-    | KHÔNG dùng danh sách này để tính giờ công. Công ty làm remote với giờ giấc
-    | linh hoạt, nên "làm cuối tuần" là chuyện bình thường và vẫn được tính đủ.
-    | Đây chỉ là mốc pháp lý cho việc nghỉ bù.
+    | Công ty chốt tháng 9/2026: thứ hai tới thứ sáu làm cả ngày, thứ bảy làm
+    | buổi sáng, chủ nhật nghỉ.
+    |
+    | Danh sách này KHÔNG cắt giờ của ai. Người làm chủ nhật vẫn được tính đủ số
+    | phút — công ty làm remote với giờ giấc linh hoạt. Nó chỉ quyết định ba
+    | thứ: hôm đó có tính đi muộn không, có nhắc nộp báo cáo không, và ngày lễ
+    | trùng ngày nghỉ thì nghỉ bù vào đâu (khoản 3 Điều 112).
     |
     */
 
-    'weekly_rest_days' => [0, 6],
+    'work_days_full' => (string) env('ATTENDANCE_WORK_DAYS_FULL', '1,2,3,4,5'),
+    'work_days_half' => (string) env('ATTENDANCE_WORK_DAYS_HALF', '6'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trần giờ công tự động của NGÀY NỬA BUỔI
+    |--------------------------------------------------------------------------
+    |
+    | Tách riêng khỏi trần ngày thường, và đây không phải chuyện làm cho đẹp:
+    | trần 600 phút áp lên một buổi sáng 225 phút nghĩa là cái tab quên đóng
+    | chiều thứ bảy vẫn ghi thẳng 10 tiếng công. Vài lần như vậy là không ai còn
+    | tin bảng công — mà mất niềm tin thì cả hệ thống chấm công thành vô dụng.
+    |
+    | 360 phút = 6 tiếng: rộng hơn ca 225 phút một quãng đủ để ai làm thêm buổi
+    | chiều thứ bảy vẫn được ghi nhận, mà vẫn chặn được tab bỏ quên qua đêm.
+    |
+    */
+
+    'max_daily_minutes_half' => (int) env('ATTENDANCE_MAX_DAILY_MINUTES_HALF', 360),
 
     /*
     |--------------------------------------------------------------------------
