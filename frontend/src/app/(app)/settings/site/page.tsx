@@ -10,7 +10,7 @@ import {
   useSiteSettings,
   useUpdateSiteSettings,
 } from "@/features/settings/api/site-api";
-import { LogoUploader } from "@/features/settings/components/logo-uploader";
+import { BrandingImageUploader } from "@/features/settings/components/branding-image-uploader";
 import {
   GROUP_HINTS,
   GROUP_LABELS,
@@ -19,6 +19,12 @@ import {
   type SettingValue,
 } from "@/features/settings/types/site";
 import { cn } from "@/lib/cn";
+
+/**
+ * Khoá trỏ tới một TỆP — có ô tải riêng ở trên, nên không dựng thành ô nhập
+ * chữ trong form. Backend cũng từ chối nhận chúng qua `PUT /settings`.
+ */
+const KHOA_ANH = ["logo_path", "icon_path"];
 
 /**
  * Cài đặt trang.
@@ -79,8 +85,8 @@ export default function SiteSettingsPage() {
           Cài đặt trang
         </h1>
         <p className="text-ink-soft mt-1.5 max-w-2xl text-[0.9rem]">
-          Tên công ty, logo, và các mốc chính sách. Đổi ở đây có tác dụng ngay —
-          không cần ai vào máy chủ.
+          Tên công ty, logo, biểu tượng, và các mốc chính sách. Đổi ở đây có tác
+          dụng ngay — không cần ai vào máy chủ.
         </p>
       </header>
 
@@ -92,13 +98,14 @@ export default function SiteSettingsPage() {
 
       {cai.data && (
         <>
-          <LogoUploader />
+          <BrandingImageUploader loai="logo" />
+          <BrandingImageUploader loai="icon" />
 
           {(
             ["branding", "attendance", "report", "leave"] as SettingGroup[]
           ).map((nhom) => {
             const truong = cai.data.fields.filter(
-              (f) => f.group === nhom && f.key !== "logo_path",
+              (f) => f.group === nhom && !KHOA_ANH.includes(f.key),
             );
 
             if (truong.length === 0) return null;

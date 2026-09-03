@@ -25,7 +25,7 @@ namespace App\Support\Settings;
  * `configPath()` nói giá trị này ghi vào đâu trong `Config` lúc khởi động. Nhờ
  * nó mà `WorkShift::fromConfig()` và mọi chỗ đọc config khác **không phải sửa
  * một dòng nào**. Khoá trả về `null` là khoá cố ý không đi qua config — nhận
- * diện (tên, logo) được đọc thẳng qua API.
+ * diện (tên, logo, biểu tượng) được đọc thẳng qua API.
  */
 enum SettingKey: string
 {
@@ -33,6 +33,7 @@ enum SettingKey: string
     case CompanyName = 'company_name';
     case CompanyShortName = 'company_short_name';
     case LogoPath = 'logo_path';
+    case IconPath = 'icon_path';
 
     // ── Ca làm ───────────────────────────────────────────────────────────
     case ShiftMorningStart = 'shift_morning_start';
@@ -57,7 +58,8 @@ enum SettingKey: string
     public function configPath(): ?string
     {
         return match ($this) {
-            self::CompanyName, self::CompanyShortName, self::LogoPath => null,
+            self::CompanyName, self::CompanyShortName,
+            self::LogoPath, self::IconPath => null,
 
             self::ShiftMorningStart => 'attendance.shift.morning_start',
             self::ShiftLunchStart => 'attendance.shift.lunch_start',
@@ -115,7 +117,7 @@ enum SettingKey: string
         return match ($this) {
             self::CompanyName => 'Explus',
             self::CompanyShortName => 'explus',
-            self::LogoPath => null,
+            self::LogoPath, self::IconPath => null,
             default => null,
         };
     }
@@ -127,6 +129,7 @@ enum SettingKey: string
             self::CompanyName => 'Tên công ty',
             self::CompanyShortName => 'Tên ngắn (hiện cạnh logo)',
             self::LogoPath => 'Logo',
+            self::IconPath => 'Biểu tượng',
 
             self::ShiftMorningStart => 'Giờ vào làm buổi sáng',
             self::ShiftLunchStart => 'Bắt đầu nghỉ trưa',

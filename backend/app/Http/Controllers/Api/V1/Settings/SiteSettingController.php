@@ -93,6 +93,15 @@ final class SiteSettingController
         );
     }
 
+    /**
+     * Nhóm của một cài đặt.
+     *
+     * ⚠️ Nhánh `default` là một cái bẫy: khoá mới nào không khớp nhánh nào ở
+     * trên sẽ **âm thầm** rơi vào nhóm Nghỉ phép và hiện sai chỗ trên form.
+     * `max_daily_minutes` đã dính đúng như vậy — nó là cài đặt chấm công nhưng
+     * suốt một thời gian hiện dưới mục Nghỉ phép. Thêm khoá mới thì khai nhóm
+     * ở đây trước.
+     */
     private function nhom(SettingKey $k): string
     {
         return match (true) {
@@ -100,10 +109,12 @@ final class SiteSettingController
                 SettingKey::CompanyName,
                 SettingKey::CompanyShortName,
                 SettingKey::LogoPath,
+                SettingKey::IconPath,
             ], true) => 'branding',
 
             str_starts_with($k->value, 'shift_'),
-            $k === SettingKey::MinWorkedMinutes => 'attendance',
+            $k === SettingKey::MinWorkedMinutes,
+            $k === SettingKey::MaxDailyMinutes => 'attendance',
 
             str_starts_with($k->value, 'report_') => 'report',
 

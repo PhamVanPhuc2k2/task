@@ -47,6 +47,8 @@ use App\Http\Controllers\Api\V1\Reports\ReviewDailyReportController;
 use App\Http\Controllers\Api\V1\Reports\SaveDailyReportController;
 use App\Http\Controllers\Api\V1\Reports\TeamReportsController;
 use App\Http\Controllers\Api\V1\Settings\SiteBrandingController;
+use App\Http\Controllers\Api\V1\Settings\SiteFaviconController;
+use App\Http\Controllers\Api\V1\Settings\SiteIconController;
 use App\Http\Controllers\Api\V1\Settings\SiteLogoController;
 use App\Http\Controllers\Api\V1\Settings\SiteSettingController;
 use App\Http\Controllers\Api\V1\Tasks\AssignTaskController;
@@ -110,6 +112,19 @@ Route::get('/health', HealthController::class)
 | quyền — xem SiteBrandingController để biết vì sao ranh giới đó quan trọng.
 */
 Route::get('/site', SiteBrandingController::class)->middleware('throttle:120,1');
+
+/*
+| Biểu tượng trên tab trình duyệt — CÔNG KHAI, và luôn chuyển hướng tới một
+| ảnh thật.
+|
+| Frontend khai URL này tĩnh trong `metadata.icons` vì `generateMetadata()`
+| chạy trên máy chủ Next, nơi đường dẫn API tương đối của production không có
+| origin để phân giải. Xem SiteFaviconController.
+|
+| Hạn mức rộng hơn /site: trình duyệt xin favicon ở mọi tab mới, và cả văn
+| phòng thường đi ra Internet bằng chung một địa chỉ IP.
+*/
+Route::get('/site/icon', SiteFaviconController::class)->middleware('throttle:300,1');
 
 Route::prefix('auth')->group(function (): void {
     // Bước một: email + mật khẩu. Chưa đăng nhập được — hệ thống bắt buộc
@@ -200,6 +215,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::put('/settings', [SiteSettingController::class, 'update']);
     Route::post('/settings/logo', [SiteLogoController::class, 'store']);
     Route::delete('/settings/logo', [SiteLogoController::class, 'destroy']);
+    Route::post('/settings/icon', [SiteIconController::class, 'store']);
+    Route::delete('/settings/icon', [SiteIconController::class, 'destroy']);
 
     // ── Chấm công ────────────────────────────────────
     // Nhịp tim là đường được gọi nhiều nhất hệ thống (~96.000 lượt/ngày với

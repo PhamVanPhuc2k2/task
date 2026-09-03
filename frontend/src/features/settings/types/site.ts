@@ -32,6 +32,13 @@ export interface SiteBranding {
   company_short_name: string;
   /** `null` = chưa đặt logo, giao diện dùng dấu cộng vẽ tay. */
   logo_url: string | null;
+  /**
+   * `null` = chưa đặt biểu tượng.
+   *
+   * Chỉ dùng để xem trước ở màn Cài đặt. Tab trình duyệt KHÔNG đọc giá trị này
+   * — nó trỏ thẳng vào `/site/icon` của backend, xem `app/layout.tsx`.
+   */
+  icon_url: string | null;
 }
 
 export const GROUP_LABELS: Record<SettingGroup, string> = {
@@ -42,7 +49,8 @@ export const GROUP_LABELS: Record<SettingGroup, string> = {
 };
 
 export const GROUP_HINTS: Record<SettingGroup, string> = {
-  branding: "Tên và logo hiện trên trang đăng nhập và đầu trang.",
+  branding:
+    "Tên và logo hiện trên trang đăng nhập và đầu trang. Biểu tượng hiện trên tab trình duyệt và màn hình chính điện thoại.",
   attendance:
     "Đổi ca làm là đổi cách tính đi muộn cho cả công ty. Số giờ đã ghi nhận không bị tính lại — chỉ các ngày sau đó dùng mốc mới.",
   report: "Giờ nhắc và số ngày được nộp báo cáo bù.",

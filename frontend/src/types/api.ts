@@ -4,6 +4,38 @@
  */
 
 export interface paths {
+    "/users/{user}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["users.activateUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project}/bonus/allocations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["payroll.allocateBonus"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tasks/{task}/assign": {
         parameters: {
             query?: never;
@@ -36,6 +68,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.attendanceTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tasks/bulk-reassign": {
         parameters: {
             query?: never;
@@ -46,6 +94,54 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["tasks.bulkReassign"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/late-arrivals/{lateArrival}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.cancelLateArrival"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/{leave}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.cancelLeave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project}/bonus/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["payroll.changeBonusPoolStatus"];
         delete?: never;
         options?: never;
         head?: never;
@@ -157,7 +253,71 @@ export interface paths {
         };
         get: operations["department.index"];
         put?: never;
+        post: operations["departmentAdmin.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/departments/{department}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["departmentAdmin.update"];
         post?: never;
+        delete: operations["departmentAdmin.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["v1.health"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.heartbeat"];
         delete?: never;
         options?: never;
         head?: never;
@@ -204,6 +364,86 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth.me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.myAttendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/bonus/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payroll.myBonus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/late-arrivals/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.myLateArrival"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.myLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports.myReports"];
         put?: never;
         post?: never;
         delete?: never;
@@ -311,6 +551,64 @@ export interface paths {
         patch: operations["notificationSetting.update"];
         trace?: never;
     };
+    "/dashboard/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["dashboard.overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payroll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Mức lương hiện hành của những người trong phạm vi
+         * @description Chỉ trả mức ĐANG hiệu lực, không trả lịch sử: bảng này để nhìn tổng thể,
+         *     còn lịch sử đọc ở màn chi tiết từng người.
+         */
+        get: operations["payroll.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payroll/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Toàn bộ lịch sử mức lương của một người
+         * @description Người dùng xem được của chính mình mà không cần quyền gì thêm — lương của
+         *     mình thì mình có quyền biết, và biết cả lịch sử điều chỉnh.
+         */
+        get: operations["payroll.show"];
+        put?: never;
+        post: operations["payroll.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/positions": {
         parameters: {
             query?: never;
@@ -359,6 +657,22 @@ export interface paths {
         patch: operations["project.update"];
         trace?: never;
     };
+    "/projects/{project}/bonus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["projectBonus.show"];
+        put?: never;
+        post: operations["projectBonus.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{project}/members": {
         parameters: {
             query?: never;
@@ -391,6 +705,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth.resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/{user}/reset-two-factor": {
         parameters: {
             query?: never;
@@ -417,6 +747,198 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["users.resetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{report}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reports.reviewDailyReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/late-arrivals/{lateArrival}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.reviewLateArrival"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/{leave}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.reviewLeave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/{user}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.reviewWorkDay"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["reports.saveDailyReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/site": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings.siteBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/site/icon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["settings.siteFavicon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/icon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["siteIcon.store"];
+        delete: operations["siteIcon.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["siteLogo.store"];
+        delete: operations["siteLogo.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["siteSetting.index"];
+        put: operations["siteSetting.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/late-arrivals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.submitLateArrival"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["leave.submitLeave"];
         delete?: never;
         options?: never;
         head?: never;
@@ -506,6 +1028,70 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["taskComment.update"];
+        trace?: never;
+    };
+    "/attendance/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.teamAttendance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/late-arrivals/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.teamLateArrival"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.teamLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["reports.teamReports"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/tasks/team": {
@@ -604,10 +1190,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Sửa hồ sơ nhân viên
+         * @description Ngữ nghĩa **thay thế toàn bộ** (PUT), không phải sửa từng phần — lý do
+         *     ghi ở `UpdateUserData`. Form ở giao diện gửi đủ mọi trường mỗi lần lưu.
+         */
+        put: operations["user.update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{user}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["userActivity.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/{user}/{date}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.workDayDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AllocateBonusRequest */
+        AllocateBonusRequest: {
+            /**
+             * @description Mảng rỗng hợp lệ: xoá sạch phần chia để làm lại từ đầu là thao
+             *     tác bình thường lúc còn nháp.
+             */
+            allocations: {
+                /** Format: uuid */
+                user_id: string;
+                /**
+                 * @description | `min:0` — lớp chặn số âm thứ nhất.
+                 *     |
+                 *     | Đây không phải luật kỹ thuật mà là luật pháp lý: Điều 127 Bộ luật
+                 *     | Lao động 2019 cấm phạt tiền. Một số âm ở đây, dù gọi là "trừ
+                 *     | thưởng", về bản chất là khoản phạt trừ vào thu nhập.
+                 */
+                amount: number;
+                reason: string;
+            }[];
+        };
+        /**
+         * AttendanceDecision
+         * @description Quyết định của người quản lý trên một ngày công. Hệ thống **đo và gắn cờ**; con người **quyết định**. Không có công thức nào tự động trừ tiền — con số giờ chỉ là một trong ba thứ người quản lý nhìn, cạnh task đã động và báo cáo ngày.
+         *     | |
+         *     |---|
+         *     | `confirmed` <br/> Ngày công được chấp nhận như hệ thống đo được. |
+         *     | `waived` <br/> Bỏ qua: giờ thấp nhưng có lý do chính đáng. Đây là trường hợp thường gặp nhất và cũng là lý do bảng này tồn tại — họp cả ngày ngoài công ty, mất mạng, đi gặp khách. |
+         *     | `flagged` <br/> Đánh dấu để hỏi lại. Không phải kết luận, chỉ là chưa xong. |
+         * @enum {string}
+         */
+        AttendanceDecision: "confirmed" | "waived" | "flagged";
+        /** BonusPoolResource */
+        BonusPoolResource: {
+            id: string;
+            total_amount: string;
+            allocated_total: string;
+            remaining: string;
+            currency: string;
+            status: string;
+            /** @enum {string} */
+            status_label: "Đang lập" | "Đã chốt" | "Đã chi";
+            is_editable: boolean;
+            condition_note: string;
+            locked_at: string | null;
+            distributed_at: string | null;
+            allocations?: string[];
+        };
         /** ChangeDueDateRequest */
         ChangeDueDateRequest: {
             /** Format: date-time */
@@ -632,6 +1318,12 @@ export interface components {
         ChangeStatusRequest: {
             status: components["schemas"]["TaskStatus"];
         };
+        /**
+         * LeaveType
+         * @description Loại nghỉ. Ở phạm vi này, loại nghỉ **chỉ là nhãn** — nó không trừ vào quỹ nào, không đổi cách tính công. Nó tồn tại vì quản lý cần biết mình đang duyệt cái gì: duyệt nghỉ ốm và duyệt nghỉ việc riêng là hai quyết định khác nhau, dù hệ thống xử lý giống hệt.  Khi có quỹ phép (đợt 4 đầy đủ) thì chính enum này là chỗ gắn "loại nào trừ  * quỹ nào" — nên tách sẵn từ bây giờ, không gộp thành một ô ghi chú tự do.
+         * @enum {string}
+         */
+        LeaveType: "annual" | "sick" | "unpaid" | "personal";
         /** LoginRequest */
         LoginRequest: {
             /** Format: email */
@@ -655,9 +1347,39 @@ export interface components {
         /**
          * NotificationType
          * @description Các loại thông báo người dùng có thể bật/tắt. Đặt ở miền Identity chứ không ở Task: tuỳ chọn nhận thông báo là thuộc tính của *người dùng*, và đợt 2–4 sẽ thêm loại của báo cáo, chấm công, đơn nghỉ. Để ở Task thì miền Attendance sẽ phải gọi ngược sang Task chỉ để đọc một enum — đúng thứ quy tắc phụ thuộc cấm.  Mặc định chọn theo mức độ gấp, không bật hết mọi kênh: hộp thư đầy thông báo là hộp thư không ai đọc, và lúc đó thông báo thật sự quan trọng cũng trôi qua.
+         *     | |
+         *     |---|
+         *     | `task.assigned` <br/>  |
+         *     | `task.due_soon` <br/>  |
+         *     | `task.overdue` <br/>  |
+         *     | `task.comment_added` <br/>  |
+         *     | `task.mentioned` <br/>  |
+         *     | `bonus.locked` <br/> Quỹ thưởng dự án đã chốt. Loại đầu tiên không thuộc miền Task — enum này ở Identity chính vì đã lường trước điều đó. |
+         *     | `report.reviewed` <br/> Quản lý có nhận xét trên báo cáo ngày. |
+         *     | `report.missing` <br/> Cuối ngày mà chưa nộp báo cáo. |
+         *     | `leave.requested` <br/> Có nhân viên nộp đơn nghỉ cần duyệt. |
+         *     | `leave.reviewed` <br/> Đơn nghỉ của mình đã được duyệt hoặc bị từ chối. |
+         *     | `late_arrival.requested` <br/>  |
+         *     | `late_arrival.reviewed` <br/>  |
          * @enum {string}
          */
-        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned";
+        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed";
+        /** PayrollRowResource */
+        PayrollRowResource: {
+            user: {
+                id: string;
+                name: string;
+                employee_code: string | null;
+                department: string | null;
+            };
+            salary: {
+                base_salary: string;
+                allowance: string;
+                total: string;
+                currency: string;
+                effective_from: string;
+            } | null;
+        };
         /** ProjectResource */
         ProjectResource: {
             /** @description Lộ uuid, không lộ id tuần tự — xem README "Quy ước dữ liệu". */
@@ -680,7 +1402,7 @@ export interface components {
             created_at: string | null;
             updated_at: string | null;
             owner?: {
-                id: string | null;
+                id: string;
                 name: string;
                 email: string;
             } | null;
@@ -702,12 +1424,131 @@ export interface components {
          * @enum {string}
          */
         ProjectStatus: "planning" | "active" | "on_hold" | "completed" | "cancelled";
+        /** ResetPasswordRequest */
+        ResetPasswordRequest: {
+            token: string;
+            /** Format: email */
+            email: string;
+            /**
+             * @description | `Password::defaults()` — cùng chính sách với mọi chỗ khác trong hệ
+             *     | thống: tối thiểu 12 ký tự, có chữ và số, và đối chiếu với danh
+             *     | sách mật khẩu đã lộ của HaveIBeenPwned.
+             *     |
+             *     | Viết lại luật riêng ở đây là cách chắc chắn để đường đặt lại mật
+             *     | khẩu trở thành cửa sau: người dùng đặt được mật khẩu yếu ở đây
+             *     | trong khi đường đổi mật khẩu thông thường vẫn chặn.
+             */
+            password: string;
+            password_confirmation: string;
+        };
+        /** ReviewWorkDayRequest */
+        ReviewWorkDayRequest: {
+            /**
+             * Format: date
+             * @description | Không duyệt được ngày chưa tới.
+             *     |
+             *     | Chỉ chặn phía tương lai: quản lý vẫn phải xử lý được bảng công
+             *     | tháng trước, nên phía quá khứ để mở. Duyệt trước một ngày chưa xảy
+             *     | ra thì con số giờ của ngày đó còn thay đổi sau khi đã có quyết
+             *     | định, và bản ghi để lại một lý do viết cho việc chưa xảy ra.
+             *     |
+             *     | Mốc lấy theo **giờ Việt Nam** chứ không phải `today` của Laravel:
+             *     | ứng dụng chạy UTC, nên từ 00:00 tới 07:00 giờ Việt Nam mỗi ngày,
+             *     | `today` vẫn còn là hôm qua và quản lý đi làm sớm sẽ không duyệt
+             *     | được ngày hôm nay.
+             */
+            work_date: string;
+            decision: components["schemas"]["AttendanceDecision"];
+            /**
+             * @description Bắt buộc, và tối thiểu 5 ký tự. Không có mức tối thiểu thì trường
+             *     này sẽ đầy những dòng "ok" và "x" — tức là vẫn không ai trả lời
+             *     được câu hỏi vì sao, mà lại tưởng là đã ghi.
+             */
+            reason: string;
+            /**
+             * @description Tối đa 24 giờ. Chặn lỗi gõ thừa số 0 biến một ngày công thành
+             *     sáu mươi tiếng.
+             */
+            adjusted_minutes?: number | null;
+        };
         /**
          * Role
          * @description Vai trò trong hệ thống. Khác với `Position` (chức vụ trên giấy tờ nhân sự): vai trò quyết định làm được gì trong phần mềm. Một trưởng phòng trên danh nghĩa có thể chỉ được cấp vai trò nhân viên nếu công ty muốn vậy.  Khác với `ProjectRole` (vai trò trong phạm vi một dự án cụ thể).
          * @enum {string}
          */
         Role: "admin" | "giam_doc" | "truong_phong" | "nhan_vien";
+        /** SalaryRecordResource */
+        SalaryRecordResource: {
+            id: string;
+            effective_from: string;
+            effective_to: string | null;
+            is_current: boolean;
+            base_salary: string;
+            allowance: string;
+            total: string;
+            currency: string;
+            reason: string;
+            author?: {
+                id: string;
+                name: string;
+            } | null;
+            created_at: string | null;
+        };
+        /** SaveBonusPoolRequest */
+        SaveBonusPoolRequest: {
+            /**
+             * @description `decimal:0,2` chứ không `numeric` — xem SetSalaryRequest. `min:0`
+             *     là lớp chặn số âm thứ nhất trong ba lớp; hai lớp còn lại ở Action
+             *     và ở ràng buộc CHECK của database.
+             */
+            total_amount: number;
+            condition_note: string;
+        };
+        /** SaveDailyReportRequest */
+        SaveDailyReportRequest: {
+            /** Format: date */
+            report_date: string;
+            /**
+             * @description | Tối thiểu 10 ký tự.
+             *     |
+             *     | Không có mức sàn thì trường này đầy những dòng "ok", "làm việc",
+             *     | "như hôm qua" — và lúc đó báo cáo ngày trở thành nghi thức bấm nút
+             *     | chứ không còn là thứ quản lý đọc được. Mười ký tự đủ thấp để không
+             *     | làm phiền người viết thật, đủ cao để chặn bấm cho xong.
+             */
+            content: string;
+            /**
+             * @description Không bắt buộc: người họp cả ngày hoặc hỗ trợ đồng nghiệp vẫn nộp
+             *     được mà không gắn task nào. Bắt buộc phải có task là loại ràng
+             *     buộc khiến người ta bịa ra một task để nộp cho xong.
+             */
+            task_ids: string[];
+            /** @description `false` = lưu nháp, `true` = nộp. */
+            submit: boolean;
+        };
+        /** SetSalaryRequest */
+        SetSalaryRequest: {
+            /**
+             * @description | `decimal:0,2` chứ không `numeric`.
+             *     |
+             *     | `numeric` nhận cả `1.0e7` và `0x1A`, rồi ép sang float ở tầng dưới
+             *     | — đúng cái cửa sai số mà kiểu DECIMAL sinh ra để đóng. Luật này ép
+             *     | chuỗi phải là số thập phân tối đa hai chữ số sau dấu phẩy, giữ
+             *     | nguyên dạng chuỗi tới lúc ghi vào database.
+             *     |
+             *     | Trần một tỉ đồng mỗi tháng: không phải để hạn chế, mà để chặn lỗi
+             *     | gõ thừa số 0 — 12.000.000 thành 120.000.000 thì không có gì báo.
+             */
+            base_salary: number;
+            allowance?: number | null;
+            /** Format: date */
+            effective_from: string;
+            /**
+             * @description Bắt buộc, tối thiểu 5 ký tự — cùng lý do với lý do duyệt ngày
+             *     công: không có mức sàn thì trường này đầy những dòng "ok".
+             */
+            reason: string;
+        };
         /** StoreAttachmentRequest */
         StoreAttachmentRequest: {
             files: string[];
@@ -721,6 +1562,23 @@ export interface components {
              *     đúng task này — kiểm ở controller vì cần biết task nào.
              */
             parent_id?: string | null;
+        };
+        /** StoreDepartmentRequest */
+        StoreDepartmentRequest: {
+            name: string;
+            /**
+             * @description `code` để trống được, nhưng đã nhập thì phải duy nhất — nó là
+             *     khoá mà `users:import` dùng để nối nhân sự vào phòng ban, và là
+             *     khoá mà OrganizationSeeder dùng để chạy lại không tạo trùng.
+             */
+            code?: string | null;
+            description?: string | null;
+            /**
+             * Format: uuid
+             * @description Nhận uuid chứ không nhận id tuần tự — xem README "Quy ước dữ liệu".
+             */
+            parent_id?: string | null;
+            is_active?: boolean;
         };
         /** StoreProjectMemberRequest */
         StoreProjectMemberRequest: {
@@ -795,6 +1653,46 @@ export interface components {
         };
         /** Stringable */
         Stringable: string;
+        /** SubmitLateArrivalRequest */
+        SubmitLateArrivalRequest: {
+            /** Format: date */
+            date: string;
+            /**
+             * @description | Giờ dự kiến phải MUỘN HƠN giờ vào làm.
+             *     |
+             *     | Xin "đi muộn" tới 8h00 trong khi ca bắt đầu 8h15 là không có
+             *     | nghĩa. Cho qua thì sinh ra những đơn được duyệt mà chẳng miễn cái
+             *     | gì, và người nộp tưởng mình đã xin phép xong.
+             */
+            expected_arrival: string;
+            /**
+             * @description Tối thiểu 10 ký tự, cùng lý do với đơn nghỉ: không có mức sàn thì
+             *     trường này đầy những dòng "bận" và "việc riêng".
+             */
+            reason: string;
+        };
+        /** SubmitLeaveRequest */
+        SubmitLeaveRequest: {
+            type: components["schemas"]["LeaveType"];
+            /** Format: date */
+            start_date: string;
+            /**
+             * Format: date
+             * @description `after_or_equal:start_date` là ràng buộc quan trọng nhất ở đây.
+             *     Đơn "từ 20/08 đến 15/08" làm mọi phép so sánh khoảng trả về rỗng
+             *     — ngày nghỉ đơn giản là không bao giờ khớp, và không có gì báo.
+             *     Database cũng có CHECK cho việc này; hai lớp vì nó hỏng im lặng.
+             */
+            end_date: string;
+            /**
+             * @description | Lý do bắt buộc, tối thiểu 10 ký tự.
+             *     |
+             *     | Cùng lý do với lý do duyệt ngày công: không có mức sàn thì trường
+             *     | này đầy những dòng "bận" và "việc riêng" — vẫn không ai trả lời
+             *     | được câu "vì sao", mà lại tưởng là đã ghi.
+             */
+            reason: string;
+        };
         /** TaskActivityResource */
         TaskActivityResource: {
             id: number;
@@ -803,7 +1701,7 @@ export interface components {
             new_values: unknown[] | null;
             created_at: string | null;
             causer?: {
-                id: string | null;
+                id: string;
                 name: string;
             } | null;
         };
@@ -820,7 +1718,7 @@ export interface components {
             edited_at: string | null;
             parent_id?: string | null;
             author?: {
-                id: string | null;
+                id: string;
                 name: string;
                 email: string;
             } | null;
@@ -900,6 +1798,25 @@ export interface components {
             recovery_code?: string | null;
         };
         /**
+         * UpdateDepartmentRequest
+         * @description Giống `StoreDepartmentRequest` trừ hai chỗ mà chép nguyên sang thì hỏng:
+         *
+         *       1. `unique` phải BỎ QUA chính bản ghi đang sửa. Không có `ignore()` thì bấm
+         *          Lưu mà không đổi mã cũng báo "mã phòng ban đã tồn tại" — mã của chính
+         *          phòng ban đó.
+         *       2. `parent_id` không được là chính nó. Đây chỉ là lớp chặn đầu tiên cho
+         *          thông báo lỗi gắn đúng ô nhập; vòng dài hơn (A → B → A) do
+         *          `UpdateDepartmentAction` bắt, vì kiểm tra đó phải duyệt cả cây.
+         */
+        UpdateDepartmentRequest: {
+            name: string;
+            code?: string | null;
+            description?: string | null;
+            /** Format: uuid */
+            parent_id?: string | null;
+            is_active?: boolean;
+        };
+        /**
          * UpdateProjectRequest
          * @description PATCH sửa từng phần: chỉ kiểm tra những trường thực sự gửi lên.
          *
@@ -920,16 +1837,96 @@ export interface components {
             /** Format: uuid */
             department_id?: string | null;
         };
+        /**
+         * UpdateSettingsRequest
+         * @description Kiểm dữ liệu cài đặt trang.
+         *
+         *     Phần kiểm ở đây quan trọng hơn phần lưu. Một ca làm vô lý — tan làm trước giờ
+         *     vào làm — **không làm hệ thống báo lỗi**: nó chỉ khiến mọi phép tính giờ ra
+         *     số âm hoặc số 0, im lặng, cho tới khi có người thắc mắc "sao tháng này ai
+         *      * cũng 0 giờ".
+         */
+        UpdateSettingsRequest: {
+            values: {
+                company_name?: string;
+                company_short_name?: string;
+                shift_morning_start?: string;
+                shift_lunch_start?: string;
+                shift_lunch_end?: string;
+                shift_end?: string;
+                shift_grace_minutes?: number;
+                min_worked_minutes?: number;
+                max_daily_minutes?: number;
+                report_reminder_enabled?: boolean;
+                report_reminder_at?: string;
+                report_backfill_days?: number;
+                leave_backdate_days?: number;
+                leave_future_days?: number;
+                leave_max_days?: number;
+            };
+        };
+        /**
+         * UpdateUserRequest
+         * @description Sửa hồ sơ nhân viên đã có.
+         *
+         *     Gần giống `StoreUserRequest`, nhưng khác ở đúng hai chỗ mà nếu chép nguyên
+         *     sang thì hỏng:
+         *
+         *       1. `unique` phải **bỏ qua chính bản ghi đang sửa**. Không có `ignore()` thì
+         *          bấm Lưu mà không đổi email cũng báo "email đã tồn tại" — email của
+         *          chính người đó.
+         *       2. `manager_id` không được là chính mình. Đây chỉ là lớp chặn đầu tiên cho
+         *          thông báo lỗi đẹp; vòng lặp dài hơn (A→B→A) do `UpdateUserAction` bắt,
+         *          vì kiểm tra đó phải đi ngược cả chuỗi quản lý.
+         */
+        UpdateUserRequest: {
+            name: string;
+            /** Format: email */
+            email: string;
+            employee_code: string;
+            role: components["schemas"]["Role"];
+            phone?: string | null;
+            /** Format: date-time */
+            joined_at?: string | null;
+            /**
+             * Format: uuid
+             * @description Nhận uuid chứ không nhận id tuần tự — xem README "Quy ước dữ liệu".
+             */
+            department_id?: string | null;
+            /** Format: uuid */
+            position_id?: string | null;
+            /** Format: uuid */
+            manager_id?: string | null;
+        };
+        /** UserActivityResource */
+        UserActivityResource: {
+            id: number;
+            event: string;
+            /** @enum {string} */
+            event_label: "Tạo tài khoản" | "Cập nhật hồ sơ" | "Đổi vai trò" | "Vô hiệu hoá" | "Kích hoạt lại" | "Đặt lại mật khẩu" | "Gỡ xác thực hai lớp" | "Xoá dữ liệu cá nhân";
+            old_values: unknown[] | null;
+            new_values: unknown[] | null;
+            created_at: string | null;
+            causer?: {
+                id: string;
+                name: string;
+            } | null;
+        };
         /** UserResource */
         UserResource: {
             /** @description Lộ uuid, không lộ id tuần tự — xem README "Quy ước dữ liệu". */
-            id: string | null;
+            id: string;
             name: string;
             email: string;
             employee_code: string | null;
             phone: string | null;
             is_active: boolean;
             joined_at: string | null;
+            /**
+             * @description Ngày nghỉ việc: giao diện cần để nói "đã nghỉ từ …" thay vì chỉ
+             *     hiện một nhãn "Đã nghỉ" không cho biết từ bao giờ.
+             */
+            terminated_at: string | null;
             department?: {
                 id: string;
                 name: string;
@@ -939,6 +1936,15 @@ export interface components {
                 id: string;
                 name: string;
                 level: number;
+            } | null;
+            /**
+             * @description Quản lý trực tiếp: form sửa hồ sơ cần để đổ sẵn ô chọn. Chỉ trả
+             *     id và tên, không lồng cả hồ sơ người quản lý vào — lồng sâu thì
+             *     một danh sách 100 người kéo theo 100 hồ sơ nữa.
+             */
+            manager?: {
+                id: string;
+                name: string;
             } | null;
             roles: string[];
             permissions: unknown[];
@@ -1005,6 +2011,77 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "users.activateUser": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "payroll.allocateBonus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The project UUID */
+                project: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AllocateBonusRequest"];
+            };
+        };
+        responses: {
+            /** @description `BonusPoolResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BonusPoolResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "tasks.assignTask": {
         parameters: {
             query?: never;
@@ -1057,10 +2134,90 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: string[];
+                        meta: {
+                            total: string;
+                            returned: number;
+                            truncated: boolean;
+                        };
                     };
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "attendance.attendanceTimeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            date: string;
+                            range: {
+                                start: string;
+                                end: string;
+                            };
+                            shift: {
+                                morning_start: string;
+                                lunch_start: string;
+                                lunch_end: string;
+                                end: string;
+                            };
+                            rows: {
+                                user: {
+                                    id: string;
+                                    name: string;
+                                    department: string | null;
+                                };
+                                sessions: {
+                                    start: string;
+                                    end: string;
+                                    minutes: number;
+                                }[];
+                                gaps: {
+                                    start: string;
+                                    end: string;
+                                    minutes: number;
+                                    lunch_minutes: Record<string, never> | null;
+                                }[];
+                                worked_minutes: number;
+                                idle_minutes: number;
+                                lunch_minutes: number;
+                                first_seen: string | null;
+                                last_seen: string | null;
+                                late_minutes: number;
+                                late_excused: boolean;
+                                on_leave: boolean;
+                            }[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
         };
     };
     "tasks.bulkReassign": {
@@ -1109,6 +2266,190 @@ export interface operations {
                     };
                 };
             };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.cancelLateArrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The late arrival UUID */
+                lateArrival: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            expected_arrival: string;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "leave.cancelLeave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The leave UUID */
+                leave: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Nghỉ phép năm" | "Nghỉ ốm" | "Nghỉ không lương" | "Nghỉ việc riêng";
+                            start_date: string;
+                            end_date: string;
+                            days: number;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            /**
+                             * @description `null` = chưa ai xử lý. Giao diện phân biệt "đang chờ" với "đã
+                             *      duyệt nhưng không ghi chú" bằng chính chỗ này.
+                             */
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "payroll.changeBonusPoolStatus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The project UUID */
+                project: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    status: "locked" | "distributed";
+                };
+            };
+        };
+        responses: {
+            /** @description `BonusPoolResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BonusPoolResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
         };
     };
@@ -1266,7 +2607,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description The user UUID */
-                user: string | null;
+                user: string;
             };
             cookie?: never;
         };
@@ -1300,6 +2641,191 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: string[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "departmentAdmin.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreDepartmentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            name: string;
+                            code: string | null;
+                            description: string | null;
+                            is_active: boolean;
+                            parent_id: string | null;
+                            parent_name: string | null;
+                            child_count: number;
+                            user_count: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "departmentAdmin.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The department UUID */
+                department: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateDepartmentRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            name: string;
+                            code: string | null;
+                            description: string | null;
+                            is_active: boolean;
+                            parent_id: string | null;
+                            parent_name: string | null;
+                            child_count: number;
+                            user_count: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "departmentAdmin.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The department UUID */
+                department: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "auth.forgotPassword": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        message: "Nếu email này có trong hệ thống, chúng tôi vừa gửi một đường dẫn đặt lại mật khẩu. Kiểm tra cả hộp thư rác.";
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "v1.health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+        };
+    };
+    "attendance.heartbeat": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            work_date: string;
+                            today_minutes: string | 0;
+                            /**
+                             * @description Null khi đã chạm trần giờ trong ngày. Giao diện đọc cờ này
+                             *     để nói thẳng "đã đạt trần" thay vì im lặng đứng yên ở một
+                             *     con số không nhúc nhích — người dùng sẽ tưởng hệ thống hỏng.
+                             */
+                            capped: boolean;
+                            session_started_at: string | null;
+                        };
                     };
                 };
             };
@@ -1393,6 +2919,203 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["UserResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "attendance.myAttendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            month: string;
+                            days: string[];
+                            holidays: string;
+                            /**
+                             * @description Ép sang object — xem chú thích cùng chỗ ở
+                             *     TeamAttendanceController.
+                             */
+                            cells: string;
+                            total_minutes: string;
+                            days_worked: number;
+                            missing_report_days: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "payroll.myBonus": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            total: string;
+                            items: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "leave.myLateArrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
+                            total: number;
+                            /** @constant */
+                            limit: 100;
+                            window: {
+                                earliest: string;
+                                latest: string;
+                            };
+                            /**
+                             * @description Giao diện hiện "ca bắt đầu 8h15" ngay cạnh ô chọn giờ, và
+                             *     dùng đúng mốc này để chặn. Hardcode ở frontend là mở đường
+                             *     cho hai nơi nói hai giờ khác nhau sau lần đổi ca đầu tiên.
+                             */
+                            shift: {
+                                morning_start: string;
+                                end: string;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "leave.myLeave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            total: number;
+                            /**
+                             * @description Loại nghỉ do server khai, không hardcode ở frontend: thêm
+                             *     loại mới thì giao diện tự có, không phải sửa hai chỗ.
+                             */
+                            types: unknown[];
+                            /**
+                             * @description Khoảng ngày nộp được, để giao diện chặn ngay ở ô chọn ngày
+                             *     thay vì để người ta điền xong mới báo lỗi.
+                             */
+                            window: {
+                                earliest: string;
+                                latest: string;
+                                max_days: string;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "reports.myReports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            month: string;
+                            days: string[];
+                            reports: string[];
+                            submitted_count: number;
+                            /**
+                             * @description | Khoảng ngày còn nộp được, do server nói ra.
+                             *     |
+                             *     | Không để frontend tự tính từ `new Date()`: đồng hồ máy người
+                             *     | dùng có thể lệch, và múi giờ trình duyệt có thể không phải giờ
+                             *     | Việt Nam (nhân viên đi công tác). Tự tính thì giao diện mở ô
+                             *     | soạn cho một ngày mà API sẽ từ chối — người dùng viết xong mới
+                             *     | biết là không nộp được.
+                             */
+                            window: {
+                                earliest: string;
+                                latest: string;
+                            };
+                        };
                     };
                 };
             };
@@ -1619,6 +3342,237 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "dashboard.overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            summary: {
+                                open_tasks: string;
+                                overdue_tasks: string;
+                                /**
+                                 * @description Dùng scope của model chứ không viết lại truy vấn ở đây: trang
+                                 *     Công việc lọc bằng đúng scope đó, nên con số và danh sách không
+                                 *     thể lệch nhau. Scope cũng là chỗ đã sửa bẫy múi giờ — bản trước
+                                 *     ở đây dùng `endOfDay()` theo UTC, lệch bảy tiếng.
+                                 */
+                                due_today: number;
+                                /**
+                                 * @description Việc không có người làm là thứ dễ trôi nhất: không ai nhận thông
+                                 *     báo nhắc hạn, không xuất hiện trong "việc của tôi" của bất kỳ ai.
+                                 */
+                                unassigned_tasks: number;
+                                completed_this_week: number;
+                                active_projects: number;
+                                active_employees: number;
+                            };
+                            workload: {
+                                rows: {
+                                    id: string;
+                                    name: string;
+                                    department: string | null;
+                                    open: number;
+                                    overdue: number;
+                                }[];
+                                total: number;
+                            };
+                            projects: {
+                                rows: {
+                                    id: string;
+                                    name: string;
+                                    status: {
+                                        value: string;
+                                        label: string;
+                                    };
+                                    total: number;
+                                    done: number;
+                                    overdue: number;
+                                    /**
+                                     * @description Dự án chưa có việc nào thì tiến độ là 0, không phải 100. Chia
+                                     *     cho 0 ở đây sẽ thành "hoàn thành" trên màn hình.
+                                     */
+                                    progress_percent: number;
+                                }[];
+                                total: number;
+                            };
+                            /**
+                             * @description `array_values` để kiểu trả về đúng là `list` — Collection::all() giữ
+                             *     nguyên khoá, và phân tích tĩnh không chấp nhận đó là danh sách liền.
+                             */
+                            most_overdue: unknown[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "payroll.index": {
+        parameters: {
+            query?: {
+                department_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `PayrollRowResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["PayrollRowResource"][];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "payroll.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Array of `SalaryRecordResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: (components["schemas"]["SalaryRecordResource"] & Record<string, never>)[];
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "payroll.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetSalaryRequest"];
+            };
+        };
+        responses: {
+            /** @description `SalaryRecordResource` */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["SalaryRecordResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "position.index": {
         parameters: {
             query?: never;
@@ -1807,6 +3761,101 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "projectBonus.show": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The project UUID */
+                project: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: unknown[] | null;
+                        meta: {
+                            project: {
+                                id: string;
+                                name: string;
+                            };
+                            can_manage: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "projectBonus.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The project UUID */
+                project: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBonusPoolRequest"];
+            };
+        };
+        responses: {
+            /** @description `BonusPoolResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["BonusPoolResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "projectMember.index": {
         parameters: {
             query?: never;
@@ -1877,7 +3926,7 @@ export interface operations {
                 /** @description The project UUID */
                 project: string;
                 /** @description The user UUID */
-                user: string | null;
+                user: string;
             };
             cookie?: never;
         };
@@ -1895,13 +3944,36 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "auth.resetPassword": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "users.resetTwoFactor": {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /** @description The user UUID */
-                user: string | null;
+                user: string;
             };
             cookie?: never;
         };
@@ -1925,7 +3997,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description The user UUID */
-                user: string | null;
+                user: string;
             };
             cookie?: never;
         };
@@ -1949,6 +4021,736 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "reports.reviewDailyReport": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The report UUID */
+                report: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Không bắt buộc: đánh dấu đã đọc mà không có gì để nói là trường
+                     *     hợp thường gặp nhất. Bắt ghi nhận xét mỗi ngày cho mỗi người là
+                     *     cách nhanh nhất khiến quản lý bỏ luôn việc đọc.
+                     */
+                    note?: string | null;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            report_date: string;
+                            content: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Bản nháp" | "Đã nộp" | "Quản lý đã xem";
+                            is_editable: boolean;
+                            submitted_at: string | null;
+                            author: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            } | null;
+                            /**
+                             * @description Task đã bị xoá cứng thì không còn trong bảng tra — bỏ qua thay vì
+                             *     hiện một dòng trống. Bản ghi trong `daily_report_tasks` đã đi
+                             *     theo nhờ `cascadeOnDelete`, nên trường hợp này chỉ xảy ra khi có
+                             *     hai request chạy sát nhau.
+                             */
+                            tasks: string[];
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự đánh dấu đã đọc báo cáo của chính mình.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.reviewLateArrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The late arrival UUID */
+                lateArrival: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    approve: boolean;
+                    /**
+                     * @description Từ chối bắt buộc có lý do; duyệt thì không — cùng lý do đã ghi ở
+                     *     ReviewLeaveController.
+                     */
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            expected_arrival: string;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.reviewLeave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The leave UUID */
+                leave: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    approve: boolean;
+                    /**
+                     * @description Từ chối BẮT BUỘC có lý do; duyệt thì không. "Đồng ý" đã là câu
+                     *     trả lời đầy đủ, còn bắt gõ lý do cho mọi lượt duyệt chỉ sinh ra
+                     *     những dòng "ok". Từ chối mà không nói vì sao thì người nộp không
+                     *     biết phải sửa gì.
+                     */
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Nghỉ phép năm" | "Nghỉ ốm" | "Nghỉ không lương" | "Nghỉ việc riêng";
+                            start_date: string;
+                            end_date: string;
+                            days: number;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            /**
+                             * @description `null` = chưa ai xử lý. Giao diện phân biệt "đang chờ" với "đã
+                             *      duyệt nhưng không ghi chú" bằng chính chỗ này.
+                             */
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "attendance.reviewWorkDay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewWorkDayRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            work_date: string;
+                            decision: string;
+                            /** @enum {string} */
+                            decision_label: "Đã ghi nhận" | "Bỏ qua" | "Cần hỏi lại";
+                            adjusted_minutes: number | null;
+                            reason: string;
+                            reviewed_by: string;
+                            reviewed_at: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự duyệt ngày công của chính mình được.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "reports.saveDailyReport": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveDailyReportRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            report_date: string;
+                            content: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Bản nháp" | "Đã nộp" | "Quản lý đã xem";
+                            is_editable: boolean;
+                            submitted_at: string | null;
+                            author: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            } | null;
+                            /**
+                             * @description Task đã bị xoá cứng thì không còn trong bảng tra — bỏ qua thay vì
+                             *     hiện một dòng trống. Bản ghi trong `daily_report_tasks` đã đi
+                             *     theo nhờ `cascadeOnDelete`, nên trường hợp này chỉ xảy ra khi có
+                             *     hai request chạy sát nhau.
+                             */
+                            tasks: string[];
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "settings.siteBranding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            company_name: string | number | boolean | null;
+                            company_short_name: string | number | boolean | null;
+                            /**
+                             * @description `null` khi chưa đặt — giao diện tự quay về dấu cộng vẽ tay.
+                             *     Không trả chuỗi rỗng: chuỗi rỗng làm `<img src="">` và trình
+                             *     duyệt tải lại chính trang hiện tại.
+                             */
+                            logo_url: null;
+                            icon_url: null;
+                        };
+                    };
+                };
+            };
+        };
+    };
+    "settings.siteFavicon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+        };
+    };
+    "siteIcon.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Maximum file size: 512 kilobytes.
+                     */
+                    icon: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            icon_url: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "siteIcon.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            icon_url: null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "siteLogo.store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Maximum file size: 1024 kilobytes.
+                     */
+                    logo: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            logo_url: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "siteLogo.destroy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            logo_url: null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "siteSetting.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            values: {
+                                [key: string]: string | number | boolean | null;
+                            };
+                            fields: unknown[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "siteSetting.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateSettingsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            values: {
+                                [key: string]: string | number | boolean | null;
+                            };
+                            fields: unknown[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.submitLateArrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitLateArrivalRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            expected_arrival: string;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.submitLeave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitLeaveRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Nghỉ phép năm" | "Nghỉ ốm" | "Nghỉ không lương" | "Nghỉ việc riêng";
+                            start_date: string;
+                            end_date: string;
+                            days: number;
+                            reason: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            /**
+                             * @description `null` = chưa ai xử lý. Giao diện phân biệt "đang chờ" với "đã
+                             *      duyệt nhưng không ghi chú" bằng chính chỗ này.
+                             */
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "task.index": {
         parameters: {
             query?: {
@@ -1957,6 +4759,10 @@ export interface operations {
                 assignee_id?: string;
                 project_id?: string;
                 overdue?: boolean;
+                open?: boolean;
+                unassigned?: boolean;
+                due_today?: boolean;
+                completed_this_week?: boolean;
             };
             header?: never;
             path?: never;
@@ -2314,6 +5120,204 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.teamAttendance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            month: string;
+                            days: string[];
+                            holidays: string;
+                            rows: {
+                                user: {
+                                    id: string;
+                                    name: string;
+                                    department: string | null;
+                                };
+                                /**
+                                 * @description Ép sang object: mảng PHP rỗng được json_encode thành `[]`,
+                                 *     nên người chưa có ngày công nào sẽ trả về một MẢNG trong khi
+                                 *     mọi người khác trả về object. Client tra `cells["2026-08-01"]`
+                                 *     trên mảng thì im lặng ra undefined — không lỗi, chỉ sai.
+                                 */
+                                cells: string;
+                                total_minutes: string;
+                                days_worked: number;
+                                /** @description Số đưa lên đầu hàng để quản lý không phải rà ba mươi ô. */
+                                missing_report_days: number;
+                            }[];
+                            can_review: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "leave.teamLateArrival": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string[];
+                        meta: {
+                            total: string;
+                            /** @constant */
+                            limit: 100;
+                            pending: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "leave.teamLeave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string;
+                            status: string;
+                            /**
+                             * @description Số đơn đang chờ, luôn trả về bất kể đang lọc trạng thái nào —
+                             *     đây là con số hiện lên thanh điều hướng, và nó phải đúng kể
+                             *     cả khi người dùng đang xem tab "đã duyệt".
+                             */
+                            pending_count: string;
+                            /**
+                             * @description Tổng của trạng thái đang xem. Có `limit(100)` ở trên nên bắt
+                             *     buộc phải trả tổng — quy ước "không cắt im lặng" của dự án.
+                             */
+                            total: string;
+                            can_approve: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "reports.teamReports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            date: string;
+                            rows: string[];
+                            submitted: number;
+                            total: number;
+                            can_review: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "tasks.teamTasks": {
         parameters: {
             query?: never;
@@ -2590,6 +5594,163 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "user.update": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserRequest"];
+            };
+        };
+        responses: {
+            /** @description `UserResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: components["schemas"]["UserResource"] & Record<string, never>;
+                        meta: {
+                            warnings: string[];
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "userActivity.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Paginated set of `UserActivityResource` */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: (components["schemas"]["UserActivityResource"] & Record<string, never>)[];
+                        links: {
+                            first: string | null;
+                            last: string | null;
+                            prev: string | null;
+                            next: string | null;
+                        };
+                        meta: {
+                            current_page: number;
+                            from: number | null;
+                            last_page: number;
+                            /** @description Generated paginator links. */
+                            links: {
+                                url: string | null;
+                                label: string;
+                                active: boolean;
+                            }[];
+                            /** @description Base path for paginator generated URLs. */
+                            path: string | null;
+                            /** @description Number of items shown per page. */
+                            per_page: number;
+                            /** @description Number of the last item in the slice. */
+                            to: number | null;
+                            /** @description Total number of items being paginated. */
+                            total: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            403: components["responses"]["AuthorizationException"];
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.workDayDetail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The user UUID */
+                user: string;
+                date: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            work_date: string;
+                            user: {
+                                id: string;
+                                name: string;
+                            };
+                            sessions: string[];
+                            task_activity_count: number;
+                            /**
+                             * @description | Mảnh còn thiếu từ đợt 3, nay đã có: báo cáo ngày.
+                             *     |
+                             *     | Số giờ đứng một mình không nói được gì. Đứng cạnh "đã đụng
+                             *     | vào mấy việc" và "có báo cáo chưa" thì mới đọc ra được tình
+                             *     | hình: sáu tiếng online, không đụng việc nào, không báo cáo —
+                             *     | nhìn phát ra ngay.
+                             */
+                            daily_report: {
+                                status: string;
+                                /** @enum {string} */
+                                status_label: "Bản nháp" | "Đã nộp" | "Quản lý đã xem";
+                                /**
+                                 * @description Cắt ngắn: đây là màn chấm công, không phải màn đọc báo cáo. Ai
+                                 *     muốn đọc đủ thì sang trang Báo cáo.
+                                 */
+                                content: string;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
 }

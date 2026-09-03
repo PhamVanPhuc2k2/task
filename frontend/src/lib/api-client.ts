@@ -5,8 +5,7 @@
  * Không gọi fetch() trực tiếp trong component.
  */
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+import { API_BASE_URL as BASE_URL } from "./api-url";
 
 /** Dạng lỗi thống nhất mà backend trả về. Xem README mục 1.4. */
 export interface ApiErrorBody {

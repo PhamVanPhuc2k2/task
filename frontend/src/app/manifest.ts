@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 
+import { API_BASE_URL } from "@/lib/api-url";
+
 /**
  * Manifest để cài Explus lên màn hình chính điện thoại.
  *
@@ -22,11 +24,20 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: "vi",
     background_color: "#0c0d09",
     theme_color: "#0c0d09",
+    /*
+    | Cùng một đường với biểu tượng trên tab (`app/layout.tsx`), nên đổi biểu
+    | tượng trong Cài đặt trang là đổi cả hai. Trước đây chỗ này trỏ thẳng vào
+    | `/icon.svg` còn tab lại lấy `favicon.ico` mặc định của Next — cùng một ứng
+    | dụng mà màn hình chính và trình duyệt hiện hai nhận diện khác nhau.
+    |
+    | KHÔNG khai `type`: ảnh trả về là PNG hoặc WebP nếu công ty đã tải lên, và
+    | SVG nếu chưa. Khai cứng một kiểu thì nó sai đúng một nửa số trường hợp,
+    | mà `type` vốn là trường tuỳ chọn.
+    */
     icons: [
       {
-        src: "/icon.svg",
+        src: `${API_BASE_URL}/site/icon`,
         sizes: "any",
-        type: "image/svg+xml",
         purpose: "any",
       },
     ],
