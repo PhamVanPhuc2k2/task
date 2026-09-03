@@ -76,19 +76,30 @@ export function useUpdateSiteSettings(): UseMutationResult<
   });
 }
 
-export function useUploadLogo(): UseMutationResult<
-  Wrapped<{ logo_url: string }>,
-  ApiError,
-  File
-> {
+/** Hai loại ảnh nhận diện — cũng chính là tên trường và đoạn cuối endpoint. */
+export type AnhNhanDien = "logo" | "icon";
+
+/** Khoá trả về là `logo_url` hoặc `icon_url` tuỳ loại. */
+type KetQuaTai = Wrapped<Record<string, string>>;
+
+/**
+ * Tải một ảnh nhận diện lên.
+ *
+ * Một hàm cho cả logo lẫn biểu tượng: đường đi giống hệt nhau, chỉ khác tên
+ * trường trong form và đoạn cuối của endpoint. Viết thành hai bản là dựng sẵn
+ * hai chỗ sẽ lệch nhau sau lần sửa đầu tiên.
+ */
+export function useUploadBrandingImage(
+  loai: AnhNhanDien,
+): UseMutationResult<KetQuaTai, ApiError, File> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (file) => {
       const form = new FormData();
-      form.append("logo", file);
+      form.append(loai, file);
 
-      return api.post<Wrapped<{ logo_url: string }>>("/settings/logo", form);
+      return api.post<KetQuaTai>(`/settings/${loai}`, form);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: siteKeys.all });
@@ -96,11 +107,14 @@ export function useUploadLogo(): UseMutationResult<
   });
 }
 
-export function useRemoveLogo(): UseMutationResult<unknown, ApiError, void> {
+/** Xoá ảnh nhận diện — quay về dấu cộng Explus vẽ tay. */
+export function useRemoveBrandingImage(
+  loai: AnhNhanDien,
+): UseMutationResult<unknown, ApiError, void> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => api.delete<unknown>("/settings/logo"),
+    mutationFn: () => api.delete<unknown>(`/settings/${loai}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: siteKeys.all });
     },

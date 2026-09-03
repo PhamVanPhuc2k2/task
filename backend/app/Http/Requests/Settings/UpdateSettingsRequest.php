@@ -29,8 +29,7 @@ final class UpdateSettingsRequest extends FormRequest
         ];
 
         foreach (SettingKey::cases() as $k) {
-            // Logo đi qua đường riêng (upload tệp), không nhận qua form này.
-            if ($k === SettingKey::LogoPath) {
+            if (self::laTepAnh($k)) {
                 continue;
             }
 
@@ -46,6 +45,22 @@ final class UpdateSettingsRequest extends FormRequest
             $this->kiemCaLam($v);
             $this->kiemKhoaLa($v);
         });
+    }
+
+    /**
+     * Khoá trỏ tới một TỆP, không phải một giá trị gõ tay.
+     *
+     * Logo và biểu tượng đi qua đường upload riêng. Form này không nhận chúng —
+     * và `kiemKhoaLa()` bên dưới từ chối hẳn, chứ không chỉ bỏ qua.
+     *
+     * Vì sao phải từ chối hẳn: `values` có luật của chính nó (`array`), nên
+     * `validated()` trả về **cả mảng**, kể cả những khoá không có luật riêng.
+     * Chỉ `continue` ở vòng lặp trên thì một `values.logo_path` gửi kèm vẫn đi
+     * thẳng xuống `setRaw()` và ghi đè đường dẫn tệp bằng chuỗi tuỳ ý.
+     */
+    private static function laTepAnh(SettingKey $k): bool
+    {
+        return $k === SettingKey::LogoPath || $k === SettingKey::IconPath;
     }
 
     /**
@@ -155,8 +170,19 @@ final class UpdateSettingsRequest extends FormRequest
         $gui = $this->input('values', []);
 
         foreach (array_keys($gui) as $khoa) {
-            if (SettingKey::tryFrom((string) $khoa) === null) {
+            $k = SettingKey::tryFrom((string) $khoa);
+
+            if ($k === null) {
                 $v->errors()->add("values.{$khoa}", 'Không có cài đặt nào tên này.');
+
+                continue;
+            }
+
+            if (self::laTepAnh($k)) {
+                $v->errors()->add(
+                    "values.{$khoa}",
+                    'Ảnh nhận diện phải tải lên qua ô chọn tệp, không đặt được ở đây.',
+                );
             }
         }
     }

@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**713 test xanh** (4755 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**721 test xanh** (4787 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-24 model · 25 migration · 44 bảng · 69 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -2627,6 +2627,53 @@ Thêm quyền `setting.manage` xong, giám đốc bấm vào trang cài đặt v
 Nhưng `scripts/deploy.sh` **không hề chạy seeder đó**, chỉ chạy `migrate`. Nghĩa là deploy lên máy chủ thật sẽ "thành công" — mã mới chạy, trang có đủ — mà không ai vào được, và không có gì trong log nói vì sao.
 
 Đã bổ sung vào deploy. Seeder vốn đã an toàn cho hệ thống đang chạy: nó **chỉ cấp thêm quyền vừa mới ra đời**, không dùng `syncPermissions` nên không xoá tuỳ chỉnh của quản trị viên.
+
+---
+
+### Biểu tượng của trang ✅ Đã xong
+
+Tải logo lên xong, tab trình duyệt **vẫn hiện logo Next.js**. Không phải logo hỏng — favicon chưa bao giờ được nối với nó.
+
+`src/app/favicon.ico` là tệp mặc định còn sót từ `create-next-app`; dấu vết là nó cùng ngày sửa với `next.svg` và `vercel.svg`, nguyên bộ scaffold chưa ai dọn. Next.js tự nhận tệp đó theo quy ước và **quy ước tệp thắng `metadata.icons`**, nên có khai thêm ở `layout.tsx` cũng vô ích. Phải xoá tệp thì khai báo mới có tác dụng.
+
+Một chỗ lệch đi kèm: `manifest.ts` trỏ vào `/icon.svg`, nên cài lên màn hình chính điện thoại thì ra dấu cộng Explus, còn mở trên trình duyệt lại ra logo Next.js. Cùng một ứng dụng, hai nhận diện.
+
+#### Hai ô tải, không phải một
+
+Cách hiển nhiên là lấy thẳng logo làm favicon. Nó sai, và chính mã nguồn đã nói trước điều đó — `app-shell.tsx` dùng `object-contain` kèm ghi chú *"logo do người dùng tải lên, tỉ lệ không đoán được"*.
+
+Logo công ty thường nằm ngang: một dấu hiệu cộng với tên viết bằng chữ. Ảnh đó co xuống 16×16 pixel thì thành vệt mờ — chữ biến mất trước tiên. Biểu tượng là bài toán ngược lại: vuông, một hình duy nhất, đọc được ở cỡ rất nhỏ. Ép hai yêu cầu vào một tệp là hỏng cả hai.
+
+| | Logo | Biểu tượng |
+|---|---|---|
+| Hiện ở | Đầu trang, trang đăng nhập | Tab trình duyệt, màn hình chính |
+| Tỉ lệ | Tự do | **Ép vuông** (`ratio=1/1`) |
+| Định dạng | PNG, JPG, WebP | PNG, WebP — **không JPG** |
+| Cỡ | ≤ 1024px, ≤ 1MB | 64–512px, ≤ 512KB |
+
+Không nhận JPG cho biểu tượng vì JPG không có nền trong suốt: nó thành một ô vuông trắng trên thanh tab nền tối. Logo thì nhận được, vì nó nằm trên nền của trang.
+
+Màn cài đặt xem trước biểu tượng thêm ở **đúng 16px** — cỡ thật trên tab. Không có ô đó thì người ta chọn một ảnh nhiều chi tiết, thấy đẹp ở ô 80px, và chỉ phát hiện nó thành vệt mờ sau khi đã lưu.
+
+#### Vì sao favicon đi qua một endpoint chuyển hướng
+
+Cách thông thường là `generateMetadata()` gọi API lấy đường dẫn ảnh. Cách đó **không chạy được ở dự án này**: `NEXT_PUBLIC_API_URL` ở production là đường dẫn tương đối (`/api/v1`) — chủ ý, để ảnh Docker build một lần chạy được ở mọi tên miền — mà `generateMetadata()` chạy trên máy chủ Next, nơi đường dẫn tương đối không có origin để phân giải.
+
+Vá bằng cách thêm một biến môi trường chỉ dành cho server là thêm một thứ phải khai đúng lúc deploy, mà khai sai thì favicon **âm thầm** rơi về mặc định: không lỗi, không log, chỉ là sai.
+
+Nên `GET /api/v1/site/icon` nhận việc đó. Frontend khai một URL tĩnh, trình duyệt tự phân giải theo origin đang mở, backend quyết định trả ảnh nào. `manifest.ts` dùng chung đúng đường đó, nên tab và màn hình chính không thể lệch nhau nữa.
+
+Đường này **luôn chuyển hướng tới một ảnh thật**, chưa ai đặt thì trỏ về `public/icon.svg` của frontend. Trả 404 thì trình duyệt hiện biểu tượng trang trắng và nhớ điều đó rất lâu — tệ hơn hẳn ảnh mặc định. Backend cũng cố ý không giữ bản sao dấu cộng Explus: hai bản của cùng một dấu nhận diện là hai bản sẽ lệch nhau sau lần đổi thương hiệu đầu tiên.
+
+`Cache-Control: public, max-age=300`. Trình duyệt cache favicon rất dai, nên con số này quyết định giám đốc đổi biểu tượng xong bao lâu thì thấy — dài quá thì họ tưởng chức năng hỏng.
+
+#### Ba thứ lộ ra khi làm
+
+**`PUT /settings` ghi đè được đường dẫn tệp.** `values` có luật của chính nó (`array`), nên `validated()` trả về **cả mảng** — kể cả khoá không có luật riêng. Bỏ qua `logo_path` lúc dựng luật là chưa đủ: nó vẫn đi thẳng xuống `setRaw()`. Giờ bị từ chối hẳn, có test cho cả hai khoá. Chỉ admin mới gọi được nên mức độ thấp, nhưng nó đúng họ với những lỗi im lặng khác trong tài liệu này.
+
+**`max_daily_minutes` hiện dưới mục Nghỉ phép.** `nhom()` có nhánh `default => 'leave'`, nên khoá mới nào không khớp nhánh nào ở trên sẽ âm thầm rơi vào nhóm sai. Đã sửa và ghi cảnh báo ngay trên hàm.
+
+**Test kiến trúc bắt được controller mới.** `SiteFaviconController` là công khai có chủ ý, và `ControllerAuthorizationTest` đỏ ngay lần chạy đầu — đúng như nó được viết ra để làm. Đã thêm vào danh sách miễn trừ **kèm lý do**, vì test còn kiểm cả việc lý do có được viết tử tế không.
 
 ---
 

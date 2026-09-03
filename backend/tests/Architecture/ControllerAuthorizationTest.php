@@ -67,6 +67,7 @@ const MIEN_KHAI_QUYEN = [
     'V1/Auth/TwoFactorConfirmController.php' => 'Xác nhận 2FA của chính mình.',
     'V1/HealthController.php' => 'Công khai theo thiết kế — bộ cân bằng tải gọi khi chưa có phiên nào.',
     'V1/Settings/SiteBrandingController.php' => 'Công khai theo thiết kế — trang đăng nhập cần tên và logo khi chưa có phiên nào. Chỉ trả nhận diện, không trả chính sách.',
+    'V1/Settings/SiteFaviconController.php' => 'Công khai theo thiết kế — trình duyệt xin biểu tượng của tab trước cả trang đăng nhập, không kèm cookie nào. Chỉ chuyển hướng tới một ảnh, không đọc gì khác.',
 
     // ── Nhóm 2: chỉ thao tác trên dữ liệu của CHÍNH NGƯỜI ĐĂNG NHẬP ──────
     // Không có tham số người dùng trên đường dẫn, và trong mã chỉ đọc

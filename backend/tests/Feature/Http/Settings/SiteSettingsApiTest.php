@@ -151,3 +151,132 @@ it('ghi lại ai đổi lần cuối', function (): void {
         'updated_by' => $gd->id,
     ]);
 });
+
+/*
+|--------------------------------------------------------------------------
+| Biểu tượng (favicon)
+|--------------------------------------------------------------------------
+|
+| Tách hẳn khỏi logo, và đó là điểm chính. Logo công ty thường nằm ngang —
+| một dấu hiệu cộng với tên viết bằng chữ. Ảnh đó co xuống 16×16 pixel trên
+| tab trình duyệt thì thành vệt mờ, chữ biến mất trước tiên. Nên biểu tượng
+| có ô tải riêng với ràng buộc riêng: vuông, và chỉ nhận định dạng có nền
+| trong suốt.
+|
+*/
+
+it('tải biểu tượng lên và trả về đường dẫn công khai', function (): void {
+    Storage::fake('public');
+
+    $duong = $this->actingAs(giamDoc())
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('icon.png', 256, 256),
+        ])
+        ->assertOk()
+        ->json('data.icon_url');
+
+    expect($duong)->toBeString()->not->toContain('X-Amz-Signature');
+
+    // Và nó phải lộ ra ở đường công khai, vì màn cài đặt xem trước bằng đó.
+    $this->getJson('/api/v1/site')->assertOk()->assertJsonPath('data.icon_url', $duong);
+});
+
+it('từ chối biểu tượng không vuông', function (): void {
+    /*
+    | Ràng buộc quan trọng nhất của tính năng này. Trình duyệt không cắt ảnh,
+    | nó BÓP — một logo ngang lọt qua đây sẽ thành biểu tượng méo trên mọi tab,
+    | và không có gì báo lỗi. Đây đúng là lý do biểu tượng không dùng chung ô
+    | tải với logo.
+    */
+    Storage::fake('public');
+
+    $this->actingAs(giamDoc())
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('logo-ngang.png', 512, 128),
+        ])
+        ->assertJsonValidationErrors('icon');
+});
+
+it('từ chối JPG làm biểu tượng', function (): void {
+    // JPG không có nền trong suốt: biểu tượng sẽ là một ô vuông trắng trên
+    // thanh tab nền tối. Logo thì nhận JPG được, vì nó nằm trên nền của trang.
+    Storage::fake('public');
+
+    $this->actingAs(giamDoc())
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('icon.jpg', 256, 256),
+        ])
+        ->assertJsonValidationErrors('icon');
+});
+
+it('nhân viên thường không đổi được biểu tượng', function (): void {
+    Storage::fake('public');
+
+    $u = User::factory()->create();
+    $u->assignRole(Role::NhanVien->value);
+
+    $this->actingAs($u)
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('icon.png', 256, 256),
+        ])
+        ->assertForbidden();
+});
+
+it('đường biểu tượng luôn trả về một ảnh, kể cả khi chưa ai đặt', function (): void {
+    /*
+    | Không đăng nhập vẫn phải gọi được: trình duyệt xin biểu tượng của tab
+    | trước cả trang đăng nhập, và không kèm cookie nào.
+    |
+    | Trả 404 ở đây thì trình duyệt hiện biểu tượng trang trắng và NHỚ điều đó
+    | rất lâu — tệ hơn hẳn việc chuyển hướng về ảnh mặc định.
+    */
+    $this->get('/api/v1/site/icon')
+        ->assertRedirect(rtrim((string) config('app.frontend_url'), '/').'/icon.svg');
+});
+
+it('đường biểu tượng trỏ sang ảnh đã tải lên', function (): void {
+    Storage::fake('public');
+
+    $duong = $this->actingAs(giamDoc())
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('icon.png', 256, 256),
+        ])
+        ->json('data.icon_url');
+
+    $this->get('/api/v1/site/icon')->assertRedirect($duong);
+});
+
+it('xoá biểu tượng thì quay về ảnh mặc định', function (): void {
+    Storage::fake('public');
+
+    $this->actingAs(giamDoc())
+        ->post('/api/v1/settings/icon', [
+            'icon' => UploadedFile::fake()->image('icon.png', 256, 256),
+        ])
+        ->assertOk();
+
+    $this->actingAs(giamDoc())
+        ->deleteJson('/api/v1/settings/icon')
+        ->assertOk()
+        ->assertJsonPath('data.icon_url', null);
+
+    $this->get('/api/v1/site/icon')
+        ->assertRedirect(rtrim((string) config('app.frontend_url'), '/').'/icon.svg');
+});
+
+it('không đặt được đường dẫn ảnh qua form cài đặt', function (): void {
+    /*
+    | `values` có luật của chính nó (`array`), nên `validated()` trả về CẢ mảng
+    | — kể cả khoá không có luật riêng. Chỉ bỏ qua `logo_path` khi dựng luật là
+    | chưa đủ: nó vẫn đi thẳng xuống `setRaw()` và ghi đè đường dẫn tệp bằng
+    | chuỗi tuỳ ý, im lặng. Ảnh chỉ được đặt qua đường tải tệp.
+    */
+    foreach (['logo_path', 'icon_path'] as $khoa) {
+        $this->actingAs(giamDoc())
+            ->putJson('/api/v1/settings', ['values' => [$khoa => 'branding/gia-mao.png']])
+            ->assertJsonValidationErrors("values.{$khoa}");
+    }
+
+    expect(app(SiteSettings::class)->get(SettingKey::LogoPath))->toBeNull()
+        ->and(app(SiteSettings::class)->get(SettingKey::IconPath))->toBeNull();
+});
