@@ -65,7 +65,7 @@ final class LoginController
 
         RateLimiter::clear($request->throttleKey());
 
-        $this->rememberPendingLogin($request, $user);
+        $this->rememberPendingLogin($request, $user, $request->boolean('remember'));
 
         /*
         | Hỏi KÊNH ĐANG DÙNG, không hỏi cột `two_factor_confirmed_at`.
