@@ -7,6 +7,7 @@ namespace App\Domain\Leave\Notifications;
 use App\Domain\Identity\Enums\NotificationType;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Notifications\PreferenceAwareNotification;
+use App\Domain\Leave\Enums\AttendanceExceptionType;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -28,7 +29,15 @@ final class LateArrivalRequestedNotification extends PreferenceAwareNotification
         private readonly string $tenNguoiNop,
         private readonly string $ngay,
         private readonly string $gioDuKien,
-        private readonly int $soPhutMuon,
+        private readonly int $soPhutLech,
+        /**
+         * Đi muộn hay về sớm.
+         *
+         * Dùng chung một loại thông báo cho cả hai: người duyệt nhận cùng một
+         * việc phải làm, và tách thành hai loại thì họ phải bật/tắt hai ô trong
+         * Cài đặt thông báo cho cùng một thứ.
+         */
+        private readonly AttendanceExceptionType $loai = AttendanceExceptionType::Late,
     ) {}
 
     public function type(): NotificationType
@@ -38,18 +47,26 @@ final class LateArrivalRequestedNotification extends PreferenceAwareNotification
 
     public function title(): string
     {
-        return 'Có đơn xin đi muộn cần duyệt';
+        return sprintf('Có đơn xin %s cần duyệt', mb_strtolower($this->loai->label()));
     }
 
     public function message(User $notifiable): string
     {
-        return sprintf(
-            '%s xin đi muộn ngày %s, dự kiến đến lúc %s (muộn %d phút).',
-            $this->tenNguoiNop,
-            $this->ngayViet($this->ngay),
-            $this->gioDuKien,
-            $this->soPhutMuon,
-        );
+        return $this->loai === AttendanceExceptionType::Early
+            ? sprintf(
+                '%s xin về sớm ngày %s, dự kiến rời lúc %s (sớm %d phút).',
+                $this->tenNguoiNop,
+                $this->ngayViet($this->ngay),
+                $this->gioDuKien,
+                $this->soPhutLech,
+            )
+            : sprintf(
+                '%s xin đi muộn ngày %s, dự kiến đến lúc %s (muộn %d phút).',
+                $this->tenNguoiNop,
+                $this->ngayViet($this->ngay),
+                $this->gioDuKien,
+                $this->soPhutLech,
+            );
     }
 
     public function url(): string
@@ -62,7 +79,11 @@ final class LateArrivalRequestedNotification extends PreferenceAwareNotification
      */
     protected function extra(): array
     {
-        return ['date' => $this->ngay, 'expected_arrival' => $this->gioDuKien];
+        return [
+            'date' => $this->ngay,
+            'type' => $this->loai->value,
+            'expected_time' => $this->gioDuKien,
+        ];
     }
 
     private function ngayViet(string $ngay): string

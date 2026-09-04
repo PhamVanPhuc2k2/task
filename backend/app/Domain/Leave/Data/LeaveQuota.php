@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Leave\Data;
 
+use App\Domain\Leave\Enums\AttendanceExceptionType;
 use App\Domain\Leave\Enums\LeaveType;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Domain\Leave\Models\LeaveRequest;
@@ -43,6 +44,12 @@ final readonly class LeaveQuota
         public int $unpaidMaxDaysPerYear,
         /** Số lần xin đi muộn tối đa mỗi tháng. 0 = không giới hạn. */
         public int $lateArrivalMaxPerMonth,
+        /**
+         * So lan xin ve som toi da moi thang. 0 = khong gioi han.
+         *
+         * Han muc RIENG, khong dung chung voi di muon.
+         */
+        public int $earlyLeaveMaxPerMonth,
     ) {}
 
     public static function fromConfig(): self
@@ -50,6 +57,7 @@ final readonly class LeaveQuota
         return new self(
             unpaidMaxDaysPerYear: Config::integer('leave.unpaid_max_days_per_year'),
             lateArrivalMaxPerMonth: Config::integer('leave.late_arrival_max_per_month'),
+            earlyLeaveMaxPerMonth: Config::integer('leave.early_leave_max_per_month'),
         );
     }
 
@@ -92,13 +100,33 @@ final readonly class LeaveQuota
         return $tong;
     }
 
-    /** Số lần xin đi muộn đã dùng trong tháng chứa ngày này. */
-    public function lateArrivalsUsed(int $userId, string $ngay, ?int $boQuaDonId = null, bool $khoaDong = false): int
+    /** Hạn mức mỗi tháng của một loại đơn. 0 = không giới hạn. */
+    public function maxPerMonthFor(AttendanceExceptionType $loai): int
     {
+        return match ($loai) {
+            AttendanceExceptionType::Late => $this->lateArrivalMaxPerMonth,
+            AttendanceExceptionType::Early => $this->earlyLeaveMaxPerMonth,
+        };
+    }
+
+    /**
+     * Số đơn của một loại đã dùng trong tháng chứa ngày này.
+     *
+     * Đếm số ĐƠN chứ không đếm số phút: một đơn xin tới 9h và một đơn xin tới
+     * 11h đều là một lần phải báo trước.
+     */
+    public function exceptionsUsed(
+        int $userId,
+        string $ngay,
+        AttendanceExceptionType $loai,
+        ?int $boQuaDonId = null,
+        bool $khoaDong = false,
+    ): int {
         $moc = CarbonImmutable::parse($ngay);
 
         return LateArrivalRequest::query()
             ->where('user_id', $userId)
+            ->where('type', $loai->value)
             ->blocking()
             ->whereBetween('date', [
                 $moc->startOfMonth()->toDateString(),

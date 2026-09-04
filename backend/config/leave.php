@@ -76,4 +76,27 @@ return [
 
     'late_arrival_max_per_month' => (int) env('LATE_ARRIVAL_MAX_PER_MONTH', 3),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Xin về sớm
+    |--------------------------------------------------------------------------
+    |
+    | Hạn mức RIÊNG, không dùng chung với đi muộn — công ty đã chốt như vậy. Hai
+    | con số tách nhau nghĩa là dùng hết quota đi muộn không làm mất quyền xin
+    | về sớm, và ngược lại.
+    |
+    | `grace_minutes` = 5 chứ không phải 0 như đi muộn: về sớm năm phút mà bắt
+    | làm đơn thì không ai dùng, và một tính năng không ai dùng còn tệ hơn không
+    | có — nó làm bảng công trông như đã theo dõi trong khi thực tế thì không.
+    |
+    | Ân hạn ở đây DỜI NGƯỠNG, không trừ vào số phút: về sớm 20 phút thì tính
+    | đủ 20, không phải 15. Cùng quy ước với ân hạn đi muộn.
+    |
+    | Đặt hạn mức 0 để tắt.
+    |
+    */
+
+    'early_leave_max_per_month' => (int) env('EARLY_LEAVE_MAX_PER_MONTH', 3),
+    'early_leave_grace_minutes' => (int) env('EARLY_LEAVE_GRACE_MINUTES', 5),
+
 ];

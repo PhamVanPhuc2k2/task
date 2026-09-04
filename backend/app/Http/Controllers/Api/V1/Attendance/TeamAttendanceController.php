@@ -82,6 +82,7 @@ final class TeamAttendanceController
         // người một tháng là chín trăm ô, và mỗi lần dựng là năm lượt đọc config.
         $tuan = WorkWeek::fromConfig();
         $diMuon = $this->approvedLateArrivals($ids, $tuNgay, $denNgay);
+        $veSom = $this->approvedEarlyLeaves($ids, $tuNgay, $denNgay);
 
         foreach ($nhanSu as $u) {
             $cua = $ngay->filter(
@@ -140,6 +141,8 @@ final class TeamAttendanceController
                     // để mà muộn so với nó.
                     'late_minutes' => $tuan->shiftFor($d->workDate)?->lateMinutes($d->firstSeenAt) ?? 0,
                     'late_excused' => $this->isLateExcused($diMuon, $tuan->shiftFor($d->workDate), $u->id, $d->workDate, $d->firstSeenAt),
+                    'early_leave_minutes' => $tuan->shiftFor($d->workDate)?->earlyLeaveMinutes($d->lastSeenAt) ?? 0,
+                    'early_leave_excused' => $this->isEarlyLeaveExcused($veSom, $tuan->shiftFor($d->workDate), $u->id, $d->workDate, $d->lastSeenAt),
                 ];
             }
 

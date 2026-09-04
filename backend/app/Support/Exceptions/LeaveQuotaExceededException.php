@@ -44,13 +44,25 @@ final class LeaveQuotaExceededException extends DomainException
         );
     }
 
-    public static function xinDiMuon(string $thang, int $daDung, int $hanMuc): self
-    {
+    /**
+     * @param  string  $tenLoai  "đi muộn" hoặc "về sớm", đã viết thường.
+     *
+     * Nhận CHUỖI chứ không nhận enum của miền Leave: `Support` là tầng dưới
+     * cùng và không được biết `Domain` — deptrac chặn, và luật đó đúng. Chỗ gọi
+     * ở tầng Domain tự chuyển enum thành nhãn.
+     */
+    public static function xinNgoaiLe(
+        string $tenLoai,
+        string $thang,
+        int $daDung,
+        int $hanMuc,
+    ): self {
         return new self(
             sprintf(
-                'Bạn đã dùng hết %d/%d lần xin đi muộn của tháng %s. Trao đổi với quản lý nếu cần ngoại lệ.',
+                'Bạn đã dùng hết %d/%d lần xin %s của tháng %s. Trao đổi với quản lý nếu cần ngoại lệ.',
                 $daDung,
                 $hanMuc,
+                $tenLoai,
                 $thang,
             ),
             'date',

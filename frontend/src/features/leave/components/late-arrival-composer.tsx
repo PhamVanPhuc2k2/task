@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, TextArea, TextInput } from "@/components/ui/field";
 
 import { useSubmitLateArrival } from "../api/late-arrival-api";
+import type { AttendanceExceptionValue } from "../types/late-arrival";
 
 /**
  * Ô nộp đơn xin đi làm muộn.
@@ -24,22 +25,42 @@ export function LateArrivalComposer({
 }) {
   const nop = useSubmitLateArrival();
 
+  const [loai, setLoai] = useState<AttendanceExceptionValue>("late");
   const [ngay, setNgay] = useState("");
   const [gio, setGio] = useState("");
   const [lyDo, setLyDo] = useState("");
 
-  const soPhutMuon = phutGiua(ca.morning_start, gio);
+  const veSom = loai === "early";
 
-  // Xin "đi muộn" tới trước giờ vào làm là không có nghĩa. Chặn ngay ở đây
-  // thay vì để người ta điền xong mới báo lỗi — backend vẫn kiểm lại.
-  const gioKhongHopLe = gio !== "" && soPhutMuon <= 0;
+  /*
+  | Đi muộn đo TỪ giờ vào ca; về sớm đo TỚI giờ tan ca. Hai chiều ngược nhau
+  | nên phép trừ đảo thứ tự, còn lại mọi thứ giống hệt.
+  |
+  | Giờ tan lấy từ `shift.end` mà server trả về — đó là ca ngày làm CẢ NGÀY.
+  | Ngày nửa buổi (thứ bảy tan 12:00) thì mốc này rộng hơn thực tế, và server
+  | mới là nơi chặn theo đúng ngày. Chấp nhận: form không biết trước người dùng
+  | sẽ chọn ngày nào, và hỏi server mỗi lần đổi ngày là một vòng mạng cho một
+  | dòng chữ gợi ý.
+  */
+  const soPhutLech = veSom
+    ? phutGiua(gio, ca.end)
+    : phutGiua(ca.morning_start, gio);
+
+  // Xin "đi muộn" tới trước giờ vào làm — hoặc "về sớm" sau giờ tan — là không
+  // có nghĩa. Chặn ngay ở đây thay vì để người ta điền xong mới báo lỗi.
+  const gioKhongHopLe = gio !== "" && soPhutLech <= 0;
 
   const duLieuDu =
     ngay !== "" && gio !== "" && !gioKhongHopLe && lyDo.trim().length >= 10;
 
   function gui() {
     nop.mutate(
-      { date: ngay, expected_arrival: gio, reason: lyDo.trim() },
+      {
+        type: loai,
+        date: ngay,
+        ...(veSom ? { expected_departure: gio } : { expected_arrival: gio }),
+        reason: lyDo.trim(),
+      },
       {
         onSuccess: () => {
           setNgay("");
@@ -52,6 +73,39 @@ export function LateArrivalComposer({
 
   return (
     <div className="space-y-4">
+      {/* Đổi loại thì xoá giờ đã nhập: "9h30" hợp lệ cho đi muộn nhưng vô nghĩa
+          cho về sớm, và để nguyên thì người dùng gửi nhầm mà không nhận ra. */}
+      <div
+        role="radiogroup"
+        aria-label="Loại đơn"
+        className="border-line bg-paper-sunken inline-flex gap-0.5 rounded-xl border p-0.5"
+      >
+        {(
+          [
+            { v: "late", nhan: "Đi muộn" },
+            { v: "early", nhan: "Về sớm" },
+          ] as { v: AttendanceExceptionValue; nhan: string }[]
+        ).map((m) => (
+          <button
+            key={m.v}
+            type="button"
+            role="radio"
+            aria-checked={loai === m.v}
+            onClick={() => {
+              setLoai(m.v);
+              setGio("");
+            }}
+            className={
+              loai === m.v
+                ? "bg-tone text-tone-ink rounded-lg px-3 py-1 text-[0.82rem] font-medium"
+                : "text-ink-soft hover:text-ink rounded-lg px-3 py-1 text-[0.82rem]"
+            }
+          >
+            {m.nhan}
+          </button>
+        ))}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Ngày" required error={nop.error?.fieldError("date")}>
           {(id) => (
@@ -67,10 +121,16 @@ export function LateArrivalComposer({
         </Field>
 
         <Field
-          label="Dự kiến đến lúc"
+          label={veSom ? "Dự kiến rời lúc" : "Dự kiến đến lúc"}
           required
-          hint={`Ca làm bắt đầu ${ca.morning_start}.`}
-          error={nop.error?.fieldError("expected_arrival")}
+          hint={
+            veSom
+              ? `Ca làm tan ${ca.end}. Về sớm dưới 5 phút thì không cần xin.`
+              : `Ca làm bắt đầu ${ca.morning_start}.`
+          }
+          error={nop.error?.fieldError(
+            veSom ? "expected_departure" : "expected_arrival",
+          )}
         >
           {(id, describedBy) => (
             <TextInput
@@ -93,11 +153,25 @@ export function LateArrivalComposer({
           }
         >
           {gioKhongHopLe ? (
-            `${gio} không muộn hơn giờ vào làm ${ca.morning_start} — không cần xin phép.`
+            veSom ? (
+              `${gio} không sớm hơn giờ tan ca ${ca.end} — không cần xin phép.`
+            ) : (
+              `${gio} không muộn hơn giờ vào làm ${ca.morning_start} — không cần xin phép.`
+            )
+          ) : veSom ? (
+            <>
+              Sớm{" "}
+              <strong className="text-ink">{dienGiaiPhut(soPhutLech)}</strong>{" "}
+              so với giờ tan {ca.end}.{" "}
+              <span className="text-ink-faint">
+                Đơn được duyệt chỉ bao từ đúng {gio} — về trước mốc đó vẫn tính
+                là về sớm.
+              </span>
+            </>
           ) : (
             <>
               Muộn{" "}
-              <strong className="text-ink">{dienGiaiPhut(soPhutMuon)}</strong>{" "}
+              <strong className="text-ink">{dienGiaiPhut(soPhutLech)}</strong>{" "}
               so với ca {ca.morning_start}.{" "}
               <span className="text-ink-faint">
                 Đơn được duyệt chỉ bao tới đúng {gio} — đến sau mốc đó vẫn tính

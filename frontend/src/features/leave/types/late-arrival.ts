@@ -2,7 +2,20 @@
 
 import type { LeaveStatusValue } from "./leave";
 
+/** Đi muộn hay về sớm. Khớp App\Domain\Leave\Enums\AttendanceExceptionType. */
+export type AttendanceExceptionValue = "late" | "early";
+
 export interface LateArrivalItem {
+  /** Loại đơn. Client cũ không gửi thì server mặc định `late`. */
+  type: AttendanceExceptionValue;
+  type_label: string;
+  /**
+   * Mốc giờ của đơn — giờ đến với đơn đi muộn, giờ rời với đơn về sớm.
+   *
+   * Dùng trường này để hiển thị thay vì `expected_arrival`: nó đúng cho cả hai
+   * loại, còn `expected_arrival` rỗng trên đơn về sớm.
+   */
+  expected_time: string;
   id: string;
   /** Ngày xin đi muộn, `YYYY-MM-DD` theo lịch Việt Nam. */
   date: string;

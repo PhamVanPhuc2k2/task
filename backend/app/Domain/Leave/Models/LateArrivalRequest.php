@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Leave\Models;
 
 use App\Domain\Identity\Models\User;
+use App\Domain\Leave\Enums\AttendanceExceptionType;
 use App\Domain\Leave\Enums\LeaveStatus;
 use App\Support\Concerns\HasUuid;
 use Carbon\CarbonImmutable;
@@ -33,7 +34,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $uuid
  * @property int $user_id
  * @property string $date
- * @property string $expected_arrival
+ * @property AttendanceExceptionType $type
+ * @property string|null $expected_arrival
+ * @property string|null $expected_departure
  * @property string $reason
  * @property LeaveStatus $status
  * @property int|null $reviewed_by
@@ -43,7 +46,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $updated_at
  */
 #[Fillable([
-    'user_id', 'date', 'expected_arrival', 'reason',
+    'user_id', 'date', 'type', 'expected_arrival', 'expected_departure', 'reason',
     'status', 'reviewed_by', 'reviewed_at', 'review_note',
 ])]
 final class LateArrivalRequest extends Model
@@ -62,10 +65,38 @@ final class LateArrivalRequest extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
-    /** Giờ dự kiến đến, dạng `HH:MM` để hiển thị. */
+    /**
+     * Mốc giờ người dùng đã xin, dạng `HH:MM` để hiển thị.
+     *
+     * Đơn đi muộn đọc `expected_arrival`, đơn về sớm đọc `expected_departure`.
+     * Ràng buộc CHECK ở database bảo đảm đúng một trong hai được điền và khớp
+     * `type`, nên `??` ở đây là lưới an toàn chứ không phải nhánh nghiệp vụ.
+     */
+    public function timeLabel(): string
+    {
+        $tho = $this->type === AttendanceExceptionType::Early
+            ? $this->expected_departure
+            : $this->expected_arrival;
+
+        return substr($tho ?? '', 0, 5);
+    }
+
+    /**
+     * Giờ dự kiến đến, dạng `HH:MM`.
+     *
+     * Giữ tên cũ vì đơn xin đi muộn dùng nó ở nhiều chỗ. Đơn về sớm không có
+     * giờ đến, nên trả chuỗi rỗng thay vì ném lỗi — chỗ gọi nào cần phân biệt
+     * thì đọc `timeLabel()`.
+     */
     public function arrivalLabel(): string
     {
-        return substr($this->expected_arrival, 0, 5);
+        return substr($this->expected_arrival ?? '', 0, 5);
+    }
+
+    /** Giờ dự kiến rời, dạng `HH:MM`. Rỗng với đơn đi muộn. */
+    public function departureLabel(): string
+    {
+        return substr($this->expected_departure ?? '', 0, 5);
     }
 
     /**
@@ -105,9 +136,11 @@ final class LateArrivalRequest extends Model
     {
         return [
             'status' => LeaveStatus::class,
+            'type' => AttendanceExceptionType::class,
             // Cố ý là string — xem chú thích đầu lớp.
             'date' => 'string',
             'expected_arrival' => 'string',
+            'expected_departure' => 'string',
             'reviewed_at' => 'datetime',
         ];
     }

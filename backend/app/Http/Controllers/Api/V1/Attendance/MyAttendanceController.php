@@ -47,6 +47,7 @@ final class MyAttendanceController
         $daBaoCao = $this->submittedReportKeys([$actor->id], $tuNgay, $denNgay);
         $ngayNghi = $this->approvedLeaveDays([$actor->id], $tuNgay, $denNgay);
         $diMuon = $this->approvedLateArrivals([$actor->id], $tuNgay, $denNgay);
+        $veSom = $this->approvedEarlyLeaves([$actor->id], $tuNgay, $denNgay);
 
         // Ngày có phiên làm việc, cộng thêm ngày chỉ có báo cáo mà không có
         // phiên nào — xem reportOnlyDays(). Giữ nguyên kiểu Collection để hai
@@ -85,6 +86,7 @@ final class MyAttendanceController
                 $doiChieu,
                 $tuan->shiftFor($d->workDate),
                 $this->isLateExcused($diMuon, $tuan->shiftFor($d->workDate), $actor->id, $d->workDate, $d->firstSeenAt),
+                $this->isEarlyLeaveExcused($veSom, $tuan->shiftFor($d->workDate), $actor->id, $d->workDate, $d->lastSeenAt),
             );
         }
 
@@ -115,8 +117,14 @@ final class MyAttendanceController
      *                              "muộn mấy tiếng" — vô nghĩa và gây hiểu lầm.
      * @return array<string, mixed>
      */
-    private function veO(DailyAttendance $d, bool $coBaoCao, ReportMatch $doiChieu, ?WorkShift $ca, bool $duocMien): array
-    {
+    private function veO(
+        DailyAttendance $d,
+        bool $coBaoCao,
+        ReportMatch $doiChieu,
+        ?WorkShift $ca,
+        bool $duocMien,
+        bool $veSomDuocMien,
+    ): array {
         return [
             'minutes' => $d->effectiveMinutes(),
             // Trả cả số hệ thống đo được lẫn số người quản lý ấn định. Chỉ trả
@@ -133,6 +141,10 @@ final class MyAttendanceController
             'report_match_label' => $doiChieu->label(),
             'late_minutes' => $ca?->lateMinutes($d->firstSeenAt) ?? 0,
             'late_excused' => $duocMien,
+            // Về sớm đọc `last_seen_at`, mà mốc đó chỉ đứng yên khi ngày đã
+            // kết thúc — con số này chỉ có nghĩa khi nhìn lại ngày đã qua.
+            'early_leave_minutes' => $ca?->earlyLeaveMinutes($d->lastSeenAt) ?? 0,
+            'early_leave_excused' => $veSomDuocMien,
         ];
     }
 }
