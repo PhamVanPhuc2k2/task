@@ -21,12 +21,22 @@ trait ManagesPendingLogin
 {
     private const string PENDING_KEY = 'auth.pending_user_id';
 
+    /**
+     * Người dùng có tích "ghi nhớ đăng nhập" ở bước một hay không.
+     *
+     * Phải cất vào session chứ không truyền thẳng: bước nhập mật khẩu và bước
+     * nhập mã OTP là **hai request khác nhau**, và cờ này ra đời ở bước một
+     * nhưng chỉ được dùng ở bước hai.
+     */
+    private const string PENDING_REMEMBER_KEY = 'auth.pending_remember';
+
     /** Cờ để frontend biết đã đăng nhập. Xem markAsAuthenticated(). */
     private const string AUTH_FLAG_COOKIE = 'explus_auth';
 
-    private function rememberPendingLogin(Request $request, User $user): void
+    private function rememberPendingLogin(Request $request, User $user, bool $ghiNho = false): void
     {
         $request->session()->put(self::PENDING_KEY, $user->id);
+        $request->session()->put(self::PENDING_REMEMBER_KEY, $ghiNho);
     }
 
     private function pendingUser(Request $request): User
@@ -66,12 +76,36 @@ trait ManagesPendingLogin
         return $hienThi.str_repeat('*', max(3, mb_strlen($ten) - mb_strlen($hienThi))).'@'.$mien;
     }
 
-    /** Hoàn tất đăng nhập sau khi đã qua cả hai bước. */
+    /**
+     * Hoàn tất đăng nhập sau khi đã qua cả hai bước.
+     *
+     * ## "Ghi nhớ đăng nhập" chính là refresh token, viết bằng cookie
+     *
+     * `remember: true` làm Laravel phát thêm một cookie sống **400 ngày** chứa
+     * `user_id|remember_token|hash mật khẩu`. Khi phiên ngắn hết hạn,
+     * `SessionGuard` tự đọc cookie đó và lập lại phiên — **không qua OTP, người
+     * dùng không thấy gì**. Đúng vai trò của refresh token, chỉ khác tên.
+     *
+     * Đây là thứ đáng giá nhất với hệ thống này: đăng nhập lại ở đây tốn một
+     * vòng email OTP chứ không phải chỉ gõ mật khẩu, nên mỗi lần phiên hết hạn
+     * là một lần người dùng đứng chờ hộp thư.
+     *
+     * Thu hồi: xoay `remember_token` (đã làm sẵn ở cả ba đường đổi mật khẩu)
+     * giết cookie, còn `AuthenticateSession` giết các phiên đang sống. Không có
+     * vế thứ hai thì không nên bật vế thứ nhất.
+     *
+     * Người không tích thì `remember: false` — hành vi y như trước.
+     */
     private function completeLogin(Request $request, User $user): void
     {
+        // `pull` chứ không `get`: cờ chỉ dùng đúng một lần, để lại trong session
+        // thì lần đăng nhập sau trên cùng trình duyệt sẽ thừa hưởng lựa chọn cũ
+        // mà người dùng không hề tích lại.
+        $ghiNho = $request->session()->pull(self::PENDING_REMEMBER_KEY) === true;
+
         $request->session()->forget(self::PENDING_KEY);
 
-        Auth::guard('web')->login($user, remember: false);
+        Auth::guard('web')->login($user, remember: $ghiNho);
 
         // Đổi id phiên sau khi đăng nhập để chống session fixation.
         $request->session()->regenerate();

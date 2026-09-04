@@ -31,7 +31,7 @@ export function CredentialsStep({
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", remember: false },
   });
 
   const onSubmit = handleSubmit(async (values) => {
@@ -107,6 +107,28 @@ export function CredentialsStep({
           error={errors.password?.message}
           {...register("password")}
         />
+
+        {/*
+          Mặc định KHÔNG tích.
+
+          Đăng nhập lại ở hệ thống này tốn một vòng email OTP chứ không phải chỉ
+          gõ mật khẩu, nên ghi nhớ là thứ đáng giá — nhưng nó phải là lựa chọn
+          của người dùng, không phải mặc định áp cho cả máy mượn lẫn máy chung.
+        */}
+        <label className="flex cursor-pointer items-start gap-2.5">
+          <input
+            type="checkbox"
+            className="accent-accent mt-0.5 size-4 shrink-0"
+            {...register("remember")}
+          />
+          <span className="text-ink-soft text-[0.84rem] leading-snug">
+            Ghi nhớ đăng nhập trên máy này
+            <span className="text-ink-faint block text-[0.78rem]">
+              Đỡ phải chờ mã OTP mỗi lần quay lại. Đừng tích nếu đây là máy dùng
+              chung.
+            </span>
+          </span>
+        </label>
 
         <SubmitButton pending={isSubmitting}>
           {isSubmitting ? "Đang kiểm tra" : "Tiếp tục"}

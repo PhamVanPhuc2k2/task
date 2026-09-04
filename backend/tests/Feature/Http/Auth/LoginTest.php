@@ -6,6 +6,9 @@ use App\Domain\Identity\Enums\Role;
 use App\Domain\Identity\Models\LoginAttempt;
 use App\Domain\Identity\Models\User;
 use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Auth\SessionGuard;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use PragmaRX\Google2FA\Google2FA;
@@ -177,4 +180,149 @@ it('đăng xuất làm mất phiên', function (): void {
     $this->postJson('/api/v1/auth/logout')->assertNoContent();
 
     $this->assertGuest('web');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Ghi nhớ đăng nhập
+|--------------------------------------------------------------------------
+|
+| Cookie "ghi nhớ" của Laravel đóng đúng vai trò refresh token: sống 400 ngày,
+| chứa `user_id|remember_token|hash mật khẩu`, và khi phiên ngắn hết hạn thì
+| SessionGuard tự đọc nó để lập phiên mới — KHÔNG qua mã OTP.
+|
+| Điều đó đáng giá ở hệ thống này vì đăng nhập lại tốn một vòng email OTP chứ
+| không phải chỉ gõ mật khẩu. Nhưng nó cũng là thứ sống lâu nhất trong hệ thống,
+| nên ba test dưới đây khoá cả ba mặt: có khi được yêu cầu, KHÔNG có khi không
+| yêu cầu, và thu hồi được.
+|
+| Dùng kênh TOTP để sinh mã tại chỗ — thứ đang kiểm là vòng đời phiên, không
+| phải kênh xác thực.
+|
+*/
+
+/** Đi trọn hai bước đăng nhập, trả về mã người dùng vừa tạo. */
+function dangNhapDayDu(bool $ghiNho): User
+{
+    config()->set('two-factor.driver', 'totp');
+
+    $secret = app(Google2FA::class)->generateSecretKey();
+
+    $user = User::factory()->create([
+        'email' => 'an@congty.vn',
+        'password' => Hash::make('MatKhauDung@2026'),
+        'two_factor_secret' => $secret,
+        'two_factor_confirmed_at' => now(),
+    ]);
+
+    test()->postJson('/api/v1/auth/login', [
+        'email' => 'an@congty.vn',
+        'password' => 'MatKhauDung@2026',
+        'remember' => $ghiNho,
+    ])->assertOk();
+
+    test()->postJson('/api/v1/auth/two-factor-challenge', [
+        'code' => app(Google2FA::class)->getCurrentOtp($secret),
+    ])->assertOk();
+
+    return $user;
+}
+
+/** Tên cookie ghi nhớ mà Laravel phát cho guard `web`. */
+function tenCookieGhiNho(): string
+{
+    // Ép kiểu vì `Auth::guard()` khai trả về StatefulGuard, mà tên cookie ghi
+    // nhớ là chi tiết của SessionGuard — Larastan mức 8 từ chối nếu không nói rõ.
+    /** @var SessionGuard $guard */
+    $guard = Auth::guard('web');
+
+    return $guard->getRecallerName();
+}
+
+it('tích ghi nhớ thì phát cookie sống lâu', function (): void {
+    $user = dangNhapDayDu(ghiNho: true);
+
+    expect(Auth::guard('web')->check())->toBeTrue();
+
+    // Cookie được xếp hàng ở response chứ chưa nằm trong request, nên đọc từ
+    // CookieJar — nơi Laravel gom cookie chờ gửi đi.
+    $daXep = collect(Cookie::getQueuedCookies())
+        ->first(fn ($c): bool => $c->getName() === tenCookieGhiNho());
+
+    expect($daXep)->not->toBeNull();
+
+    // Nội dung phải trỏ đúng người và mang đúng remember_token — đó là thứ
+    // xoay đi khi đổi mật khẩu, tức là công tắc thu hồi.
+    [$id, $token] = array_pad(explode('|', (string) $daXep?->getValue()), 2, '');
+
+    expect((int) $id)->toBe($user->id)
+        ->and($token)->toBe($user->fresh()?->getRememberToken());
+});
+
+it('không tích thì KHÔNG phát cookie ghi nhớ', function (): void {
+    /*
+    | Vế này quan trọng ngang vế trên. Ghi nhớ phải là lựa chọn của người dùng —
+    | phát cookie 400 ngày cho người không yêu cầu, trên máy có thể là máy mượn,
+    | là đúng thứ không được phép làm mặc định.
+    */
+    dangNhapDayDu(ghiNho: false);
+
+    expect(Auth::guard('web')->check())->toBeTrue();
+
+    $daXep = collect(Cookie::getQueuedCookies())
+        ->first(fn ($c): bool => $c->getName() === tenCookieGhiNho());
+
+    expect($daXep)->toBeNull();
+});
+
+it('thiếu hẳn trường remember thì coi như không ghi nhớ', function (): void {
+    // Hành vi cũ phải giữ nguyên: client cũ không gửi trường này.
+    config()->set('two-factor.driver', 'totp');
+
+    $secret = app(Google2FA::class)->generateSecretKey();
+
+    User::factory()->create([
+        'email' => 'an@congty.vn',
+        'password' => Hash::make('MatKhauDung@2026'),
+        'two_factor_secret' => $secret,
+        'two_factor_confirmed_at' => now(),
+    ]);
+
+    $this->postJson('/api/v1/auth/login', [
+        'email' => 'an@congty.vn',
+        'password' => 'MatKhauDung@2026',
+    ])->assertOk();
+
+    $this->postJson('/api/v1/auth/two-factor-challenge', [
+        'code' => app(Google2FA::class)->getCurrentOtp($secret),
+    ])->assertOk();
+
+    $daXep = collect(Cookie::getQueuedCookies())
+        ->first(fn ($c): bool => $c->getName() === tenCookieGhiNho());
+
+    expect($daXep)->toBeNull();
+});
+
+it('đổi mật khẩu thu hồi được cookie ghi nhớ', function (): void {
+    /*
+    | Đây là công tắc thu hồi, và nó là điều kiện để dám phát một cookie sống
+    | 400 ngày. Cơ chế đã có sẵn từ trước — ChangePasswordController xoay
+    | `remember_token` — nhưng trước bản này chưa có gì phát cookie nên luật đó
+    | chưa từng được kiểm.
+    */
+    $user = dangNhapDayDu(ghiNho: true);
+
+    $tokenCu = $user->fresh()?->getRememberToken();
+
+    expect($tokenCu)->not->toBeEmpty();
+
+    $this->patchJson('/api/v1/auth/password', [
+        'current_password' => 'MatKhauDung@2026',
+        'password' => 'MatKhauMoi@2026',
+        'password_confirmation' => 'MatKhauMoi@2026',
+    ])->assertNoContent();
+
+    // Token đổi nghĩa là cookie cũ không còn khớp `retrieveByToken()`, nên mọi
+    // thiết bị đang giữ nó mất đường tự đăng nhập lại.
+    expect($user->fresh()?->getRememberToken())->not->toBe($tokenCu);
 });

@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**748 test xanh** (4893 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**752 test xanh** (4912 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -1205,6 +1205,40 @@ Cách xử lý: `docker/php/entrypoint.sh` chạy `chmod -R a+rwX` lên đúng h
 - [x] Trang đăng nhập ở frontend + route guard (`src/proxy.ts`)
 - [x] **Xác thực hai lớp bằng mã OTP — bắt buộc với mọi nhân viên** (xem mục riêng bên dưới)
 - [x] **Màn hình** quản trị người dùng — trang `/employees`, xem [Quản trị nhân sự](#quản-trị-nhân-sự--đã-xong)
+
+### Ghi nhớ đăng nhập ✅ Đã xong
+
+Ô tích **"Ghi nhớ đăng nhập trên máy này"** ở bước nhập mật khẩu. Bật thì Laravel phát thêm một cookie sống **400 ngày**, và mỗi lần phiên ngắn hết hạn nó tự lập lại phiên mới — **không qua mã OTP, người dùng không thấy gì**.
+
+#### Đây chính là access token + refresh token, viết bằng cookie
+
+| Khái niệm | Trong dự án này |
+|---|---|
+| Access token, ngắn hạn | Session cookie · `SESSION_LIFETIME` |
+| Refresh token, dài hạn | Cookie `remember_web_*` · 400 ngày |
+| Nội dung refresh token | `user_id \| remember_token \| hash mật khẩu` |
+| Client tự refresh khi 401 | `SessionGuard::user()` tự làm — **frontend không viết một dòng nào** |
+| Thu hồi | Xoay `remember_token` — đã có sẵn ở cả ba đường đổi mật khẩu |
+
+Không đổi sang JWT, và đó là quyết định có lý do: giao diện với API **cùng một origin** (xem [Một origin, không phải hai tên miền](#một-origin-không-phải-hai-tên-miền)), nên cookie httpOnly vừa an toàn hơn — JavaScript không đọc được — vừa thu hồi được tức thì bằng cách xoá key trong Redis. JWT không thu hồi được, nên mọi triển khai nghiêm túc đều phải thêm một danh sách chặn, tức là thêm lại đúng cái state mà JWT hứa bỏ đi.
+
+#### Vì sao nó đáng giá ở riêng hệ thống này
+
+Đăng nhập lại ở đây tốn **một vòng email OTP**, không phải chỉ gõ mật khẩu. Mã đi qua hàng đợi rồi SMTP — vài chục giây nếu suôn sẻ, và có thể vào thư rác. Nên mỗi lần phiên hết hạn là một lần người dùng đứng chờ hộp thư, chứ không phải một phiền toái năm giây như ở ứng dụng thường.
+
+#### Mặc định KHÔNG tích, có chủ ý
+
+Ghi nhớ phải là lựa chọn của người dùng. Phát cookie 400 ngày cho người không yêu cầu, trên một máy có thể là máy mượn, là đúng thứ không được phép làm mặc định. Có test khoá cả ba mặt: có khi được yêu cầu, **không** có khi không yêu cầu, và không có khi client cũ không gửi trường này.
+
+#### Món nợ còn lại: phiên đang sống không thu hồi được
+
+Đổi mật khẩu xoay `remember_token` nên cookie ghi nhớ chết ngay. Nhưng **phiên đang mở trong Redis thì sống tiếp** cho tới khi hết `SESSION_LIFETIME` — chú thích trong `ChangePasswordController` nói "mọi thiết bị cũ bị đá ra", và vế đó chỉ đúng với cookie.
+
+Cửa sổ phơi nhiễm bằng đúng `SESSION_LIFETIME` (8 tiếng), và có đường chặn ngay là vô hiệu hoá tài khoản — middleware `active` cắt ở request kế tiếp. Nhưng đó là dao mổ trâu.
+
+Cách chuẩn của Laravel là middleware `AuthenticateSession`. **Đã thử và gỡ ra**: nó bám vào *guard mặc định*, mà `auth:sanctum` gọi `Auth::shouldUse('sanctum')` giữa chừng — nên middleware đọc `password_hash_web` trước khi xử lý rồi ghi `password_hash_sanctum` sau response, và 48 test đỏ. Muốn dùng phải tự viết một middleware ghim cứng guard `web`; để lại thành một việc riêng, vì nó đổi hành vi đăng xuất của cả hệ thống nên đáng có lượt xem xét của chính nó.
+
+---
 
 ### 1.2b Xác thực hai lớp (OTP) ✅ Đã xong
 

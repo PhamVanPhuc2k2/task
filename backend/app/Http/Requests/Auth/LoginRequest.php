@@ -17,6 +17,9 @@ final class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string'],
+            // Ghi nhớ đăng nhập trên máy này. Không bắt buộc — thiếu thì coi
+            // như không, tức là hành vi cũ.
+            'remember' => ['sometimes', 'boolean'],
         ];
     }
 
