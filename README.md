@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**763 test xanh** (4937 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**766 test xanh** (4963 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -2599,6 +2599,22 @@ Bỏ luật này thì một đơn duy nhất biến thành giấy thông hành c
 `work_sessions.started_at` là **UTC**, còn 8h15 là **giờ Việt Nam**. Quên quy đổi thì lệch đúng 7 tiếng — và lệch theo hướng tệ nhất: con số ra vẫn trông hợp lý. `08:20 UTC` so thẳng với `08:15` ra "muộn 5 phút", trong khi thật ra là **muộn 425 phút**.
 
 Có một test khoá riêng đúng tình huống này. Helper test `coGioLamTu()` nhận **giờ Việt Nam** thay vì UTC, để người đọc test không phải tự cộng bảy tiếng trong đầu.
+
+#### Hộp duyệt từng làm sập cả tab — bài học về hình dạng phản hồi
+
+`/late-arrivals/team` trả `data` là một **mảng** kèm `meta` riêng, trong khi ba đường cùng họ — `/leave/team`, `/late-arrivals/me` và giao diện — đều theo dạng `data: { requests, ... }`.
+
+Hậu quả: `cuaDoi.data.requests` là `undefined`, và `undefined.length` làm **sập cả tab Đi muộn**. Nhưng chỉ với người **có quyền duyệt** — nhân viên thường không vẽ khối đó, nên lỗi sống sót từ lúc viết tính năng cho tới lúc một người duyệt mở nó ra lần đầu.
+
+Ba điều rút ra:
+
+**Kiểu ở frontend không phải phép kiểm.** `TeamLateArrivals` khai đúng hình dạng mong đợi, `tsc` xanh, `next build` xanh — vì kiểu chỉ mô tả điều ta *tin* API trả về. Không có gì đối chiếu nó với backend.
+
+**Lỗi chỉ nổ với một vai trò là lỗi sống lâu nhất.** Mọi test và mọi lần dùng thử đều đi bằng tài khoản không có quyền duyệt.
+
+**Sửa kèm một con số sai im lặng.** `pending` đếm trên tập đã bị `limit()` cắt, mà đơn chờ duyệt lại được sắp lên đầu — nên khi số đơn chờ vượt trần, viên nhãn đứng im ở đúng con số trần và người duyệt tưởng mình đã xử lý gần hết. Giờ đếm trên truy vấn.
+
+Đã có ba test khoá hình dạng phản hồi, gồm cả trường hợp danh sách rỗng.
 
 #### Chưa làm
 

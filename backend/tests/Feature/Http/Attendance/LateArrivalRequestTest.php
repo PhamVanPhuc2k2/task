@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Identity\Enums\Role;
 use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Enums\LeaveStatus;
+use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Domain\Leave\Notifications\LateArrivalRequestedNotification;
 use App\Domain\Leave\Notifications\LateArrivalReviewedNotification;
 use Carbon\CarbonImmutable;
@@ -244,4 +245,97 @@ it('báo cho người nộp khi đơn bị từ chối', function (): void {
         ->assertOk();
 
     Notification::assertSentTo($nv, LateArrivalReviewedNotification::class);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Hình dạng phản hồi của hộp duyệt
+|--------------------------------------------------------------------------
+|
+| Ba test dưới đây ra đời sau một lỗi thật: đường `/late-arrivals/team` từng trả
+| `data` là một MẢNG kèm `meta` riêng, trong khi `/leave/team`,
+| `/late-arrivals/me` và giao diện đều theo dạng `data: { requests, ... }`.
+|
+| Hậu quả: `cuaDoi.data.requests` là `undefined`, và `undefined.length` làm SẬP
+| cả tab Đi muộn — nhưng chỉ với người CÓ QUYỀN DUYỆT, vì nhân viên thường không
+| vẽ khối đó. Nên lỗi sống sót từ lúc viết tính năng cho tới lúc có người duyệt
+| mở nó ra lần đầu.
+|
+| Kiểu ở frontend không cứu được: nó chỉ là lời khai, không phải phép kiểm.
+| Không có test khoá hình dạng thì không có gì bắt.
+|
+*/
+
+it('hộp duyệt trả về đúng hình dạng giao diện đọc', function (): void {
+    [$sep, $nv] = sepVaNhanVien();
+
+    $this->actingAs($nv)->postJson('/api/v1/late-arrivals', [
+        'date' => '2026-08-13',
+        'expected_arrival' => '09:30',
+        'reason' => 'Đưa con đi khám buổi sáng.',
+    ])->assertCreated();
+
+    $this->actingAs($sep)
+        ->getJson('/api/v1/late-arrivals/team')
+        ->assertOk()
+        // `data.requests` là MẢNG, không phải `data` là mảng. Đây là dòng khoá
+        // đúng cái đã làm sập tab Đi muộn.
+        ->assertJsonStructure([
+            'data' => [
+                'requests' => [['id', 'date', 'expected_arrival', 'status']],
+                'total',
+                'limit',
+                'pending',
+            ],
+        ])
+        ->assertJsonPath('data.total', 1)
+        ->assertJsonPath('data.pending', 1)
+        ->assertJsonCount(1, 'data.requests');
+});
+
+it('hộp duyệt rỗng vẫn trả về đủ các trường', function (): void {
+    // Trường hợp dễ quên nhất: danh sách rỗng. Giao diện vẫn đọc
+    // `data.requests.length` và `data.pending`, nên chúng phải luôn có mặt.
+    [$sep] = sepVaNhanVien();
+
+    $this->actingAs($sep)
+        ->getJson('/api/v1/late-arrivals/team')
+        ->assertOk()
+        ->assertJsonPath('data.requests', [])
+        ->assertJsonPath('data.total', 0)
+        ->assertJsonPath('data.pending', 0);
+});
+
+it('đếm số đơn chờ duyệt trên toàn bộ, không chỉ trang đã lấy về', function (): void {
+    /*
+    | Đơn chờ duyệt được sắp lên đầu và danh sách bị cắt ở trần. Đếm trên tập đã
+    | cắt thì khi số đơn chờ vượt trần, viên nhãn đứng im ở đúng con số trần và
+    | người duyệt tưởng mình đã xử lý gần hết.
+    |
+    | Test này dùng trần thật nên không dựng nổi 100 đơn — thay vào đó kiểm rằng
+    | `pending` đếm cả đơn KHÔNG nằm trong danh sách trả về, bằng cách xen một
+    | đơn đã duyệt vào giữa.
+    */
+    [$sep, $nv] = sepVaNhanVien();
+
+    foreach (['2026-08-13', '2026-08-14', '2026-08-17'] as $ngay) {
+        $this->actingAs($nv)->postJson('/api/v1/late-arrivals', [
+            'date' => $ngay,
+            'expected_arrival' => '09:30',
+            'reason' => 'Đưa con đi khám buổi sáng.',
+        ])->assertCreated();
+    }
+
+    $don = LateArrivalRequest::query()->where('date', '2026-08-14')->firstOrFail();
+
+    $this->actingAs($sep)
+        ->postJson("/api/v1/late-arrivals/{$don->uuid}/review", ['approve' => true])
+        ->assertOk();
+
+    $this->actingAs($sep)
+        ->getJson('/api/v1/late-arrivals/team')
+        ->assertOk()
+        ->assertJsonPath('data.total', 3)
+        // Ba đơn, một đã duyệt → còn đúng hai đơn đang chờ.
+        ->assertJsonPath('data.pending', 2);
 });

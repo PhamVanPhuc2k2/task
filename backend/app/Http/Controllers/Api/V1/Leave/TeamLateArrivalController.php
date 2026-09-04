@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Leave;
 
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
+use App\Domain\Leave\Enums\LeaveStatus;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Http\Concerns\PresentsLateArrivals;
 use Illuminate\Http\JsonResponse;
@@ -59,14 +60,42 @@ final class TeamLateArrivalController
             ->limit(self::TRAN)
             ->get();
 
+        /*
+        | Bọc trong `data` như ba đường anh em, KHÔNG dùng `data` + `meta`.
+        |
+        | Đường này từng trả `data` là một MẢNG kèm `meta` riêng, trong khi
+        | `/leave/team`, `/late-arrivals/me` và giao diện đều theo dạng
+        | `data: { requests, ... }`. Hậu quả: `cuaDoi.data.requests` là
+        | `undefined`, và `undefined.length` làm sập cả tab Đi muộn — nhưng CHỈ
+        | với người có quyền duyệt, vì nhân viên thường không vẽ khối đó. Nên
+        | lỗi sống sót từ lúc viết tính năng tới lúc có người duyệt mở nó ra.
+        |
+        | Bài học: một đường trả về lệch hình dạng so với các đường cùng họ là
+        | thứ TypeScript không bắt được — kiểu ở frontend chỉ là lời khai, không
+        | phải phép kiểm. Giờ đã có test khoá hình dạng.
+        */
         return new JsonResponse([
-            'data' => $ds->map(
-                fn (LateArrivalRequest $d): array => $this->presentLateArrival($d, kemNguoiNop: true),
-            )->all(),
-            'meta' => [
+            'data' => [
+                'requests' => $ds->map(
+                    fn (LateArrivalRequest $d): array => $this->presentLateArrival($d, kemNguoiNop: true),
+                )->all(),
+
+                // Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                // mình chỉ từng nộp 100. Quy ước chung của cả dự án.
                 'total' => $tong,
                 'limit' => self::TRAN,
-                'pending' => $ds->where('status.value', 'pending')->count(),
+
+                /*
+                | Đếm trên TRUY VẤN, không đếm trên trang đã lấy về.
+                |
+                | Bản trước đếm `$ds` — tập đã bị `limit(TRAN)` cắt. Đơn chờ
+                | duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                | nhãn đứng im ở đúng con số trần và người duyệt tưởng mình đã
+                | xử lý gần hết. Con số trên nhãn phải là con số thật.
+                */
+                'pending' => (clone $truyVan)
+                    ->where('status', LeaveStatus::Pending->value)
+                    ->count(),
             ],
         ]);
     }
