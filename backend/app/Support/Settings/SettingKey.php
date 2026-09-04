@@ -57,6 +57,8 @@ enum SettingKey: string
     case LeaveBackdateDays = 'leave_backdate_days';
     case LeaveFutureDays = 'leave_future_days';
     case LeaveMaxDays = 'leave_max_days';
+    case LeaveUnpaidMaxDaysYear = 'leave_unpaid_max_days_year';
+    case LateArrivalMaxPerMonth = 'late_arrival_max_per_month';
 
     /** Đường dẫn trong `Config`, hoặc `null` nếu khoá này không đi qua config. */
     public function configPath(): ?string
@@ -84,6 +86,8 @@ enum SettingKey: string
             self::LeaveBackdateDays => 'leave.backdate_days',
             self::LeaveFutureDays => 'leave.future_days',
             self::LeaveMaxDays => 'leave.max_days_per_request',
+            self::LeaveUnpaidMaxDaysYear => 'leave.unpaid_max_days_per_year',
+            self::LateArrivalMaxPerMonth => 'leave.late_arrival_max_per_month',
         };
     }
 
@@ -97,7 +101,9 @@ enum SettingKey: string
             self::ReportBackfillDays,
             self::LeaveBackdateDays,
             self::LeaveFutureDays,
-            self::LeaveMaxDays => SettingType::Integer,
+            self::LeaveMaxDays,
+            self::LeaveUnpaidMaxDaysYear,
+            self::LateArrivalMaxPerMonth => SettingType::Integer,
 
             self::ReportReminderEnabled => SettingType::Boolean,
 
@@ -159,6 +165,8 @@ enum SettingKey: string
             self::LeaveBackdateDays => 'Số ngày được xin nghỉ lùi về quá khứ',
             self::LeaveFutureDays => 'Số ngày được xin nghỉ trước',
             self::LeaveMaxDays => 'Số ngày tối đa một đơn nghỉ',
+            self::LeaveUnpaidMaxDaysYear => 'Số ngày nghỉ không lương tối đa mỗi năm',
+            self::LateArrivalMaxPerMonth => 'Số lần xin đi muộn tối đa mỗi tháng',
         };
     }
 }

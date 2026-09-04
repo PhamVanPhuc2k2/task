@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Domain\Leave\Actions;
 
 use App\Domain\Identity\Models\User;
+use App\Domain\Leave\Data\LeaveQuota;
 use App\Domain\Leave\Enums\LeaveStatus;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Support\Exceptions\LateArrivalAlreadyRequestedException;
+use App\Support\Exceptions\LeaveQuotaExceededException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -36,6 +38,29 @@ final class SubmitLateArrivalAction
 
             if ($daCo) {
                 throw new LateArrivalAlreadyRequestedException($ngay);
+            }
+
+            /*
+            | Hạn mức số lần xin đi muộn trong THÁNG chứa ngày này.
+            |
+            | Đếm số ĐƠN chứ không đếm số phút: một đơn xin tới 9h và một đơn
+            | xin tới 11h đều là một lần phải báo trước.
+            |
+            | Đọc có khoá dòng vì đang ở trong giao dịch — cùng lý do với phép
+            | kiểm trùng ngày ngay trên.
+            */
+            $hanMuc = LeaveQuota::fromConfig();
+
+            if ($hanMuc->lateArrivalMaxPerMonth > 0) {
+                $daDung = $hanMuc->lateArrivalsUsed($nguoiNop->id, $ngay, khoaDong: true);
+
+                if ($daDung >= $hanMuc->lateArrivalMaxPerMonth) {
+                    throw LeaveQuotaExceededException::xinDiMuon(
+                        substr($ngay, 0, 7),
+                        $daDung,
+                        $hanMuc->lateArrivalMaxPerMonth,
+                    );
+                }
             }
 
             return LateArrivalRequest::query()->create([
