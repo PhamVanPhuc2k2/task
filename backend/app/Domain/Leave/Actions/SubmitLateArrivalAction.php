@@ -6,6 +6,7 @@ namespace App\Domain\Leave\Actions;
 
 use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Data\LeaveQuota;
+use App\Domain\Leave\Enums\AttendanceExceptionType;
 use App\Domain\Leave\Enums\LeaveStatus;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Support\Exceptions\LateArrivalAlreadyRequestedException;
@@ -24,14 +25,23 @@ final class SubmitLateArrivalAction
 {
     public function execute(
         User $nguoiNop,
+        AttendanceExceptionType $loai,
         string $ngay,
         string $gioDuKien,
         string $lyDo,
     ): LateArrivalRequest {
-        return DB::transaction(function () use ($nguoiNop, $ngay, $gioDuKien, $lyDo): LateArrivalRequest {
+        return DB::transaction(function () use ($nguoiNop, $loai, $ngay, $gioDuKien, $lyDo): LateArrivalRequest {
+            /*
+            | Kiểm trùng theo (người, ngày, LOẠI).
+            |
+            | Không lọc theo loại thì một người xin đi muộn buổi sáng rồi không
+            | xin về sớm buổi chiều cùng ngày được nữa — hai việc chẳng liên
+            | quan gì tới nhau.
+            */
             $daCo = LateArrivalRequest::query()
                 ->where('user_id', $nguoiNop->id)
                 ->where('date', $ngay)
+                ->where('type', $loai->value)
                 ->blocking()
                 ->lockForUpdate()
                 ->exists();
@@ -50,15 +60,17 @@ final class SubmitLateArrivalAction
             | kiểm trùng ngày ngay trên.
             */
             $hanMuc = LeaveQuota::fromConfig();
+            $tran = $hanMuc->maxPerMonthFor($loai);
 
-            if ($hanMuc->lateArrivalMaxPerMonth > 0) {
-                $daDung = $hanMuc->lateArrivalsUsed($nguoiNop->id, $ngay, khoaDong: true);
+            if ($tran > 0) {
+                $daDung = $hanMuc->exceptionsUsed($nguoiNop->id, $ngay, $loai, khoaDong: true);
 
-                if ($daDung >= $hanMuc->lateArrivalMaxPerMonth) {
-                    throw LeaveQuotaExceededException::xinDiMuon(
+                if ($daDung >= $tran) {
+                    throw LeaveQuotaExceededException::xinNgoaiLe(
+                        mb_strtolower($loai->label()),
                         substr($ngay, 0, 7),
                         $daDung,
-                        $hanMuc->lateArrivalMaxPerMonth,
+                        $tran,
                     );
                 }
             }
@@ -66,7 +78,11 @@ final class SubmitLateArrivalAction
             return LateArrivalRequest::query()->create([
                 'user_id' => $nguoiNop->id,
                 'date' => $ngay,
-                'expected_arrival' => $gioDuKien,
+                'type' => $loai,
+                // Đúng một trong hai cột được điền, khớp `type`. Ràng buộc
+                // CHECK ở database chặn lần thứ hai nếu chỗ này viết sai.
+                'expected_arrival' => $loai === AttendanceExceptionType::Late ? $gioDuKien : null,
+                'expected_departure' => $loai === AttendanceExceptionType::Early ? $gioDuKien : null,
                 'reason' => $lyDo,
                 'status' => LeaveStatus::Pending,
             ]);

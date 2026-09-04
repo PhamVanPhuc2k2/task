@@ -622,9 +622,22 @@
                                                 "date": {
                                                     "type": "string"
                                                 },
-                                                "expected_arrival": {
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "type_label": {
                                                     "type": "string",
-                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft."
+                                                    "enum": [
+                                                        "\u0110i mu\u1ed9n",
+                                                        "V\u1ec1 s\u1edbm"
+                                                    ]
+                                                },
+                                                "expected_time": {
+                                                    "type": "string",
+                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft. `expected_time` l\u00e0 m\u1ed1c gi\u1edd c\u1ee7a \u0110\u01a0N \u2014 gi\u1edd \u0111\u1ebfn v\u1edbi \u0111\u01a1n \u0111i mu\u1ed9n, gi\u1edd\nr\u1eddi v\u1edbi \u0111\u01a1n v\u1ec1 s\u1edbm. Gi\u1eef lu\u00f4n `expected_arrival` v\u00ec giao di\u1ec7n c\u0169\n\u0111\u1ecdc n\u00f3; b\u1ecf ngay th\u00ec m\u1ecdi b\u1ea3n ch\u01b0a c\u1eadp nh\u1eadt hi\u1ec7n \u00f4 tr\u1ed1ng."
+                                                },
+                                                "expected_arrival": {
+                                                    "type": "string"
                                                 },
                                                 "reason": {
                                                     "type": "string"
@@ -704,6 +717,9 @@
                                             "required": [
                                                 "id",
                                                 "date",
+                                                "type",
+                                                "type_label",
+                                                "expected_time",
                                                 "expected_arrival",
                                                 "reason",
                                                 "status",
@@ -4489,9 +4505,22 @@
                                                 "date": {
                                                     "type": "string"
                                                 },
-                                                "expected_arrival": {
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "type_label": {
                                                     "type": "string",
-                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft."
+                                                    "enum": [
+                                                        "\u0110i mu\u1ed9n",
+                                                        "V\u1ec1 s\u1edbm"
+                                                    ]
+                                                },
+                                                "expected_time": {
+                                                    "type": "string",
+                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft. `expected_time` l\u00e0 m\u1ed1c gi\u1edd c\u1ee7a \u0110\u01a0N \u2014 gi\u1edd \u0111\u1ebfn v\u1edbi \u0111\u01a1n \u0111i mu\u1ed9n, gi\u1edd\nr\u1eddi v\u1edbi \u0111\u01a1n v\u1ec1 s\u1edbm. Gi\u1eef lu\u00f4n `expected_arrival` v\u00ec giao di\u1ec7n c\u0169\n\u0111\u1ecdc n\u00f3; b\u1ecf ngay th\u00ec m\u1ecdi b\u1ea3n ch\u01b0a c\u1eadp nh\u1eadt hi\u1ec7n \u00f4 tr\u1ed1ng."
+                                                },
+                                                "expected_arrival": {
+                                                    "type": "string"
                                                 },
                                                 "reason": {
                                                     "type": "string"
@@ -4571,6 +4600,9 @@
                                             "required": [
                                                 "id",
                                                 "date",
+                                                "type",
+                                                "type_label",
+                                                "expected_time",
                                                 "expected_arrival",
                                                 "reason",
                                                 "status",
@@ -5623,9 +5655,22 @@
                                                 "date": {
                                                     "type": "string"
                                                 },
-                                                "expected_arrival": {
+                                                "type": {
+                                                    "type": "string"
+                                                },
+                                                "type_label": {
                                                     "type": "string",
-                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft."
+                                                    "enum": [
+                                                        "\u0110i mu\u1ed9n",
+                                                        "V\u1ec1 s\u1edbm"
+                                                    ]
+                                                },
+                                                "expected_time": {
+                                                    "type": "string",
+                                                    "description": "`HH:MM` ch\u1ee9 kh\u00f4ng ph\u1ea3i `HH:MM:SS` m\u00e0 MySQL tr\u1ea3 v\u1ec1: gi\u00e2y kh\u00f4ng\nmang th\u00f4ng tin n\u00e0o \u1edf \u0111\u00e2y, v\u00e0 \u0111\u1ec3 nguy\u00ean th\u00ec giao di\u1ec7n ph\u1ea3i c\u1eaft. `expected_time` l\u00e0 m\u1ed1c gi\u1edd c\u1ee7a \u0110\u01a0N \u2014 gi\u1edd \u0111\u1ebfn v\u1edbi \u0111\u01a1n \u0111i mu\u1ed9n, gi\u1edd\nr\u1eddi v\u1edbi \u0111\u01a1n v\u1ec1 s\u1edbm. Gi\u1eef lu\u00f4n `expected_arrival` v\u00ec giao di\u1ec7n c\u0169\n\u0111\u1ecdc n\u00f3; b\u1ecf ngay th\u00ec m\u1ecdi b\u1ea3n ch\u01b0a c\u1eadp nh\u1eadt hi\u1ec7n \u00f4 tr\u1ed1ng."
+                                                },
+                                                "expected_arrival": {
+                                                    "type": "string"
                                                 },
                                                 "reason": {
                                                     "type": "string"
@@ -5705,6 +5750,9 @@
                                             "required": [
                                                 "id",
                                                 "date",
+                                                "type",
+                                                "type_label",
+                                                "expected_time",
                                                 "expected_arrival",
                                                 "reason",
                                                 "status",
@@ -7022,34 +7070,36 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "",
+                        "description": "| B\u1ecdc trong `data` nh\u01b0 ba \u0111\u01b0\u1eddng anh em, KH\u00d4NG d\u00f9ng `data` + `meta`.\n|\n| \u0110\u01b0\u1eddng n\u00e0y t\u1eebng tr\u1ea3 `data` l\u00e0 m\u1ed9t M\u1ea2NG k\u00e8m `meta` ri\u00eang, trong khi\n| `/leave/team`, `/late-arrivals/me` v\u00e0 giao di\u1ec7n \u0111\u1ec1u theo d\u1ea1ng\n| `data: { requests, ... }`. H\u1eadu qu\u1ea3: `cuaDoi.data.requests` l\u00e0\n| `undefined`, v\u00e0 `undefined.length` l\u00e0m s\u1eadp c\u1ea3 tab \u0110i mu\u1ed9n \u2014 nh\u01b0ng CH\u1ec8\n| v\u1edbi ng\u01b0\u1eddi c\u00f3 quy\u1ec1n duy\u1ec7t, v\u00ec nh\u00e2n vi\u00ean th\u01b0\u1eddng kh\u00f4ng v\u1ebd kh\u1ed1i \u0111\u00f3. N\u00ean\n| l\u1ed7i s\u1ed1ng s\u00f3t t\u1eeb l\u00fac vi\u1ebft t\u00ednh n\u0103ng t\u1edbi l\u00fac c\u00f3 ng\u01b0\u1eddi duy\u1ec7t m\u1edf n\u00f3 ra.\n|\n| B\u00e0i h\u1ecdc: m\u1ed9t \u0111\u01b0\u1eddng tr\u1ea3 v\u1ec1 l\u1ec7ch h\u00ecnh d\u1ea1ng so v\u1edbi c\u00e1c \u0111\u01b0\u1eddng c\u00f9ng h\u1ecd l\u00e0\n| th\u1ee9 TypeScript kh\u00f4ng b\u1eaft \u0111\u01b0\u1ee3c \u2014 ki\u1ec3u \u1edf frontend ch\u1ec9 l\u00e0 l\u1eddi khai, kh\u00f4ng\n| ph\u1ea3i ph\u00e9p ki\u1ec3m. Gi\u1edd \u0111\u00e3 c\u00f3 test kho\u00e1 h\u00ecnh d\u1ea1ng.",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        },
-                                        "meta": {
                                             "type": "object",
                                             "properties": {
+                                                "requests": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
                                                 "total": {
-                                                    "type": "string"
+                                                    "type": "string",
+                                                    "description": "Tr\u1ea3 t\u1ed5ng k\u00e8m tr\u1ea7n: c\u1eaft im l\u1eb7ng th\u00ec ng\u01b0\u1eddi c\u00f3 120 \u0111\u01a1n t\u01b0\u1edfng\nm\u00ecnh ch\u1ec9 t\u1eebng n\u1ed9p 100. Quy \u01b0\u1edbc chung c\u1ee7a c\u1ea3 d\u1ef1 \u00e1n."
                                                 },
                                                 "limit": {
                                                     "type": "integer",
                                                     "const": 100
                                                 },
                                                 "pending": {
-                                                    "type": "integer",
-                                                    "minimum": 0
+                                                    "type": "string",
+                                                    "description": "| \u0110\u1ebfm tr\u00ean TRUY V\u1ea4N, kh\u00f4ng \u0111\u1ebfm tr\u00ean trang \u0111\u00e3 l\u1ea5y v\u1ec1.\n|\n| B\u1ea3n tr\u01b0\u1edbc \u0111\u1ebfm `$ds` \u2014 t\u1eadp \u0111\u00e3 b\u1ecb `limit(TRAN)` c\u1eaft. \u0110\u01a1n ch\u1edd\n| duy\u1ec7t \u0111\u01b0\u1ee3c s\u1eafp l\u00ean \u0111\u1ea7u, n\u00ean khi s\u1ed1 \u0111\u01a1n ch\u1edd v\u01b0\u1ee3t tr\u1ea7n th\u00ec vi\u00ean\n| nh\u00e3n \u0111\u1ee9ng im \u1edf \u0111\u00fang con s\u1ed1 tr\u1ea7n v\u00e0 ng\u01b0\u1eddi duy\u1ec7t t\u01b0\u1edfng m\u00ecnh \u0111\u00e3\n| x\u1eed l\u00fd g\u1ea7n h\u1ebft. Con s\u1ed1 tr\u00ean nh\u00e3n ph\u1ea3i l\u00e0 con s\u1ed1 th\u1eadt."
                                                 }
                                             },
                                             "required": [
+                                                "requests",
                                                 "total",
                                                 "limit",
                                                 "pending"
@@ -7057,8 +7107,7 @@
                                         }
                                     },
                                     "required": [
-                                        "data",
-                                        "meta"
+                                        "data"
                                     ]
                                 }
                             }
@@ -8393,6 +8442,15 @@
                 ],
                 "title": "AttendanceDecision"
             },
+            "AttendanceExceptionType": {
+                "type": "string",
+                "description": "Lo\u1ea1i \u0111\u01a1n xin ngo\u1ea1i l\u1ec7 ch\u1ea5m c\u00f4ng: \u0111i mu\u1ed9n hay v\u1ec1 s\u1edbm. ## V\u00ec sao m\u1ed9t c\u1ed9t `type` ch\u1ee9 kh\u00f4ng ph\u1ea3i hai b\u1ea3ng  Hai lo\u1ea1i \u0111i qua **\u0111\u00fang m\u1ed9t v\u00f2ng \u0111\u1eddi** \u2014 ch\u1edd \u2192 duy\u1ec7t / t\u1eeb ch\u1ed1i / r\u00fat \u2014 do c\u00f9ng m\u1ed9t ng\u01b0\u1eddi duy\u1ec7t, v\u1edbi c\u00f9ng m\u1ed9t quy\u1ec1n `leave.approve`, c\u00f9ng m\u1ed9t b\u1ed9 th\u00f4ng b\u00e1o. T\u00e1ch th\u00e0nh hai b\u1ea3ng l\u00e0 nh\u00e2n \u0111\u00f4i controller, action, notification, policy v\u00e0 giao di\u1ec7n cho m\u1ed9t lu\u1ed3ng gi\u1ed1ng nhau t\u1edbi ch\u00edn ph\u1ea7n m\u01b0\u1eddi.  C\u1ed9t n\u00e0y c\u0169ng ch\u1eeba s\u1eb5n ch\u1ed7 cho **mu\u1ed9n bu\u1ed5i chi\u1ec1u** \u1edf \u0111\u1ee3t sau: th\u00eam m\u1ed9t case, kh\u00f4ng th\u00eam b\u1ea3ng.  ## T\u00ean b\u1ea3ng \u0111ang n\u00f3i d\u1ed1i, v\u00e0 \u0111\u00f3 l\u00e0 m\u00f3n n\u1ee3 c\u00f3 t\u00ean  B\u1ea3ng v\u1eabn t\u00ean `late_arrival_requests` nh\u01b0ng t\u1eeb nay ch\u1ee9a c\u1ea3 \u0111\u01a1n v\u1ec1 s\u1edbm. \u0110\u1ed5i t\u00ean b\u1ea3ng tr\u00ean h\u1ec7 th\u1ed1ng \u0111ang ch\u1ea1y ph\u1ea3i t\u00e1ch **hai l\u1ea7n deploy** theo quy \u01b0\u1edbc d\u1ef1 \u00e1n \u2014 `deploy.sh` ch\u1ea1y migration TR\u01af\u1edaC khi \u0111\u1ed5i container, n\u00ean \u0111\u1ed5i t\u00ean ngay b\u00e2y gi\u1edd th\u00ec image c\u0169 \u0111ang ch\u1ea1y s\u1ebd truy v\u1ea5n m\u1ed9t b\u1ea3ng kh\u00f4ng c\u00f2n t\u1ed3n t\u1ea1i.  Tr\u1ea3 n\u1ee3 khi l\u00e0m \"mu\u1ed9n bu\u1ed5i chi\u1ec1u\": l\u00fac \u0111\u00f3 \u0111\u1ed5i t\u00ean m\u1ed9t l\u1ea7n cho c\u1ea3 ba lo\u1ea1i.\n| |\n|---|\n| `late` <br/> \u0110\u1ebfn sau gi\u1edd v\u00e0o ca bu\u1ed5i s\u00e1ng. |\n| `early` <br/> R\u1eddi tr\u01b0\u1edbc gi\u1edd tan ca. |",
+                "enum": [
+                    "late",
+                    "early"
+                ],
+                "title": "AttendanceExceptionType"
+            },
             "BonusPoolResource": {
                 "type": "object",
                 "properties": {
@@ -8538,6 +8596,10 @@
                     },
                     "password": {
                         "type": "string"
+                    },
+                    "remember": {
+                        "type": "boolean",
+                        "description": "Ghi nh\u1edb \u0111\u0103ng nh\u1eadp tr\u00ean m\u00e1y n\u00e0y. Kh\u00f4ng b\u1eaft bu\u1ed9c \u2014 thi\u1ebfu th\u00ec coi\nnh\u01b0 kh\u00f4ng, t\u1ee9c l\u00e0 h\u00e0nh vi c\u0169."
                     }
                 },
                 "required": [
@@ -9381,6 +9443,9 @@
             "SubmitLateArrivalRequest": {
                 "type": "object",
                 "properties": {
+                    "type": {
+                        "$ref": "#/components/schemas/AttendanceExceptionType"
+                    },
                     "date": {
                         "type": "string",
                         "format": "date"
@@ -9388,6 +9453,10 @@
                     "expected_arrival": {
                         "type": "string",
                         "description": "| Gi\u1edd d\u1ef1 ki\u1ebfn ph\u1ea3i MU\u1ed8N H\u01a0N gi\u1edd v\u00e0o l\u00e0m.\n|\n| Xin \"\u0111i mu\u1ed9n\" t\u1edbi 8h00 trong khi ca b\u1eaft \u0111\u1ea7u 8h15 l\u00e0 kh\u00f4ng c\u00f3\n| ngh\u0129a. Cho qua th\u00ec sinh ra nh\u1eefng \u0111\u01a1n \u0111\u01b0\u1ee3c duy\u1ec7t m\u00e0 ch\u1eb3ng mi\u1ec5n c\u00e1i\n| g\u00ec, v\u00e0 ng\u01b0\u1eddi n\u1ed9p t\u01b0\u1edfng m\u00ecnh \u0111\u00e3 xin ph\u00e9p xong."
+                    },
+                    "expected_departure": {
+                        "type": "string",
+                        "description": "| Gi\u1edd d\u1ef1 ki\u1ebfn r\u1eddi ph\u1ea3i S\u1edaM H\u01a0N gi\u1edd tan ca c\u1ee7a \u0111\u00fang ng\u00e0y \u0111\u00f3.\n|\n| \u0110\u1ecdc ca theo ng\u00e0y ch\u1ee9 kh\u00f4ng l\u1ea5y 17:30 c\u1ee9ng: th\u1ee9 b\u1ea3y tan l\u00fac 12:00,\n| n\u00ean xin \"v\u1ec1 s\u1edbm l\u00fac 16h\" v\u00e0o th\u1ee9 b\u1ea3y l\u00e0 m\u1ed9t \u0111\u01a1n v\u00f4 ngh\u0129a \u0111\u01b0\u1ee3c\n| duy\u1ec7t m\u00e0 ch\u1eb3ng mi\u1ec5n c\u00e1i g\u00ec."
                     },
                     "reason": {
                         "type": "string",
@@ -9398,7 +9467,6 @@
                 },
                 "required": [
                     "date",
-                    "expected_arrival",
                     "reason"
                 ],
                 "title": "SubmitLateArrivalRequest"
@@ -10011,6 +10079,26 @@
                                 "type": "integer",
                                 "minimum": 1,
                                 "maximum": 90
+                            },
+                            "leave_unpaid_max_days_year": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 365
+                            },
+                            "late_arrival_max_per_month": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 31
+                            },
+                            "early_leave_max_per_month": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 31
+                            },
+                            "early_leave_grace_minutes": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 120
                             }
                         }
                     }

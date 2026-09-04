@@ -58,6 +58,16 @@ final readonly class WorkShift
          * mã rồi đi kiểm lại toàn bộ.
          */
         public int $graceMinutes,
+        /**
+         * Số phút được châm chước trước khi bị tính là về sớm.
+         *
+         * Tách khỏi `graceMinutes` vì hai chiều không đối xứng: công ty chốt ân
+         * hạn đi muộn bằng 0 nhưng về sớm bằng 5. Về sớm năm phút mà bắt làm
+         * đơn thì không ai dùng, và một tính năng không ai dùng còn tệ hơn
+         * không có — nó làm bảng công trông như đã theo dõi trong khi thực tế
+         * thì không.
+         */
+        public int $earlyGraceMinutes,
     ) {}
 
     public static function fromConfig(): self
@@ -68,6 +78,7 @@ final readonly class WorkShift
             lunchEnd: Config::string('attendance.shift.lunch_end'),
             end: Config::string('attendance.shift.end'),
             graceMinutes: Config::integer('attendance.shift.grace_minutes'),
+            earlyGraceMinutes: Config::integer('leave.early_leave_grace_minutes'),
         );
     }
 
@@ -80,14 +91,19 @@ final readonly class WorkShift
      * mà chiều bằng không — nên `WorkShift` không cần thêm một nhánh `if` nào,
      * và mọi chỗ đang dùng nó không phải biết ngày nửa buổi tồn tại.
      */
-    public static function halfDay(string $morningStart, string $end, int $graceMinutes): self
-    {
+    public static function halfDay(
+        string $morningStart,
+        string $end,
+        int $graceMinutes,
+        int $earlyGraceMinutes,
+    ): self {
         return new self(
             morningStart: $morningStart,
             lunchStart: $end,
             lunchEnd: $end,
             end: $end,
             graceMinutes: $graceMinutes,
+            earlyGraceMinutes: $earlyGraceMinutes,
         );
     }
 
@@ -124,6 +140,70 @@ final readonly class WorkShift
         }
 
         return (int) floor($batDau->diffInMinutes($den));
+    }
+
+    /**
+     * Rời sớm bao nhiêu phút so với giờ tan ca.
+     *
+     * ## Vì sao đối xứng với `lateMinutes()` nhưng không giống hệt
+     *
+     * Đi muộn đọc `first_seen_at` — có ngay từ nhịp tim đầu tiên. Về sớm đọc
+     * `last_seen_at`, mà mốc đó **chỉ đứng yên khi ngày đã kết thúc**: phiên
+     * làm việc còn mở thì nó vẫn đang lớn dần. Nên con số này chỉ có nghĩa khi
+     * nhìn lại một ngày đã qua, không phải khi theo dõi ngày hôm nay.
+     *
+     * Không có phiên nào là VẮNG MẶT, không phải về sớm — gộp hai thứ lại thì
+     * người nghỉ phép hiện thành "về sớm 9 tiếng".
+     *
+     * Ngày nửa buổi tự đúng mà không cần nhánh riêng: `end` của ca thứ bảy là
+     * 12:00, nên về lúc 11:30 ra 30 phút chứ không phải so với 17:30.
+     *
+     * @param  string|null  $lastSeenAtUtc  Phiên cuối cùng trong ngày, **giờ
+     *                                      UTC** như MySQL trả về.
+     */
+    public function earlyLeaveMinutes(?string $lastSeenAtUtc): int
+    {
+        if ($lastSeenAtUtc === null) {
+            return 0;
+        }
+
+        $roi = CarbonImmutable::parse($lastSeenAtUtc, 'UTC')
+            ->setTimezone(WorkDate::timezone());
+
+        $tanCa = $roi->setTimeFromTimeString($this->end);
+
+        // Ân hạn dời NGƯỠNG, không trừ vào số phút: quá 5 phút châm chước thì
+        // về sớm tính từ giờ tan ca thật. Cùng quy ước với ân hạn đi muộn.
+        if ($roi->greaterThanOrEqualTo($tanCa->subMinutes($this->earlyGraceMinutes))) {
+            return 0;
+        }
+
+        // Làm quá giờ tan không phải "về sớm âm phút".
+        return max(0, (int) floor($roi->diffInMinutes($tanCa)));
+    }
+
+    /**
+     * Người này có ở lại tới mốc giờ đã hẹn không.
+     *
+     * Đối xứng với `arrivedBy()`: đơn xin về sớm chỉ bao **từ đúng giờ đã xin**
+     * trở đi. Xin về lúc 16h mà 14h đã tắt máy thì phần sớm hơn vẫn là về sớm —
+     * bỏ luật này thì một đơn duy nhất biến thành giấy thông hành cho cả buổi
+     * chiều, và cả cơ chế duyệt mất ý nghĩa.
+     *
+     * @param  string|null  $lastSeenAtUtc  Phiên cuối trong ngày, giờ UTC.
+     * @param  string  $gioHen  Giờ đã hẹn, giờ Việt Nam (`HH:MM` hoặc `HH:MM:SS`).
+     */
+    public function stayedUntil(?string $lastSeenAtUtc, string $gioHen): bool
+    {
+        // Không có phiên nào nghĩa là không đến, chứ không phải "ở lại đủ".
+        if ($lastSeenAtUtc === null) {
+            return false;
+        }
+
+        $roi = CarbonImmutable::parse($lastSeenAtUtc, 'UTC')
+            ->setTimezone(WorkDate::timezone());
+
+        return $roi->greaterThanOrEqualTo($roi->setTimeFromTimeString($gioHen));
     }
 
     /**
@@ -166,6 +246,22 @@ final readonly class WorkShift
         // Không trả số âm: "muộn -20 phút" là vô nghĩa, và một số âm lọt vào
         // câu thông báo gửi cho quản lý sẽ đọc rất kỳ.
         return max(0, $this->phut($gioVietNam) - $this->phut($this->morningStart));
+    }
+
+    /**
+     * Số phút SỚM của một mốc giờ Việt Nam so với giờ tan ca.
+     *
+     * Đối xứng với `lateMinutesFromLocalTime()`, và cùng lý do tồn tại: đây là
+     * giờ người ta tự khai trên đơn ("về lúc 16h"), chưa hề có phiên làm việc
+     * nào để quy đổi từ UTC. Phép trừ hai mốc trên đồng hồ, không phải phép so
+     * hai thời điểm.
+     *
+     * @param  string  $gioVietNam  `HH:MM` hoặc `HH:MM:SS`.
+     */
+    public function earlyMinutesFromLocalTime(string $gioVietNam): int
+    {
+        // Không trả số âm: ở lại quá giờ tan không phải "về sớm -20 phút".
+        return max(0, $this->phut($this->end) - $this->phut($gioVietNam));
     }
 
     /** Số phút của một ngày làm đủ: sáng + chiều, không tính nghỉ trưa. */

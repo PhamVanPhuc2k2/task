@@ -26,8 +26,15 @@ trait PresentsLateArrivals
         $data = [
             'id' => $don->uuid,
             'date' => $don->date,
+            'type' => $don->type->value,
+            'type_label' => $don->type->label(),
             // `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
             // mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+            //
+            // `expected_time` là mốc giờ của ĐƠN — giờ đến với đơn đi muộn, giờ
+            // rời với đơn về sớm. Giữ luôn `expected_arrival` vì giao diện cũ
+            // đọc nó; bỏ ngay thì mọi bản chưa cập nhật hiện ô trống.
+            'expected_time' => $don->timeLabel(),
             'expected_arrival' => $don->arrivalLabel(),
             'reason' => $don->reason,
             'status' => $don->status->value,

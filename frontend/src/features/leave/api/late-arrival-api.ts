@@ -10,6 +10,7 @@ import { api, type ApiError } from "@/lib/api-client";
 import type { Wrapped } from "@/lib/pagination";
 
 import type {
+  AttendanceExceptionValue,
   LateArrivalItem,
   MyLateArrivals,
   TeamLateArrivals,
@@ -42,8 +43,12 @@ export function useTeamLateArrivals(
 }
 
 export interface SubmitLateArrivalInput {
+  type: AttendanceExceptionValue;
   date: string;
-  expected_arrival: string;
+  /** Chỉ gửi với đơn đi muộn. */
+  expected_arrival?: string;
+  /** Chỉ gửi với đơn về sớm. */
+  expected_departure?: string;
   reason: string;
 }
 

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Leave;
 
 use App\Domain\Attendance\Data\WorkShift;
+use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\SubmitLateArrivalAction;
+use App\Domain\Leave\Enums\AttendanceExceptionType;
 use App\Domain\Leave\Notifications\LateArrivalRequestedNotification;
 use App\Http\Concerns\PresentsLateArrivals;
 use App\Http\Requests\Leave\SubmitLateArrivalRequest;
@@ -32,10 +34,20 @@ final class SubmitLateArrivalController
         /** @var User $actor */
         $actor = $request->user();
 
+        // Thiếu `type` thì coi như đi muộn — client cũ chỉ gửi
+        // `expected_arrival` vẫn chạy y như trước.
+        $loai = AttendanceExceptionType::tryFrom((string) $request->string('type'))
+            ?? AttendanceExceptionType::Late;
+
+        $ngay = (string) $request->string('date');
+
         $don = $action->execute(
             nguoiNop: $actor,
-            ngay: (string) $request->string('date'),
-            gioDuKien: (string) $request->string('expected_arrival'),
+            loai: $loai,
+            ngay: $ngay,
+            gioDuKien: $loai === AttendanceExceptionType::Early
+                ? (string) $request->string('expected_departure')
+                : (string) $request->string('expected_arrival'),
             lyDo: (string) $request->string('reason'),
         );
 
@@ -56,8 +68,9 @@ final class SubmitLateArrivalController
             Notification::send($quanLy, new LateArrivalRequestedNotification(
                 $actor->name,
                 $don->date,
-                $don->arrivalLabel(),
-                WorkShift::fromConfig()->lateMinutesFromLocalTime($don->arrivalLabel()),
+                $don->timeLabel(),
+                $this->soPhutLech($loai, $ngay, $don->timeLabel()),
+                $loai,
             ));
         }
 
@@ -65,5 +78,22 @@ final class SubmitLateArrivalController
             ['data' => $this->presentLateArrival($don->load('reviewer'))],
             Response::HTTP_CREATED,
         );
+    }
+
+    /**
+     * Số phút lệch so với mốc ca, để câu thông báo nói ra con số.
+     *
+     * Về sớm đọc giờ tan của ĐÚNG NGÀY đó: thứ bảy tan lúc 12:00, nên xin về
+     * lúc 11:30 là sớm 30 phút chứ không phải sớm 6 tiếng.
+     */
+    private function soPhutLech(AttendanceExceptionType $loai, string $ngay, string $gioHen): int
+    {
+        $ca = WorkWeek::fromConfig()->shiftFor($ngay) ?? WorkShift::fromConfig();
+
+        if ($loai === AttendanceExceptionType::Late) {
+            return $ca->lateMinutesFromLocalTime($gioHen);
+        }
+
+        return $ca->earlyMinutesFromLocalTime($gioHen);
     }
 }

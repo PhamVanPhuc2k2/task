@@ -39,11 +39,11 @@ export function LateArrivalPanel({ canApprove }: { canApprove: boolean }) {
       {/* ── Nộp đơn ─────────────────────────────────── */}
       <section className="tone-card rounded-2xl p-5">
         <h2 className="mb-1 text-[0.95rem] font-semibold tracking-tight">
-          Xin đi muộn
+          Xin đi muộn hoặc về sớm
         </h2>
         <p className="text-ink-faint mb-4 text-[0.84rem]">
-          Ngày đã duyệt sẽ không bị đánh dấu đi muộn trên bảng công — nhưng chỉ
-          tới đúng giờ bạn xin.
+          Ngày đã duyệt sẽ không bị đánh dấu trên bảng công — nhưng chỉ trong
+          đúng khoảng giờ bạn xin.
         </p>
 
         {cuaToi.isPending && <Skeleton className="h-40" />}
@@ -172,10 +172,11 @@ function DongDiMuon({
             <span className="text-ink-soft text-[0.84rem]">
               {formatDate(don.date)}
               <span className="text-ink-faint">
-                {" "}
-                · đến lúc{" "}
+                {/* Nói rõ loại đơn: hộp duyệt trộn cả hai, và "đến lúc 16:00"
+                    với "rời lúc 16:00" là hai việc ngược nhau hoàn toàn. */}{" "}
+                · {don.type === "early" ? "rời lúc" : "đến lúc"}{" "}
                 <strong className="text-ink font-semibold tabular-nums">
-                  {don.expected_arrival}
+                  {don.expected_time}
                 </strong>
               </span>
             </span>

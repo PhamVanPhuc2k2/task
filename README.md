@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**766 test xanh** (4963 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**775 test xanh** (4995 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -2616,9 +2616,37 @@ Ba điều rút ra:
 
 Đã có ba test khoá hình dạng phản hồi, gồm cả trường hợp danh sách rỗng.
 
+#### Xin về sớm ✅ Đã xong
+
+Đối xứng với đi muộn nhưng **không giống hệt**, và ba khác biệt đều quyết định thiết kế.
+
+**Mốc đo không đứng yên.** Đi muộn đọc `first_seen_at` — có ngay từ nhịp tim đầu tiên. Về sớm đọc `last_seen_at`, mà mốc đó vẫn lớn dần chừng nào người ta còn mở máy. Nên con số về sớm chỉ có nghĩa khi nhìn lại một ngày đã qua, không phải khi theo dõi ngày hôm nay.
+
+**Ân hạn 5 phút, không phải 0 như đi muộn.** Về sớm năm phút mà bắt làm đơn thì không ai dùng — và một tính năng không ai dùng còn tệ hơn không có, vì nó làm bảng công **trông như** đã theo dõi trong khi thực tế thì không. Ân hạn dời ngưỡng chứ không trừ vào số phút, cùng quy ước với đi muộn.
+
+**Giờ tan phụ thuộc ngày.** Thứ bảy tan 12:00, nên về lúc 11:30 là sớm 30 phút chứ không phải sớm 6 tiếng. Luật validate đọc ca của **đúng ngày** đang xin, không lấy 17:30 cứng — nếu không thì đơn "về sớm lúc 14h thứ bảy" lọt qua và được duyệt mà chẳng miễn cái gì.
+
+##### Một cột `type`, không phải hai bảng
+
+Hai loại đi qua đúng một vòng đời, do cùng một người duyệt, với cùng quyền `leave.approve`, cùng bộ thông báo. Tách bảng là nhân đôi controller, action, notification, policy và giao diện cho một luồng giống nhau tới chín phần mười. Cột này cũng chừa sẵn chỗ cho **muộn buổi chiều**: thêm một `case`, không thêm bảng.
+
+Hai cột giờ tách đôi — `expected_arrival` và `expected_departure` — vì "tôi sẽ tới lúc 9h30" và "tôi sẽ về lúc 16h" không phải cùng một dữ liệu. Nhét chung một cột thì tên cột nói dối một nửa số dòng. Ràng buộc *"đúng một trong hai, khớp `type`"* đặt ở **database** bằng `CHECK`, không chỉ ở validate — cùng lý do với ràng buộc không âm của quỹ thưởng.
+
+##### Hạn mức riêng, và "một ngày một đơn" phải lọc theo loại
+
+Công ty chốt hai hạn mức tách nhau: dùng hết quota đi muộn không làm mất quyền xin về sớm. Và luật *"một ngày một đơn"* — cả ở `Rule::unique` lẫn ở khoá dòng trong Action — đều phải lọc theo `type`, nếu không thì xin đi muộn buổi sáng là mất quyền xin về sớm buổi chiều cùng ngày.
+
+##### Món nợ có tên: bảng vẫn tên `late_arrival_requests`
+
+Nó chứa cả đơn về sớm nên tên đang nói dối. Đổi tên bảng trên hệ thống đang chạy phải tách **hai lần deploy** — `deploy.sh` chạy migration trước khi đổi container, nên đổi ngay thì image cũ truy vấn một bảng không còn tồn tại. Trả nợ khi làm "muộn buổi chiều": đổi một lần cho cả ba loại.
+
+##### Deptrac bắt được một vi phạm khi làm
+
+`LeaveQuotaExceededException` ở tầng `Support` lỡ import enum của miền `Leave`. `Support` là tầng dưới cùng, không được biết `Domain` — sửa bằng cách nhận **chuỗi nhãn** thay vì enum, và chỗ gọi ở tầng Domain tự chuyển.
+
 #### Chưa làm
 
-Không có **về sớm**, không có **muộn buổi chiều** (sau giờ nghỉ trưa), không có ca theo phòng ban. Bảng `work_shifts` vẫn hoãn: cả công ty đang chung một lịch tuần, và dựng sẵn cơ chế ca theo phòng / theo người / có hiệu lực từ ngày nào là dựng một cỗ máy cho bài toán chưa tồn tại. Khi nào có phòng thật sự làm giờ khác thì `WorkWeek::fromConfig()` là chỗ duy nhất phải sửa.
+Không có **muộn buổi chiều** (sau giờ nghỉ trưa), không có ca theo phòng ban. Bảng `work_shifts` vẫn hoãn: cả công ty đang chung một lịch tuần, và dựng sẵn cơ chế ca theo phòng / theo người / có hiệu lực từ ngày nào là dựng một cỗ máy cho bài toán chưa tồn tại. Khi nào có phòng thật sự làm giờ khác thì `WorkWeek::fromConfig()` là chỗ duy nhất phải sửa.
 
 ---
 

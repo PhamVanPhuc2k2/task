@@ -86,6 +86,7 @@ final readonly class WorkWeek
                 $this->caCaNgay->morningStart,
                 $this->gioTanNuaBuoi,
                 $this->caCaNgay->graceMinutes,
+                $this->caCaNgay->earlyGraceMinutes,
             );
         }
 

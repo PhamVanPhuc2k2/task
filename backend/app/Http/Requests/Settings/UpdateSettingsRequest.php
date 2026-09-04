@@ -146,6 +146,8 @@ final class UpdateSettingsRequest extends FormRequest
             // chính sách: 366 ngày không lương một năm là vô nghĩa.
             SettingKey::LeaveUnpaidMaxDaysYear => ['min:0', 'max:365'],
             SettingKey::LateArrivalMaxPerMonth => ['min:0', 'max:31'],
+            SettingKey::EarlyLeaveMaxPerMonth => ['min:0', 'max:31'],
+            SettingKey::EarlyLeaveGraceMinutes => ['min:0', 'max:120'],
             default => ['min:0'],
         };
     }

@@ -1278,6 +1278,16 @@ export interface components {
          * @enum {string}
          */
         AttendanceDecision: "confirmed" | "waived" | "flagged";
+        /**
+         * AttendanceExceptionType
+         * @description Loại đơn xin ngoại lệ chấm công: đi muộn hay về sớm. ## Vì sao một cột `type` chứ không phải hai bảng  Hai loại đi qua **đúng một vòng đời** — chờ → duyệt / từ chối / rút — do cùng một người duyệt, với cùng một quyền `leave.approve`, cùng một bộ thông báo. Tách thành hai bảng là nhân đôi controller, action, notification, policy và giao diện cho một luồng giống nhau tới chín phần mười.  Cột này cũng chừa sẵn chỗ cho **muộn buổi chiều** ở đợt sau: thêm một case, không thêm bảng.  ## Tên bảng đang nói dối, và đó là món nợ có tên  Bảng vẫn tên `late_arrival_requests` nhưng từ nay chứa cả đơn về sớm. Đổi tên bảng trên hệ thống đang chạy phải tách **hai lần deploy** theo quy ước dự án — `deploy.sh` chạy migration TRƯỚC khi đổi container, nên đổi tên ngay bây giờ thì image cũ đang chạy sẽ truy vấn một bảng không còn tồn tại.  Trả nợ khi làm "muộn buổi chiều": lúc đó đổi tên một lần cho cả ba loại.
+         *     | |
+         *     |---|
+         *     | `late` <br/> Đến sau giờ vào ca buổi sáng. |
+         *     | `early` <br/> Rời trước giờ tan ca. |
+         * @enum {string}
+         */
+        AttendanceExceptionType: "late" | "early";
         /** BonusPoolResource */
         BonusPoolResource: {
             id: string;
@@ -1329,6 +1339,11 @@ export interface components {
             /** Format: email */
             email: string;
             password: string;
+            /**
+             * @description Ghi nhớ đăng nhập trên máy này. Không bắt buộc — thiếu thì coi
+             *     như không, tức là hành vi cũ.
+             */
+            remember?: boolean;
         };
         /** NotificationResource */
         NotificationResource: {
@@ -1655,6 +1670,7 @@ export interface components {
         Stringable: string;
         /** SubmitLateArrivalRequest */
         SubmitLateArrivalRequest: {
+            type?: components["schemas"]["AttendanceExceptionType"];
             /** Format: date */
             date: string;
             /**
@@ -1664,7 +1680,15 @@ export interface components {
              *     | nghĩa. Cho qua thì sinh ra những đơn được duyệt mà chẳng miễn cái
              *     | gì, và người nộp tưởng mình đã xin phép xong.
              */
-            expected_arrival: string;
+            expected_arrival?: string;
+            /**
+             * @description | Giờ dự kiến rời phải SỚM HƠN giờ tan ca của đúng ngày đó.
+             *     |
+             *     | Đọc ca theo ngày chứ không lấy 17:30 cứng: thứ bảy tan lúc 12:00,
+             *     | nên xin "về sớm lúc 16h" vào thứ bảy là một đơn vô nghĩa được
+             *     | duyệt mà chẳng miễn cái gì.
+             */
+            expected_departure?: string;
             /**
              * @description Tối thiểu 10 ký tự, cùng lý do với đơn nghỉ: không có mức sàn thì
              *     trường này đầy những dòng "bận" và "việc riêng".
@@ -1867,6 +1891,10 @@ export interface components {
                 leave_backdate_days?: number;
                 leave_future_days?: number;
                 leave_max_days?: number;
+                leave_unpaid_max_days_year?: number;
+                late_arrival_max_per_month?: number;
+                early_leave_max_per_month?: number;
+                early_leave_grace_minutes?: number;
             };
         };
         /**
@@ -2295,10 +2323,16 @@ export interface operations {
                         data: {
                             id: string;
                             date: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Đi muộn" | "Về sớm";
                             /**
                              * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
-                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt. `expected_time` là mốc giờ của ĐƠN — giờ đến với đơn đi muộn, giờ
+                             *     rời với đơn về sớm. Giữ luôn `expected_arrival` vì giao diện cũ
+                             *     đọc nó; bỏ ngay thì mọi bản chưa cập nhật hiện ô trống.
                              */
+                            expected_time: string;
                             expected_arrival: string;
                             reason: string;
                             status: string;
@@ -4147,10 +4181,16 @@ export interface operations {
                         data: {
                             id: string;
                             date: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Đi muộn" | "Về sớm";
                             /**
                              * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
-                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt. `expected_time` là mốc giờ của ĐƠN — giờ đến với đơn đi muộn, giờ
+                             *     rời với đơn về sớm. Giữ luôn `expected_arrival` vì giao diện cũ
+                             *     đọc nó; bỏ ngay thì mọi bản chưa cập nhật hiện ô trống.
                              */
+                            expected_time: string;
                             expected_arrival: string;
                             reason: string;
                             status: string;
@@ -4672,10 +4712,16 @@ export interface operations {
                         data: {
                             id: string;
                             date: string;
+                            type: string;
+                            /** @enum {string} */
+                            type_label: "Đi muộn" | "Về sớm";
                             /**
                              * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
-                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt. `expected_time` là mốc giờ của ĐƠN — giờ đến với đơn đi muộn, giờ
+                             *     rời với đơn về sớm. Giữ luôn `expected_arrival` vì giao diện cũ
+                             *     đọc nó; bỏ ngay thì mọi bản chưa cập nhật hiện ô trống.
                              */
+                            expected_time: string;
                             expected_arrival: string;
                             reason: string;
                             status: string;
@@ -5194,18 +5240,44 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
+            /**
+             * @description | Bọc trong `data` như ba đường anh em, KHÔNG dùng `data` + `meta`.
+             *     |
+             *     | Đường này từng trả `data` là một MẢNG kèm `meta` riêng, trong khi
+             *     | `/leave/team`, `/late-arrivals/me` và giao diện đều theo dạng
+             *     | `data: { requests, ... }`. Hậu quả: `cuaDoi.data.requests` là
+             *     | `undefined`, và `undefined.length` làm sập cả tab Đi muộn — nhưng CHỈ
+             *     | với người có quyền duyệt, vì nhân viên thường không vẽ khối đó. Nên
+             *     | lỗi sống sót từ lúc viết tính năng tới lúc có người duyệt mở nó ra.
+             *     |
+             *     | Bài học: một đường trả về lệch hình dạng so với các đường cùng họ là
+             *     | thứ TypeScript không bắt được — kiểu ở frontend chỉ là lời khai, không
+             *     | phải phép kiểm. Giờ đã có test khoá hình dạng.
+             */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        data: string[];
-                        meta: {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
                             total: string;
                             /** @constant */
                             limit: 100;
-                            pending: number;
+                            /**
+                             * @description | Đếm trên TRUY VẤN, không đếm trên trang đã lấy về.
+                             *     |
+                             *     | Bản trước đếm `$ds` — tập đã bị `limit(TRAN)` cắt. Đơn chờ
+                             *     | duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                             *     | nhãn đứng im ở đúng con số trần và người duyệt tưởng mình đã
+                             *     | xử lý gần hết. Con số trên nhãn phải là con số thật.
+                             */
+                            pending: string;
                         };
                     };
                 };
