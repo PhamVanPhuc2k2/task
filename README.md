@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**752 test xanh** (4912 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**763 test xanh** (4937 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -2476,7 +2476,40 @@ Làm sớm hơn lộ trình, cắt ra khỏi đợt 4. Lý do: **càng làm ch�
 - [x] Duyệt / từ chối, kèm thông báo cho cả hai phía
 - [x] **Ngày đã duyệt được miễn chấm công** — bảng công hiện "Nghỉ phép đã duyệt"
 - [x] Người nộp tự rút được đơn khi còn đang chờ
+- [x] **Hạn mức nghỉ không lương theo năm** — giám đốc đặt số, hệ thống chặn ở bước nộp. Xem [Hạn mức nghỉ và đi muộn](#hạn-mức-nghỉ-không-lương-và-xin-đi-muộn--đã-xong)
 - [ ] Nghỉ nửa ngày · duyệt nhiều cấp — cần công ty chốt chính sách trước
+
+#### Hạn mức nghỉ không lương và xin đi muộn ✅ Đã xong
+
+Giám đốc đặt hai con số ở **Cài đặt trang → Nghỉ phép**: số ngày nghỉ không lương mỗi **năm**, và số lần xin đi muộn mỗi **tháng**. Đặt `0` là tắt hạn mức.
+
+##### Hai chu kỳ khác nhau, có lý do
+
+Nghỉ không lương đếm theo **năm** vì nó hiếm và dài ngày, hợp với cách nghĩ của luật lao động. Xin đi muộn đếm theo **tháng** vì đó là chuyện lặt vặt lặp lại — hạn mức năm thì người ta dùng hết từ tháng ba rồi cả năm còn lại không xin được nữa, trong khi mục đích của con số này là điều chỉnh thói quen chứ không phải trừng phạt.
+
+##### Chặn ở bước NỘP, không phải bước duyệt
+
+Đây là chỗ hạn mức khác hẳn chấm công. Giờ công thì hệ thống **đo và gắn cờ**, con người quyết định — vì phép đo có thể sai. Hạn mức thì không có gì để sai: nó là con số giám đốc đặt ra, và số ngày đã dùng là dữ liệu chắc chắn. Cho nộp rồi bắt người duyệt từ chối là lãng phí thời gian cả hai bên.
+
+Câu chữ nói ra **cả ba con số** — đã dùng, hạn mức, và đơn này cần thêm bao nhiêu. *"Bạn đã vượt hạn mức"* là câu vô dụng: người đọc không biết phải sửa đơn thế nào.
+
+##### Đếm cả đơn ĐANG CHỜ DUYỆT
+
+Chỗ dễ sai nhất. Chỉ đếm đơn đã duyệt thì nộp năm đơn nhỏ cùng lúc là lách được — mỗi đơn nhìn riêng đều nằm trong hạn mức, và người duyệt phải tự cộng nhẩm. Đơn bị từ chối hoặc đã rút thì trả lại hạn mức.
+
+##### Đơn vắt qua giao thừa chia phần cho đúng hai năm
+
+Đơn 28/12 → 03/01 tính 4 ngày cho năm cũ và 3 ngày cho năm mới, chứ không dồn cả 7 ngày vào năm bắt đầu — dồn hết một bên nghĩa là nghỉ cuối năm bị tính nặng hơn nghỉ giữa năm, mà không có lý do nào để như vậy.
+
+Hệ quả: đơn vắt năm phải lọt hạn mức của **cả hai** năm, và thông báo lỗi nói rõ năm nào không đủ.
+
+##### Đọc có khoá dòng
+
+Phép đếm nằm **trong giao dịch** và dùng `lockForUpdate`, cùng lý do với phép kiểm chồng lấn: hai request gửi gần như cùng lúc — bấm đúp nút Nộp, hoặc mở hai tab — đều đếm ra "còn chỗ" rồi cùng ghi, và hạn mức bị vượt mà không có gì báo.
+
+##### Chỉ áp cho nghỉ không lương
+
+Phép năm sẽ có quỹ riêng ở đợt 4 (`leave_balances`); nghỉ ốm và việc riêng là chuyện chính sách, không phải một con số chặn cứng.
 
 #### Phạm vi cố ý hẹp
 

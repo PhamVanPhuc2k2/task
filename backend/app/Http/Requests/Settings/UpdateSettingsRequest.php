@@ -142,6 +142,10 @@ final class UpdateSettingsRequest extends FormRequest
             SettingKey::LeaveBackdateDays => ['min:0', 'max:365'],
             SettingKey::LeaveFutureDays => ['min:1', 'max:730'],
             SettingKey::LeaveMaxDays => ['min:1', 'max:90'],
+            // 0 = tắt hạn mức. Trần trên chặn lỗi gõ nhầm chứ không phải
+            // chính sách: 366 ngày không lương một năm là vô nghĩa.
+            SettingKey::LeaveUnpaidMaxDaysYear => ['min:0', 'max:365'],
+            SettingKey::LateArrivalMaxPerMonth => ['min:0', 'max:31'],
             default => ['min:0'],
         };
     }
