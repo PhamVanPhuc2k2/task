@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Attendance\AttendanceTimelineController;
 use App\Http\Controllers\Api\V1\Attendance\CancelAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\CancelOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\ClosePeriodController;
 use App\Http\Controllers\Api\V1\Attendance\HeartbeatController;
 use App\Http\Controllers\Api\V1\Attendance\MyAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\MyAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\MyOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\PeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReopenPeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\ReviewOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewWorkDayController;
 use App\Http\Controllers\Api\V1\Attendance\SubmitAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\SubmitOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\TeamAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\TeamAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\TeamOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\WorkDayDetailController;
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
@@ -276,6 +281,29 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     Route::post('/attendance/adjustments', SubmitAdjustmentController::class);
     Route::post('/attendance/adjustments/{adjustment}/review', ReviewAdjustmentController::class);
     Route::post('/attendance/adjustments/{adjustment}/cancel', CancelAdjustmentController::class);
+
+    /*
+    | Đăng ký làm thêm giờ — duyệt TRƯỚC mới được tính.
+    |
+    | Làm thêm giờ ra tiền ở mức 150–300% (Điều 98 Bộ luật Lao động 2019). Suy
+    | nó từ giờ ngồi trước máy là để hệ thống tự ký một khoản chi mà không ai
+    | quyết định — một cái tab quên đóng qua đêm sẽ thành mười tiếng làm thêm
+    | ngày nghỉ.
+    |
+    | Dùng chung quyền `attendance.review` với nút bấm tay và màn giải trình:
+    | duyệt làm thêm là quyết định của người GIAO VIỆC, mà đó cũng chính là
+    | người quyết định ngày công của phòng.
+    |
+    | KHAI TRƯỚC /attendance/{user}/{date}, cùng lý do với khối giải trình:
+    | `GET /attendance/overtime/me` khớp đúng dạng {user}/{date}.
+    |
+    | Tham số {overtime} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
+    */
+    Route::get('/attendance/overtime/me', MyOvertimeController::class);
+    Route::get('/attendance/overtime/team', TeamOvertimeController::class);
+    Route::post('/attendance/overtime', SubmitOvertimeController::class);
+    Route::post('/attendance/overtime/{overtime}/review', ReviewOvertimeController::class);
+    Route::post('/attendance/overtime/{overtime}/cancel', CancelOvertimeController::class);
 
     // Khai báo SAU /attendance/me và /attendance/team, nếu không Laravel hiểu
     // "me" là uuid người dùng rồi trả 404.

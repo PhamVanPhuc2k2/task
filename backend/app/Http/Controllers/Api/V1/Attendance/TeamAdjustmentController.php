@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Attendance;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Attendance\Models\AttendanceAdjustment;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
@@ -86,7 +86,7 @@ final class TeamAdjustmentController
                 // nhãn sẽ đứng im ở đúng con số trần và người duyệt tưởng mình
                 // đã xử lý gần hết.
                 'pending' => (clone $truyVan)
-                    ->where('status', AdjustmentStatus::Pending->value)
+                    ->where('status', RequestStatus::Pending->value)
                     ->count(),
             ],
         ]);

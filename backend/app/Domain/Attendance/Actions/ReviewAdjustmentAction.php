@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Domain\Attendance\Actions;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
 use App\Domain\Attendance\Enums\AttendanceDecision;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Attendance\Models\AttendanceAdjustment;
 use App\Domain\Identity\Models\User;
-use App\Support\Exceptions\AdjustmentNotEditableException;
+use App\Support\Exceptions\RequestNotEditableException;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
@@ -63,12 +63,12 @@ final class ReviewAdjustmentAction
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($khoa->status !== AdjustmentStatus::Pending) {
-                throw new AdjustmentNotEditableException($khoa->status->label());
+            if ($khoa->status !== RequestStatus::Pending) {
+                throw new RequestNotEditableException($khoa->status->label());
             }
 
             $khoa->forceFill([
-                'status' => $dongY ? AdjustmentStatus::Approved : AdjustmentStatus::Rejected,
+                'status' => $dongY ? RequestStatus::Approved : RequestStatus::Rejected,
                 // Chép lại số đã duyệt. `work_days.adjusted_minutes` là số HIỆN
                 // HÀNH và có thể bị sửa thẳng sau đó; cột này là số đã duyệt
                 // trên đơn này, và không bao giờ đổi nữa.

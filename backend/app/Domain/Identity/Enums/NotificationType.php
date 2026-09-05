@@ -57,6 +57,18 @@ enum NotificationType: string
     /** Đơn giải trình của mình đã được duyệt hoặc bị từ chối. */
     case AdjustmentReviewed = 'attendance.adjustment.reviewed';
 
+    /**
+     * Có nhân viên đăng ký làm thêm giờ cần duyệt.
+     *
+     * Gấp hơn mọi loại đơn khác ở một điểm: người ta đăng ký làm thêm cho TỐI
+     * NAY. Một thông báo tới sau khi họ đã về là một thông báo vô dụng, và tệ
+     * hơn — họ có thể đã ở lại làm mà chưa ai duyệt.
+     */
+    case OvertimeRequested = 'attendance.overtime.requested';
+
+    /** Đơn làm thêm giờ của mình đã được duyệt hoặc bị từ chối. */
+    case OvertimeReviewed = 'attendance.overtime.reviewed';
+
     public function label(): string
     {
         return match ($this) {
@@ -74,6 +86,8 @@ enum NotificationType: string
             self::LateArrivalReviewed => 'Đơn xin đi muộn đã được xử lý',
             self::AdjustmentRequested => 'Có đơn giải trình công cần duyệt',
             self::AdjustmentReviewed => 'Đơn giải trình công đã được xử lý',
+            self::OvertimeRequested => 'Có đăng ký làm thêm giờ cần duyệt',
+            self::OvertimeReviewed => 'Đăng ký làm thêm giờ đã được xử lý',
         };
     }
 
@@ -94,6 +108,8 @@ enum NotificationType: string
             self::LateArrivalReviewed => 'Khi đơn xin đi muộn của bạn được duyệt hoặc bị từ chối.',
             self::AdjustmentRequested => 'Khi nhân viên bạn quản lý giải trình về một ngày công đo thiếu.',
             self::AdjustmentReviewed => 'Khi đơn giải trình công của bạn được duyệt hoặc bị từ chối.',
+            self::OvertimeRequested => 'Khi nhân viên bạn quản lý đăng ký làm thêm giờ.',
+            self::OvertimeReviewed => 'Khi đăng ký làm thêm giờ của bạn được duyệt hoặc bị từ chối.',
         };
     }
 
@@ -133,7 +149,12 @@ enum NotificationType: string
             // dụng tới lúc đó là một ngày công sai không sửa lại được.
             self::ReportMissing, self::LeaveRequested, self::LeaveReviewed,
             self::LateArrivalRequested, self::LateArrivalReviewed,
-            self::AdjustmentRequested, self::AdjustmentReviewed => true,
+            self::AdjustmentRequested, self::AdjustmentReviewed,
+            //
+            // Làm thêm giờ bật email vì nó gấp theo GIỜ, không theo ngày: người
+            // ta đăng ký cho tối nay. Thông báo tới sau khi họ đã về là vô
+            // dụng — hoặc tệ hơn, họ đã ở lại làm mà chưa ai duyệt.
+            self::OvertimeRequested, self::OvertimeReviewed => true,
             // Nhận xét báo cáo là chuyện trao đổi hằng ngày, đọc trong ứng
             // dụng là đủ. Gửi email mỗi lần quản lý viết một câu thì hộp thư
             // đầy trong một tuần.

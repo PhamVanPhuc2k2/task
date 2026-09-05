@@ -70,6 +70,16 @@ enum SettingKey: string
     case LeaveAnnualSeniorityExtra = 'leave_annual_seniority_extra';
     case LeaveCarryOverMaxDays = 'leave_carry_over_max_days';
 
+    // ── Làm thêm giờ ─────────────────────────────────────────────────────
+    // Hệ số ghi bằng PHẦN TRĂM NGUYÊN: người ta nói "150%" chứ không nói "1,5",
+    // và ô nhập nhận số nguyên. Mặc định là mức sàn Điều 98 BLLĐ 2019.
+    case OvertimeRateWorking = 'overtime_rate_working';
+    case OvertimeRateWeeklyRest = 'overtime_rate_weekly_rest';
+    case OvertimeRateHoliday = 'overtime_rate_holiday';
+    case OvertimeMaxMinutesDay = 'overtime_max_minutes_day';
+    case OvertimeMaxMinutesMonth = 'overtime_max_minutes_month';
+    case OvertimeMaxMinutesYear = 'overtime_max_minutes_year';
+
     /** Đường dẫn trong `Config`, hoặc `null` nếu khoá này không đi qua config. */
     public function configPath(): ?string
     {
@@ -104,6 +114,13 @@ enum SettingKey: string
             self::LeaveAnnualSeniorityStep => 'leave.annual_seniority_step_years',
             self::LeaveAnnualSeniorityExtra => 'leave.annual_seniority_extra_days',
             self::LeaveCarryOverMaxDays => 'leave.annual_carry_over_max_days',
+
+            self::OvertimeRateWorking => 'attendance.overtime.rate_working_percent',
+            self::OvertimeRateWeeklyRest => 'attendance.overtime.rate_weekly_rest_percent',
+            self::OvertimeRateHoliday => 'attendance.overtime.rate_holiday_percent',
+            self::OvertimeMaxMinutesDay => 'attendance.overtime.max_minutes_per_day',
+            self::OvertimeMaxMinutesMonth => 'attendance.overtime.max_minutes_per_month',
+            self::OvertimeMaxMinutesYear => 'attendance.overtime.max_minutes_per_year',
         };
     }
 
@@ -125,7 +142,13 @@ enum SettingKey: string
             self::LeaveAnnualBaseDays,
             self::LeaveAnnualSeniorityStep,
             self::LeaveAnnualSeniorityExtra,
-            self::LeaveCarryOverMaxDays => SettingType::Integer,
+            self::LeaveCarryOverMaxDays,
+            self::OvertimeRateWorking,
+            self::OvertimeRateWeeklyRest,
+            self::OvertimeRateHoliday,
+            self::OvertimeMaxMinutesDay,
+            self::OvertimeMaxMinutesMonth,
+            self::OvertimeMaxMinutesYear => SettingType::Integer,
 
             self::ReportReminderEnabled => SettingType::Boolean,
 
@@ -196,6 +219,13 @@ enum SettingKey: string
             self::LeaveAnnualSeniorityStep => 'Cứ bao nhiêu năm thâm niên thì được thêm phép',
             self::LeaveAnnualSeniorityExtra => 'Số ngày phép thêm cho mỗi mốc thâm niên',
             self::LeaveCarryOverMaxDays => 'Trần phép tồn được chuyển sang năm sau',
+
+            self::OvertimeRateWorking => 'Hệ số làm thêm ngày thường (%)',
+            self::OvertimeRateWeeklyRest => 'Hệ số làm thêm ngày nghỉ tuần (%)',
+            self::OvertimeRateHoliday => 'Hệ số làm thêm ngày lễ (%)',
+            self::OvertimeMaxMinutesDay => 'Trần làm thêm mỗi ngày (phút)',
+            self::OvertimeMaxMinutesMonth => 'Trần làm thêm mỗi tháng (phút)',
+            self::OvertimeMaxMinutesYear => 'Trần làm thêm mỗi năm (phút)',
         };
     }
 }

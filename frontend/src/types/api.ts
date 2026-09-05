@@ -148,6 +148,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/overtime/{overtime}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.cancelOvertime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{project}/bonus/status": {
         parameters: {
             query?: never;
@@ -508,6 +524,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["leave.myLeaveBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.myOvertime"];
         put?: never;
         post?: never;
         delete?: never;
@@ -933,6 +965,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/overtime/{overtime}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.reviewOvertime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attendance/{user}/review": {
         parameters: {
             query?: never;
@@ -1113,6 +1161,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/overtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.submitOvertime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/tasks": {
         parameters: {
             query?: never;
@@ -1254,6 +1318,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["leave.teamLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.teamOvertime"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1562,9 +1642,11 @@ export interface components {
          *     | `late_arrival.reviewed` <br/>  |
          *     | `attendance.adjustment.requested` <br/> Có nhân viên nộp đơn giải trình công cần duyệt. Khác đơn nghỉ và đơn đi muộn ở một điểm quyết định: đơn này có HẠN CHÓT cứng. Kỳ công chốt rồi thì không ai duyệt được nữa, kể cả giám đốc, nên một đơn treo qua ngày chốt là một ngày công sai vĩnh viễn. |
          *     | `attendance.adjustment.reviewed` <br/> Đơn giải trình của mình đã được duyệt hoặc bị từ chối. |
+         *     | `attendance.overtime.requested` <br/> Có nhân viên đăng ký làm thêm giờ cần duyệt. Gấp hơn mọi loại đơn khác ở một điểm: người ta đăng ký làm thêm cho TỐI NAY. Một thông báo tới sau khi họ đã về là một thông báo vô dụng, và tệ hơn — họ có thể đã ở lại làm mà chưa ai duyệt. |
+         *     | `attendance.overtime.reviewed` <br/> Đơn làm thêm giờ của mình đã được duyệt hoặc bị từ chối. |
          * @enum {string}
          */
-        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed" | "attendance.adjustment.requested" | "attendance.adjustment.reviewed";
+        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed" | "attendance.adjustment.requested" | "attendance.adjustment.reviewed" | "attendance.overtime.requested" | "attendance.overtime.reviewed";
         /** PayrollRowResource */
         PayrollRowResource: {
             user: {
@@ -1945,6 +2027,45 @@ export interface components {
              */
             reason: string;
         };
+        /**
+         * SubmitOvertimeRequest
+         * @description Đăng ký làm thêm giờ cho một khoảng giờ trong một ngày.
+         *
+         *     ## Dùng chung khoảng ngày với đơn nghỉ
+         *
+         *     Cùng một câu hỏi — *"được khai lùi bao xa, đăng ký trước bao lâu"* — nên hai
+         *     chỗ trả lời khác nhau là sai. Cùng lý do đã ghi ở `SubmitLateArrivalRequest`.
+         *
+         *     Phía quá khứ vẫn mở: người ta hay ở lại làm tối rồi hôm sau mới nhớ ra phải
+         *     đăng ký. Chặn cứng thì họ đi nhắn quản lý qua Zalo — đúng thứ tính năng này
+         *     sinh ra để gom vào. Nhưng đơn khai lùi vẫn phải qua tay người duyệt, và kỳ đã
+         *     chốt thì controller chặn.
+         *
+         *     ## Ba luật NGHIỆP VỤ không nằm ở đây
+         *
+         *     Giờ phải ngoài ca, không chồng lấn, và ba trần của Điều 107 — cả ba nằm trong
+         *     `SubmitOvertimeAction`, có khoá dòng. Chỗ này chỉ kiểm hình dạng dữ liệu và
+         *     thứ tự hai mốc giờ.
+         */
+        SubmitOvertimeRequest: {
+            /** Format: date */
+            work_date: string;
+            start_time: string;
+            /**
+             * @description | Giờ kết thúc phải SAU giờ bắt đầu, trong cùng một ngày.
+             *     |
+             *     | Ca làm thêm vắt qua nửa đêm chưa hỗ trợ: nó cần cả phụ cấp làm
+             *     | đêm (Điều 98 khoản 2) lẫn quy tắc chia phần cho hai ngày công, mà
+             *     | công ty hiện không có ca đêm. Chặn thẳng ở đây còn hơn nhận một
+             *     | đơn ra số phút âm rồi không ai hiểu con số đó từ đâu.
+             */
+            end_time: string;
+            /**
+             * @description Tối thiểu 10 ký tự, cùng lý do với các loại đơn khác: không có
+             *     mức sàn thì trường này đầy những dòng "làm nốt việc".
+             */
+            reason: string;
+        };
         /** TaskActivityResource */
         TaskActivityResource: {
             id: number;
@@ -2127,6 +2248,12 @@ export interface components {
                 leave_annual_seniority_step?: number;
                 leave_annual_seniority_extra?: number;
                 leave_carry_over_max_days?: number;
+                overtime_rate_working?: number;
+                overtime_rate_weekly_rest?: number;
+                overtime_rate_holiday?: number;
+                overtime_max_minutes_day?: number;
+                overtime_max_minutes_month?: number;
+                overtime_max_minutes_year?: number;
             };
         };
         /**
@@ -2711,6 +2838,81 @@ export interface operations {
                                 by: string | null;
                                 at: string;
                                 note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.cancelOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The overtime UUID */
+                overtime: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
                             } | null;
                             user: {
                                 id: string;
@@ -3626,6 +3828,53 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "attendance.myOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100.
+                             */
+                            total: number;
+                            /** @constant */
+                            limit: 100;
+                            window: {
+                                earliest: string;
+                                latest: string;
+                            };
+                            policy: {
+                                rate_working_percent: Record<string, never> | null;
+                                rate_weekly_rest_percent: Record<string, never> | null;
+                                rate_holiday_percent: Record<string, never> | null;
+                                max_minutes_per_day: number;
+                                max_minutes_per_month: number;
+                                max_minutes_per_year: number;
+                            };
+                            used: {
+                                month: number;
+                                year: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "reports.myReports": {
         parameters: {
             query?: never;
@@ -4153,6 +4402,12 @@ export interface operations {
                                      *     | dễ lọt nhất, cùng cái bẫy đã bịt ở `GuardsClosedPeriods`.
                                      */
                                     "\u0111\u01A1n ngh\u1EC9": number;
+                                    /**
+                                     * @description | Đơn làm thêm giờ còn treo cũng chặn chốt sổ, và đây là loại nặng
+                                     *     | nhất trong ba loại: người ta ĐÃ LÀM rồi. Chốt sổ mà bỏ lại nó là
+                                     *     | vứt đi một khoản tiền 150–300% cho công việc đã xong.
+                                     */
+                                    "\u0111\u0103ng k\u00FD l\u00E0m th\u00EAm gi\u1EDD": number;
                                     "\u0111\u01A1n xin \u0111i mu\u1ED9n / v\u1EC1 s\u1EDBm": number;
                                 };
                                 ready: boolean;
@@ -5015,6 +5270,109 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.reviewOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The overtime UUID */
+                overtime: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    approve: boolean;
+                    /**
+                     * @description | Số phút NGƯỜI DUYỆT chốt. Để trống thì lấy đúng số đã đăng ký.
+                     *     |
+                     *     | Trần trên là SỐ ĐÃ ĐĂNG KÝ, không phải trần của Điều 107: ba cái
+                     *     | trần đó đã được kiểm lúc nộp, và cho phép duyệt nhiều hơn số đã
+                     *     | đăng ký là mở một đường vòng qua chúng — người duyệt gõ 600 phút
+                     *     | vào một đơn 60 phút và không có gì chặn.
+                     */
+                    minutes?: number | null;
+                    /** @description Từ chối bắt buộc có lý do; duyệt thì không. */
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự duyệt đăng ký làm thêm giờ của chính mình được.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "attendance.reviewWorkDay": {
         parameters: {
             query?: never;
@@ -5624,6 +5982,67 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.submitOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitOvertimeRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "task.index": {
         parameters: {
             query?: {
@@ -6213,6 +6632,55 @@ export interface operations {
                              */
                             total: string;
                             can_approve: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "attendance.teamOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            total: string;
+                            /** @constant */
+                            limit: 100;
+                            /**
+                             * @description Đếm trên TRUY VẤN, không đếm trên trang đã lấy về: đơn chờ
+                             *     duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                             *     nhãn đứng im ở đúng con số trần và người duyệt tưởng mình đã
+                             *     xử lý gần hết.
+                             */
+                            pending: string;
                         };
                     };
                 };

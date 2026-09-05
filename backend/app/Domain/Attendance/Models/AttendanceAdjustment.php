@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Attendance\Models;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Identity\Models\User;
 use App\Support\Concerns\HasUuid;
 use Carbon\CarbonImmutable;
@@ -31,7 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $work_date
  * @property string $reason
  * @property int|null $requested_minutes
- * @property AdjustmentStatus $status
+ * @property RequestStatus $status
  * @property int|null $approved_minutes
  * @property int|null $reviewed_by
  * @property CarbonImmutable|null $reviewed_at
@@ -67,8 +67,8 @@ final class AttendanceAdjustment extends Model
     public function scopeBlocking(Builder $query): void
     {
         $query->whereIn('status', [
-            AdjustmentStatus::Pending->value,
-            AdjustmentStatus::Approved->value,
+            RequestStatus::Pending->value,
+            RequestStatus::Approved->value,
         ]);
     }
 
@@ -82,7 +82,7 @@ final class AttendanceAdjustment extends Model
      */
     public function scopePendingBetween(Builder $query, string $tu, string $den): void
     {
-        $query->where('status', AdjustmentStatus::Pending->value)
+        $query->where('status', RequestStatus::Pending->value)
             ->whereBetween('work_date', [$tu, $den]);
     }
 
@@ -92,7 +92,7 @@ final class AttendanceAdjustment extends Model
     protected function casts(): array
     {
         return [
-            'status' => AdjustmentStatus::class,
+            'status' => RequestStatus::class,
             // Cố ý là string — xem chú thích đầu lớp.
             'work_date' => 'string',
             'requested_minutes' => 'integer',

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Domain\Attendance\Support\CalendarWorkingDays;
+use App\Domain\Attendance\Support\CompanyWorkCalendar;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
-use App\Support\Contracts\WorkingDays;
+use App\Support\Contracts\WorkCalendar;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
         | trong bộ nhớ, và một người có mười đơn nghỉ sẽ hỏi mười lần trong cùng
         | một request. Dựng lại mỗi lần là mười câu SQL cho cùng một danh sách.
         */
-        $this->app->singleton(WorkingDays::class, CalendarWorkingDays::class);
+        $this->app->singleton(WorkCalendar::class, CompanyWorkCalendar::class);
     }
 
     public function boot(): void

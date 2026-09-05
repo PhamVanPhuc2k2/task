@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
 use App\Domain\Attendance\Enums\AttendanceDecision;
-use App\Domain\Attendance\Enums\PeriodStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Attendance\Models\AttendanceAdjustment;
 use App\Domain\Attendance\Models\AttendancePeriod;
 use App\Domain\Attendance\Models\WorkDay;
@@ -54,21 +53,11 @@ beforeEach(function (): void {
     $this->travelTo(CarbonImmutable::parse('2026-09-02 09:00:00'));
 });
 
-/** Khoá sẵn một kỳ mà không đi qua HTTP. */
-function khoaKy(string $ky = '2026-08'): AttendancePeriod
-{
-    return AttendancePeriod::query()->create([
-        'period' => $ky,
-        'status' => PeriodStatus::Closed,
-        'closed_at' => now(),
-    ]);
-}
-
 /** Một đơn giải trình có sẵn trong database. */
 function donGiaiTrinh(
     User $u,
     string $ngay = '2026-08-20',
-    AdjustmentStatus $trangThai = AdjustmentStatus::Pending,
+    RequestStatus $trangThai = RequestStatus::Pending,
     ?int $soPhut = 480,
 ): AttendanceAdjustment {
     return AttendanceAdjustment::query()->create([
@@ -77,7 +66,7 @@ function donGiaiTrinh(
         'reason' => 'Cả ngày ở chỗ khách hàng hướng dẫn vận hành website.',
         'requested_minutes' => $soPhut,
         'status' => $trangThai,
-        'reviewed_at' => $trangThai === AdjustmentStatus::Pending ? null : now(),
+        'reviewed_at' => $trangThai === RequestStatus::Pending ? null : now(),
     ]);
 }
 
@@ -106,7 +95,7 @@ it('nhân viên nộp được đơn giải trình cho một ngày đã qua', fu
         ->assertCreated()
         ->assertJsonPath('data.work_date', '2026-08-20')
         ->assertJsonPath('data.requested_minutes', 480)
-        ->assertJsonPath('data.status', AdjustmentStatus::Pending->value)
+        ->assertJsonPath('data.status', RequestStatus::Pending->value)
         ->assertJsonPath('data.is_editable', true);
 });
 
@@ -160,7 +149,7 @@ it('bị từ chối rồi thì giải trình lại được cho đúng ngày đ
     // thường, và cấm điều đó thì người ta quay về nhắn tin cho quản lý — đúng
     // cái việc module này sinh ra để thay.
     [, $nv] = sepVaNhanVien();
-    donGiaiTrinh($nv, trangThai: AdjustmentStatus::Rejected);
+    donGiaiTrinh($nv, trangThai: RequestStatus::Rejected);
 
     $this->actingAs($nv)
         ->postJson('/api/v1/attendance/adjustments', thanDon())
@@ -206,7 +195,7 @@ it('duyệt thì ghi vào bảng công, với số phút của NGƯỜI DUYỆT'
             'note' => 'Xác nhận có lịch gặp khách, nhưng chỉ nửa ngày.',
         ])
         ->assertOk()
-        ->assertJsonPath('data.status', AdjustmentStatus::Approved->value)
+        ->assertJsonPath('data.status', RequestStatus::Approved->value)
         ->assertJsonPath('data.review.approved_minutes', 300);
 
     $ngay = WorkDay::query()
@@ -247,7 +236,7 @@ it('từ chối thì KHÔNG ghi gì vào bảng công', function (): void {
             'note' => 'Hôm đó không có lịch gặp khách nào trên hệ thống.',
         ])
         ->assertOk()
-        ->assertJsonPath('data.status', AdjustmentStatus::Rejected->value);
+        ->assertJsonPath('data.status', RequestStatus::Rejected->value);
 
     expect(WorkDay::query()->count())->toBe(0);
 });
@@ -301,7 +290,7 @@ it('không duyệt được đơn của phòng khác', function (): void {
 
 it('không duyệt lại được đơn đã xử lý', function (): void {
     [$sep, $nv] = sepVaNhanVien();
-    $don = donGiaiTrinh($nv, trangThai: AdjustmentStatus::Approved);
+    $don = donGiaiTrinh($nv, trangThai: RequestStatus::Approved);
 
     $this->actingAs($sep)
         ->postJson("/api/v1/attendance/adjustments/{$don->uuid}/review", ['approve' => true])
@@ -314,12 +303,12 @@ it('người nộp rút được đơn đang chờ, nhưng không rút được 
     [, $nv] = sepVaNhanVien();
 
     $cho = donGiaiTrinh($nv, '2026-08-20');
-    $daDuyet = donGiaiTrinh($nv, '2026-08-21', AdjustmentStatus::Approved);
+    $daDuyet = donGiaiTrinh($nv, '2026-08-21', RequestStatus::Approved);
 
     $this->actingAs($nv)
         ->postJson("/api/v1/attendance/adjustments/{$cho->uuid}/cancel")
         ->assertOk()
-        ->assertJsonPath('data.status', AdjustmentStatus::Cancelled->value);
+        ->assertJsonPath('data.status', RequestStatus::Cancelled->value);
 
     $this->actingAs($nv)
         ->postJson("/api/v1/attendance/adjustments/{$daDuyet->uuid}/cancel")

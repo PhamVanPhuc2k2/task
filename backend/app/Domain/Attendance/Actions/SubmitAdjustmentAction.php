@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Attendance\Actions;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Attendance\Models\AttendanceAdjustment;
 use App\Domain\Identity\Models\User;
 use App\Support\Exceptions\AdjustmentAlreadyRequestedException;
@@ -48,7 +48,7 @@ final class SubmitAdjustmentAction
                 'work_date' => $ngay,
                 'reason' => $lyDo,
                 'requested_minutes' => $soPhutDeNghi,
-                'status' => AdjustmentStatus::Pending,
+                'status' => RequestStatus::Pending,
             ]);
         });
     }

@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**848 test xanh** (5244 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**878 test xanh** (5354 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-28 model · 34 migration · 50 bảng · 105 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+29 model · 35 migration · 51 bảng · 110 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3089,8 +3089,7 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 ### Đợt 4 — Phần còn lại: quỹ phép, OT, chốt kỳ công
 
 - [x] **Quỹ phép năm** (`leave_balances`) — theo Điều 113 và 114, phép tồn năm trước. Xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong)
-- [ ] `overtime_requests` — đăng ký OT, duyệt trước mới được tính
-- [ ] Hệ số OT theo luật: ngày thường 150%, ngày nghỉ 200%, ngày lễ 300%
+- [x] **Đăng ký làm thêm giờ** (`overtime_requests`) — duyệt trước mới được tính, hệ số 150/200/300%. Xem [Làm thêm giờ](#làm-thêm-giờ--đã-xong)
 - [x] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Xem [Đơn giải trình công](#đơn-giải-trình-công--đã-xong)
 - [x] **Chốt kỳ công** — khoá sổ theo tháng dương lịch. Xem [Chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong)
 - [x] **Nhật ký kiểm toán** — mọi lần chốt và mở khoá vào `payroll_audits`, bảng chỉ ghi thêm
@@ -3315,6 +3314,70 @@ Năm hiện tại lấy **từ server**, không từ `new Date()`: đồng hồ 
 **`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả những tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ. Đã bọc thành một hàm trả về kiểu chắc chắn thay vì rải `?->` — `?->` sẽ biến một lỗi lập trình thành một con số 0 im lặng.
 
 **Ngày phép là số thực, và đó là ngoại lệ có chủ ý.** Quy ước của dự án là cast tiền sang `decimal` để không bao giờ cộng trên số thực. Ngày phép không phải tiền: mọi giá trị đều là bội của 0,5, mà 0,5 biểu diễn chính xác được bằng số thực nhị phân. Cast sang `decimal` cho ra chuỗi, và cộng chuỗi thì mỗi chỗ dùng lại phải tự ép kiểu — đó mới là chỗ sinh lỗi.
+
+#### Làm thêm giờ ✅ Đã xong
+
+Làm thêm giờ ra tiền ở mức **150–300%** (Điều 98 BLLĐ 2019). Suy nó từ giờ ngồi trước máy là để hệ thống tự ký một khoản chi mà không ai quyết định — và một cái tab quên đóng qua đêm sẽ thành mười tiếng làm thêm ngày nghỉ. Đó cũng đúng là lý do `max_daily_minutes` tồn tại.
+
+Nên đây là một **đơn**: đăng ký mốc giờ và lý do, quản lý duyệt, và chỉ phần đã duyệt mới đi vào bảng lương.
+
+##### Hệ số suy từ loại ngày, và đóng băng lúc duyệt
+
+| Loại ngày | Hệ số | Nguồn |
+|---|---|---|
+| Ngày làm việc (kể cả thứ bảy nửa buổi) | 150% | Điều 98 |
+| Ngày nghỉ hằng tuần | 200% | Điều 98 |
+| Ngày nghỉ lễ, tết | 300% | Điều 98 |
+
+**Thứ bảy nửa buổi là ngày làm việc**, không phải ngày nghỉ hằng tuần — ngày nghỉ hằng tuần của công ty là chủ nhật. Điều 111 chỉ đòi mỗi tuần nghỉ ít nhất một ngày nên cách xếp này hợp lệ, nhưng nó là **chênh lệch 50% tiền công** nên phải nói ra chứ không để người sau tự suy. Có test khoá lại.
+
+`rate_percent` được ghi lúc **duyệt**, không phải lúc đăng ký. Loại ngày có thể đổi sau khi đơn đã nộp — nhân sự nhập thêm một ngày lễ, hoặc công ty đổi lịch tuần. Lúc đăng ký màn hình tính sống để người nộp biết mình sắp được trả bao nhiêu (`rate_is_final: false`); lúc duyệt con số được đóng băng, vì đó là thời điểm công ty cam kết trả.
+
+Ghi bằng **phần trăm nguyên** (150, 200, 300) chứ không phải hệ số thập phân: người ta nói *"hệ số 150%"*, ô nhập ở Cài đặt nhận số nguyên, và cả module không còn phép nhân số thực nào.
+
+**Cấu hình dưới mức sàn thì bị kẹp lên.** Trả dưới mức luật định là trái luật, và một con số gõ nhầm ở màn Cài đặt không nên biến thành một sai phạm im lặng kéo dài tới khi có người khiếu nại. Chiều ngược lại không kẹp — trả cao hơn luật là quyền của công ty.
+
+##### Ba trần của Điều 107
+
+Không quá 50% giờ làm bình thường trong 1 ngày (mặc định 4 giờ), 40 giờ mỗi tháng, 200 giờ mỗi năm. Kiểm theo thứ tự **hẹp dần ra rộng** — người nộp gặp trần gần nhất trước, và đó là trần họ làm được gì đó với nó: rút ngắn hôm nay dễ hơn là dời sang năm sau.
+
+Đếm cả đơn **đang chờ duyệt**: chỉ đếm đơn đã duyệt thì nộp năm đơn nhỏ cùng lúc là lách được. Cộng bằng `SUM(COALESCE(approved_minutes, minutes))` ở database — trần theo năm sẽ kéo về cả trăm dòng chỉ để cộng một con số.
+
+Màn đăng ký trả kèm **số đã dùng** tháng này và năm nay. Ba trần chồng lên nhau và người nộp không có cách nào tự biết; không nói ra thì họ gõ xong cả cái đơn rồi mới nhận một câu từ chối, và lần sau vẫn không đoán được.
+
+##### Giờ phải nằm ngoài ca, và một lỗi lộ ra khi làm
+
+*"Làm thêm 9h–11h"* vào một ngày làm việc là hai tiếng đã được trả lương bình thường rồi — trả thêm 150% cho nó là trả hai lần cho cùng một giờ làm. Chạm đúng biên **không** tính là giao nhau: làm thêm từ đúng giờ tan ca là trường hợp thường gặp nhất.
+
+Phép kiểm này ban đầu hỏi `WorkWeek::shiftFor()`, mà hàm đó **chỉ biết hôm đó là thứ mấy**. Hậu quả: một ngày lễ rơi vào thứ hai vẫn trả về ca ngày thường, nên đăng ký làm thêm 9h–11h ngày Quốc khánh bị từ chối oan — với câu lỗi nói về một ca không hề tồn tại hôm đó. Test bắt được trước khi ai đó gặp. Giờ hỏi `WorkCalendar`, thứ biết cả ngày lễ.
+
+##### Không hai khoảng giờ chồng lấn
+
+Một người làm thêm hai lần trong ngày là chuyện có thật — sáng sớm một tiếng, tối hai tiếng. Thứ bị cấm là hai đơn **phủ cùng một khoảng giờ**: cộng cả hai vào là trả tiền hai lần. Ràng buộc này không diễn đạt được bằng index nên nằm ở tầng nghiệp vụ, trong giao dịch có khoá dòng.
+
+##### Duyệt được ít hơn, không được nhiều hơn
+
+*"Đăng ký 3 tiếng, thực tế làm 2"* là chuyện thường, nên người duyệt sửa được số phút. Trần trên là **số đã đăng ký**: cho duyệt nhiều hơn là mở một đường vòng qua ba cái trần đã kiểm lúc nộp — người duyệt gõ 600 phút vào một đơn 60 phút và không có gì chặn.
+
+Dùng chung quyền `attendance.review` với nút bấm tay và màn giải trình, có chủ ý: duyệt làm thêm là quyết định của người **giao việc**, mà đó cũng chính là người quyết định ngày công của phòng. Khác với quỹ phép năm — thứ được tách thành quyền riêng vì nó là quyết định hành chính về cả năm, không phải về một buổi tối cụ thể.
+
+##### Đơn làm thêm treo là loại nặng nhất chặn chốt sổ
+
+Ba loại đơn chặn chốt sổ giờ thành bốn. Đây là loại nặng nhất: người ta **đã làm rồi**. Chốt sổ mà bỏ lại nó là vứt đi một khoản tiền 150–300% cho công việc đã xong.
+
+##### Chưa có: nghỉ bù và phụ cấp làm đêm
+
+Điều 98 khoản 3 cho phép thoả thuận nghỉ bù thay vì trả tiền; khoản 2–3 cộng thêm 30%/20% cho giờ làm ban đêm. Công ty hiện không có ca đêm và chưa chốt chính sách nghỉ bù. Ca vắt qua nửa đêm cũng bị chặn thẳng ở ô nhập — nó cần cả hai thứ trên cộng quy tắc chia phần cho hai ngày công.
+
+Khi có thì thêm cột; các đơn cũ giữ nguyên nghĩa vì `rate_percent` đã đóng băng con số của lúc duyệt.
+
+##### Ba lần đổi tên, vì cùng một lý do
+
+`WorkingDays` → **`WorkCalendar`**: giao diện giờ trả lời hai câu — đếm ngày công, và *"ngày này thuộc loại nào"*. Cái tên cũ chỉ mô tả câu thứ nhất.
+
+`AdjustmentStatus` → **`RequestStatus`**: miền Attendance giờ có hai loại đơn cùng một vòng đời. Giữ hai enum giống hệt trong cùng một miền là đúng thứ mà chú thích ở `LateArrivalRequest` đã lên án — *"tách ra chỉ để có tên khác là nhân đôi chỗ phải sửa"*. `AdjustmentNotEditableException` → `RequestNotEditableException` theo cùng lý do.
+
+Và `khoaKy()` chuyển từ file test vào `tests/Pest.php` — hàm khai trong một file test chỉ tồn tại khi file đó được nạp, nên chạy riêng file kia sẽ đỏ với "undefined function" trong khi chạy cả bộ vẫn xanh. Lần thứ tư mắc cái bẫy này.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 

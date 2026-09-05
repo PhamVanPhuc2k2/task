@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Attendance;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Support\Time\WorkDate;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Date;
@@ -61,8 +61,8 @@ final class SubmitAdjustmentRequest extends FormRequest
                 Rule::unique('attendance_adjustments', 'work_date')
                     ->where('user_id', $this->user()?->id)
                     ->whereIn('status', [
-                        AdjustmentStatus::Pending->value,
-                        AdjustmentStatus::Approved->value,
+                        RequestStatus::Pending->value,
+                        RequestStatus::Approved->value,
                     ]),
             ],
 

@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Domain\Attendance\Enums\PeriodStatus;
+use App\Domain\Attendance\Models\AttendancePeriod;
 use App\Domain\Attendance\Models\WorkSession;
 use App\Domain\Identity\Enums\Role;
 use App\Domain\Identity\Models\Department;
@@ -170,6 +172,23 @@ function giamDoc(): User
     $u->assignRole(Role::GiamDoc->value);
 
     return $u;
+}
+
+/**
+ * Khoá sẵn một kỳ công mà không đi qua HTTP.
+ *
+ * Ở đây chứ không ở file test nào, vì hai file đã cần tới nó — và hàm khai
+ * trong một file test chỉ tồn tại khi file đó được nạp, nên chạy riêng file kia
+ * sẽ đỏ với "undefined function" trong khi chạy cả bộ vẫn xanh. Đúng cái bẫy đã
+ * ghi ở đầu mục này, và đã mắc lại lần thứ tư.
+ */
+function khoaKy(string $ky = '2026-08'): AttendancePeriod
+{
+    return AttendancePeriod::query()->create([
+        'period' => $ky,
+        'status' => PeriodStatus::Closed,
+        'closed_at' => now(),
+    ]);
 }
 
 /** Một báo cáo ngày đã nộp — bản nháp không dùng hàm này. */

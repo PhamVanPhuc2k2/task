@@ -10,7 +10,7 @@ use App\Domain\Leave\Data\AnnualLeavePolicy;
 use App\Domain\Leave\Enums\LeaveType;
 use App\Domain\Leave\Models\LeaveBalance;
 use App\Domain\Leave\Models\LeaveRequest;
-use App\Support\Contracts\WorkingDays;
+use App\Support\Contracts\WorkCalendar;
 use Illuminate\Support\Collection;
 
 /**
@@ -19,7 +19,7 @@ use Illuminate\Support\Collection;
  * ## Đã dùng thì đếm NGÀY CÔNG, không đếm ngày lịch
  *
  * Đây là điểm khác biệt lớn nhất so với hạn mức nghỉ không lương, và là lý do
- * `WorkingDays` tồn tại. Một đơn nghỉ từ thứ sáu tới thứ hai phủ 4 ngày lịch
+ * `WorkCalendar` tồn tại. Một đơn nghỉ từ thứ sáu tới thứ hai phủ 4 ngày lịch
  * nhưng chỉ tiêu **2,5 ngày phép** — thứ bảy nửa buổi, chủ nhật không tính.
  *
  * Đếm ngày lịch thì một tuần nghỉ ăn 7 ngày trong quỹ 12 ngày, và quỹ phép năm
@@ -42,7 +42,7 @@ use Illuminate\Support\Collection;
 final class ResolveLeaveBalanceAction
 {
     public function __construct(
-        private readonly WorkingDays $ngayCong,
+        private readonly WorkCalendar $ngayCong,
     ) {}
 
     /**

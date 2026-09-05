@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Concerns;
 
-use App\Domain\Attendance\Enums\AdjustmentStatus;
+use App\Domain\Attendance\Enums\RequestStatus;
 use App\Domain\Attendance\Models\AttendanceAdjustment;
+use App\Domain\Attendance\Models\OvertimeRequest;
 use App\Domain\Leave\Enums\LeaveStatus;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Domain\Leave\Models\LeaveRequest;
@@ -68,7 +69,7 @@ trait GuardsPendingWork
 
         return [
             'đơn giải trình công' => AttendanceAdjustment::query()
-                ->where('status', AdjustmentStatus::Pending->value)
+                ->where('status', RequestStatus::Pending->value)
                 ->whereBetween('work_date', [$tu, $den])
                 ->count(),
 
@@ -83,6 +84,16 @@ trait GuardsPendingWork
                 ->where('status', LeaveStatus::Pending->value)
                 ->where('start_date', '<=', $den)
                 ->where('end_date', '>=', $tu)
+                ->count(),
+
+            /*
+            | Đơn làm thêm giờ còn treo cũng chặn chốt sổ, và đây là loại nặng
+            | nhất trong ba loại: người ta ĐÃ LÀM rồi. Chốt sổ mà bỏ lại nó là
+            | vứt đi một khoản tiền 150–300% cho công việc đã xong.
+            */
+            'đăng ký làm thêm giờ' => OvertimeRequest::query()
+                ->where('status', RequestStatus::Pending->value)
+                ->whereBetween('work_date', [$tu, $den])
                 ->count(),
 
             'đơn xin đi muộn / về sớm' => LateArrivalRequest::query()

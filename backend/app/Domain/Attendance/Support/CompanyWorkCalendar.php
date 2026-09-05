@@ -6,14 +6,15 @@ namespace App\Domain\Attendance\Support;
 
 use App\Domain\Attendance\Data\WorkWeek;
 use App\Domain\Attendance\Models\Holiday;
-use App\Support\Contracts\WorkingDays;
+use App\Support\Contracts\WorkCalendar;
+use App\Support\Enums\DayKind;
 use Carbon\CarbonImmutable;
 
 /**
- * Đếm ngày công theo lịch tuần và bảng ngày lễ.
+ * Lịch làm việc của công ty, dựng từ lịch tuần và bảng ngày lễ.
  *
- * Bản cài đặt của `WorkingDays` — xem giao diện đó để biết vì sao phép đếm này
- * không nằm thẳng trong miền Leave.
+ * Bản cài đặt của `WorkCalendar` — xem giao diện đó để biết vì sao hai câu hỏi
+ * này không nằm thẳng trong miền cần chúng.
  *
  * ## Nhớ trong bộ nhớ theo NĂM
  *
@@ -26,12 +27,35 @@ use Carbon\CarbonImmutable;
  * singleton cho mỗi request. Không dùng cache ngoài: ngày lễ đổi thì trang tiếp
  * theo phải thấy ngay, chứ không phải sau khi hết hạn cache.
  */
-final class CalendarWorkingDays implements WorkingDays
+final class CompanyWorkCalendar implements WorkCalendar
 {
     private ?WorkWeek $tuan = null;
 
     /** @var array<int, array<string, true>> năm => tập ngày thực nghỉ */
     private array $ngayLe = [];
+
+    public function kindOf(string $ngay): DayKind
+    {
+        /*
+        | Ngày lễ THẮNG cả hai loại còn lại, và kiểm trước.
+        |
+        | Lễ trùng ngày nghỉ hằng tuần thì đã được nghỉ bù sang ngày kế tiếp
+        | (Điều 112) — `observed_date` giữ ngày bù đó, nên một ngày vừa là lễ
+        | vừa là chủ nhật gần như không xảy ra. Nhưng nếu công ty nhập tay một
+        | ngày lễ trùng chủ nhật, tính chất lễ vẫn phải thắng: hệ số làm thêm
+        | ngày lễ cao hơn hệ số ngày nghỉ tuần, và trả thấp hơn luật là sai.
+        */
+        if ($this->laLe($ngay)) {
+            return DayKind::Holiday;
+        }
+
+        $tuan = $this->tuan ??= WorkWeek::fromConfig();
+
+        // Ngày nửa buổi vẫn là NGÀY LÀM VIỆC — xem chú thích ở `DayKind`.
+        return $tuan->shiftFor($ngay) === null
+            ? DayKind::WeeklyRest
+            : DayKind::Working;
+    }
 
     public function countBetween(string $tuNgay, string $denNgay): float
     {
