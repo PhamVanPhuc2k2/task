@@ -247,6 +247,43 @@ it('chốt và mở khoá đều vào nhật ký kiểm toán', function (): voi
         ->toBe('Kế toán báo sai giờ công của hai người.');
 });
 
+it('màn chốt sổ trả đủ hình dạng giao diện dựa vào', function (): void {
+    /*
+    | Khoá HÌNH DẠNG, không chỉ khoá nội dung.
+    |
+    | Giao diện đọc `can_close` và `can_reopen` để quyết định hiện nút nào, và
+    | `closable` để biết kỳ nào sắp chốt. Thiếu một trường thì nút biến mất mà
+    | không có lỗi nào — kiểu ở frontend chỉ là lời khai, không phải phép kiểm.
+    | `/late-arrivals/team` đã từng làm sập cả một tab đúng theo cách đó.
+    */
+    chotSan();
+
+    $this->actingAs(giamDoc())
+        ->getJson('/api/v1/attendance/periods')
+        ->assertOk()
+        ->assertJsonStructure([
+            'data' => [
+                'periods' => [['period', 'status', 'status_label', 'is_locked', 'closed_at', 'closed_by', 'reopened_at', 'reopened_by', 'reopen_reason']],
+                'can_close',
+                'can_reopen',
+                'closable' => ['period', 'pending', 'ready'],
+            ],
+        ])
+        ->assertJsonPath('data.can_close', true)
+        ->assertJsonPath('data.can_reopen', true)
+        // Kỳ 2026-08 vừa chốt ở trên, nên kỳ sắp chốt phải lùi tiếp về 2026-07.
+        ->assertJsonPath('data.closable.period', '2026-07')
+        ->assertJsonPath('data.closable.ready', true);
+});
+
+it('admin thấy nút chốt nhưng KHÔNG thấy nút mở khoá', function (): void {
+    $this->actingAs(quanTri())
+        ->getJson('/api/v1/attendance/periods')
+        ->assertOk()
+        ->assertJsonPath('data.can_close', true)
+        ->assertJsonPath('data.can_reopen', false);
+});
+
 it('nhân viên thường không thấy màn chốt sổ', function (): void {
     $u = User::factory()->create();
     $u->assignRole(Role::NhanVien->value);

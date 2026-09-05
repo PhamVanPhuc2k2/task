@@ -6,7 +6,7 @@
 
 ## Trạng thái hiện tại
 
-**820 test xanh** (5117 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**822 test xanh** (5143 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
 27 model · 33 migration · 49 bảng · 102 endpoint API · 30 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
@@ -3154,6 +3154,18 @@ Attendance giữ kỳ công, còn thứ bị chặn nằm ở Report và Leave �
 
 **`composer larastan:schema` hỏng trên Git Bash và cắt file schema về 0 byte.** Script khai `docker compose exec ... > file` với dấu nháy mà Git Bash phân tích khác; chạy trực tiếp thì đúng. Đáng sửa script, hoặc ít nhất ghi ra đây để lần sau không ai mất mười phút.
 
+##### Giao diện
+
+Trang **Chấm công** giờ có ba mục: *Bảng công* · *Giải trình* · *Chốt sổ*. Ba việc xoay quanh cùng một con số giờ, do cùng những người mở ra xem — tách thành ba mục điều hướng thì thanh bên dài thêm cho những thứ người ta tìm ở cùng chỗ. Cùng lý do đã áp cho cặp nghỉ phép / đi muộn.
+
+Mục *Chốt sổ* **chỉ hiện** cho người chốt hoặc mở khoá được. Hiện cho mọi người rồi để họ bấm vào ăn 403 là dạy người dùng rằng lỗi đỏ là chuyện bình thường.
+
+Màn chốt sổ đọc `can_close` và `can_reopen` **từ server** thay vì tự suy từ danh sách quyền, nên thêm một quyền ở đợt sau thì giao diện tự đúng. Nút "Chốt sổ" mờ khi kỳ còn đơn treo, và **luôn** kèm con số: còn bao nhiêu đơn, thuộc loại nào. Một nút mờ không lời giải thích là thứ người ta bấm ba lần rồi đi hỏi người khác.
+
+Bấm chốt hỏi lại một nhịp trước khi gửi: hành động này khoá số liệu đã dùng để trả lương, và **chỉ giám đốc mở khoá lại được** — admin bấm nhầm thì phải đi tìm người khác để gỡ.
+
+Chốt hoặc mở khoá xong thì làm mới **cả** bảng công, không chỉ danh sách kỳ: nút "Duyệt" trên bảng công và nút "Gửi đơn" ở màn giải trình vừa thành vô hiệu, và chỉ làm mới danh sách kỳ thì hai màn kia vẫn mời người ta bấm vào thứ chắc chắn trả lỗi.
+
 #### Đơn giải trình công ✅ Đã xong
 
 Trước phần này, `work_days` chỉ có **một cửa vào**: người quản lý bấm nút. Nhân viên đi gặp khách cả ngày, mất mạng, hay quên mở máy thì không có đường nào nói điều đó *trong hệ thống* — họ nhắn Zalo, quản lý nhớ thì bấm, quên thì thôi. Lý do thật của một ngày công bất thường nằm trong lịch sử chat của hai người.
@@ -3204,6 +3216,24 @@ Màn chốt sổ trả kèm `closable` — kỳ sắp chốt là kỳ nào, còn
 **`AdjustmentStatus` là bản sao thứ tư của cùng bốn trạng thái** — cạnh `LeaveStatus`, `BonusPoolStatus`, `DailyReportStatus`. Không gộp được: luật tầng cấm Attendance phụ thuộc Leave. Đây đã là nếp của dự án, và cái giá của hướng ngược lại — một enum dùng chung ở tầng Support — là mọi miền cùng phụ thuộc vào thứ không miền nào sở hữu.
 
 **`ngayViet()` từng có sáu bản sao**, mỗi lớp thông báo một bản. Sáu chỗ phải sửa nếu đổi cách viết ngày, và sửa năm chỗ thì người nhận thấy hai định dạng ngày khác nhau trong cùng một hộp thư, im lặng. Đã gom về `App\Support\Time\HumanTime`, cùng chỗ với `gioPhut()` và `ky()`.
+
+##### Giao diện
+
+Đường vào chính **không phải** một tab trống. Người ta phát hiện ra ngày công sai lúc đang *nhìn vào ô đó* trên lưới tháng, chứ không phải lúc mở màn giải trình rồi ngồi nhớ lại hôm ấy là ngày mấy. Nên hộp thoại chi tiết một ngày có nút **"Giải trình ngày này"** — bấm là nhảy sang màn giải trình với ngày điền sẵn.
+
+Nút đó chỉ hiện trên ngày của **chính người đang xem**: đơn giải trình là một lời khai, người khác khai hộ thì chữ ký nằm sai chỗ.
+
+Ô "Số giờ đề nghị" **không bắt buộc**, và đó là điểm chính. Người đi gặp khách cả ngày không đếm phút; bắt nhập thì họ điền một con số bịa cho xong, và người duyệt mất luôn tín hiệu *"người này không khẳng định con số nào"*. Trong hộp duyệt, con số ấy được **điền sẵn nhưng sửa được** — cái đi vào bảng công là con số người duyệt gửi lên.
+
+Khi đơn được duyệt, dòng kết quả nói ra **con số đã chốt**, không chỉ nói "đã duyệt". Hai số có thể khác nhau, và không nói thì người nộp phải tự mở bảng công đi so — phần lớn sẽ không so.
+
+Hộp duyệt chỉ hiện cho người **vừa xem được đội vừa có `attendance.review`**. Xem được đội là một chuyện, quyết định được ngày công là chuyện khác; hiện cho người chỉ xem được thì mọi nút trong đó đều dẫn tới 403.
+
+##### Một thứ lộ ra khi làm giao diện
+
+`LEAVE_STATUS_TONE` từng là bảng màu riêng của miền nghỉ phép. Đơn giải trình là loại đơn **thứ ba** đi qua đúng bốn trạng thái ấy, và ba bảng màu riêng sẽ lệch nhau ở lần đổi màu đầu tiên — lúc đó "đang chờ" có hai màu ở hai màn, và người dùng phải đọc chữ mới hiểu, đúng thứ mà màu sinh ra để khỏi phải làm.
+
+Đã chuyển thành `REQUEST_STATUS_TONE` ở `components/ui/pill`, khai lại bốn tên trạng thái tại chỗ thay vì import kiểu từ feature — luật `no-restricted-imports` cấm `components/ui` biết tới feature, và đây là bảng *màu* nên nó chỉ cần biết bốn cái tên. `LEAVE_STATUS_TONE` giữ nguyên làm bí danh nên không chỗ gọi nào phải sửa.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 

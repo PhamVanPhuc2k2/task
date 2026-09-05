@@ -32,6 +32,7 @@ export function ReviewDialog({
   date,
   cell,
   canReview,
+  onExplain,
 }: {
   open: boolean;
   onClose: () => void;
@@ -40,6 +41,17 @@ export function ReviewDialog({
   date: string;
   cell: AttendanceCell | undefined;
   canReview: boolean;
+  /**
+   * Mở màn giải trình cho đúng ngày này.
+   *
+   * Chỉ truyền cho ngày của CHÍNH người đang xem — đơn giải trình là một lời
+   * khai, người khác khai hộ thì chữ ký nằm sai chỗ.
+   *
+   * Đây là đường vào tự nhiên nhất của module: người ta phát hiện ra ngày công
+   * sai lúc đang nhìn vào ô đó, chứ không phải lúc mở một tab trống rồi ngồi
+   * nhớ lại hôm ấy là ngày mấy.
+   */
+  onExplain?: () => void;
 }) {
   const { data, isPending } = useWorkDay(userId, date, open);
   const duyet = useReviewWorkDay();
@@ -209,9 +221,24 @@ export function ReviewDialog({
 
         {!canReview && (
           <div className="border-line border-t pt-4">
-            <Button variant="ghost" onClick={onClose}>
-              Đóng
-            </Button>
+            {onExplain && (
+              <p className="text-ink-soft mb-3 text-[0.84rem]">
+                Số giờ không đúng với thực tế hôm đó? Gửi giải trình để quản lý
+                xem lại — và gửi <strong>trước khi kỳ công được chốt</strong>,
+                chốt rồi thì không ai sửa được nữa.
+              </p>
+            )}
+
+            <div className="flex flex-wrap gap-3">
+              {onExplain && (
+                <Button variant="primary" onClick={onExplain}>
+                  Giải trình ngày này
+                </Button>
+              )}
+              <Button variant="ghost" onClick={onClose}>
+                Đóng
+              </Button>
+            </div>
           </div>
         )}
       </div>
