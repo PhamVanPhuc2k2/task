@@ -13,7 +13,10 @@ import {
   useReviewLeave,
   useTeamLeave,
 } from "@/features/leave/api/leave-api";
+import { useMyLeaveBalance } from "@/features/leave/api/balance-api";
+import { BalancePanel } from "@/features/leave/components/balance-panel";
 import { LateArrivalPanel } from "@/features/leave/components/late-arrival-panel";
+import { LeaveBalanceCard } from "@/features/leave/components/leave-balance-card";
 import { LeaveComposer } from "@/features/leave/components/leave-composer";
 import {
   LEAVE_STATUS_TONE,
@@ -48,12 +51,22 @@ export default function LeavePage() {
   | hai mục điều hướng riêng thì thanh bên dài thêm cho một thứ mà người ta tìm
   | ở cùng chỗ.
   */
-  const [che, setChe] = useState<"nghi" | "muon">("nghi");
+  const [che, setChe] = useState<Che>("nghi");
 
   const duyetDuoc =
     user?.permissions.some(
       (p) => p === "leave.view.team" || p === "leave.view.all",
     ) === true;
+
+  /*
+  | Năm hiện tại lấy TỪ SERVER, không từ `new Date()`.
+  |
+  | Đồng hồ máy người dùng có thể lệch, và trong bảy tiếng đầu ngày 01/01 giờ
+  | Việt Nam thì `new Date().getFullYear()` ở một máy đặt múi giờ khác vẫn đang
+  | ở năm cũ. Truy vấn này cũng là truy vấn mà thẻ quỹ phép dùng, nên dùng lại
+  | không tốn thêm một lượt gọi nào.
+  */
+  const quyCuaToi = useMyLeaveBalance();
 
   const cuaToi = useMyLeave();
   // Không nạp hộp duyệt nghỉ phép khi đang xem tab đi muộn — đó là một
@@ -76,12 +89,26 @@ export default function LeavePage() {
         </p>
       </header>
 
-      <ChonChe che={che} onChange={setChe} />
+      <ChonChe che={che} onChange={setChe} quyPhepDuoc={duyetDuoc} />
 
       {che === "muon" && <LateArrivalPanel canApprove={duyetDuoc} />}
 
+      {che === "quy" &&
+        (quyCuaToi.data ? (
+          <BalancePanel year={quyCuaToi.data.year} />
+        ) : (
+          <Skeleton className="h-48" />
+        ))}
+
       {che === "nghi" && (
         <div className="space-y-8">
+          {/*
+            Quỹ phép đặt TRƯỚC ô xin nghỉ, không phải sau.
+            Số ngày còn lại là thứ quyết định người ta chọn loại đơn nào — đọc
+            nó sau khi đã điền xong form thì đã muộn.
+          */}
+          <LeaveBalanceCard />
+
           {/* ── Nộp đơn ─────────────────────────────────── */}
           <section className="tone-card rounded-2xl p-5">
             <h2 className="mb-4 text-[0.95rem] font-semibold tracking-tight">
@@ -214,16 +241,28 @@ export default function LeavePage() {
  * đọc màn hình phải hiểu đây là **một lựa chọn giữa hai thứ loại trừ nhau**,
  * không phải hai hành động rời rạc.
  */
+type Che = "nghi" | "muon" | "quy";
+
+/**
+ * Ba chế độ, cùng khuôn với trang Chấm công.
+ *
+ * "Quỹ phép" chỉ hiện cho người xem được đội — nhân viên thường đã có thẻ quỹ
+ * phép của chính mình ngay trên ô xin nghỉ, nên một tab riêng chỉ để xem lại
+ * đúng con số đó là thừa.
+ */
 function ChonChe({
   che,
   onChange,
+  quyPhepDuoc,
 }: {
-  che: "nghi" | "muon";
-  onChange: (v: "nghi" | "muon") => void;
+  che: Che;
+  onChange: (v: Che) => void;
+  quyPhepDuoc: boolean;
 }) {
-  const muc: { v: "nghi" | "muon"; nhan: string }[] = [
+  const muc: { v: Che; nhan: string }[] = [
     { v: "nghi", nhan: "Nghỉ phép" },
     { v: "muon", nhan: "Đi muộn" },
+    ...(quyPhepDuoc ? [{ v: "quy" as const, nhan: "Quỹ phép" }] : []),
   ];
 
   return (

@@ -3291,6 +3291,25 @@ Trưởng phòng duyệt đơn nghỉ cho phòng mình là bình thường. Trư
 
 Mọi lần sửa vào `payroll_audits` kèm **giá trị cũ lẫn mới** — cùng chỗ với đổi mức lương và chốt sổ kỳ công, cùng một họ: hành vi quyết định số tiền công ty phải trả.
 
+##### Giao diện
+
+Thẻ **Phép năm** đặt ngay trên ô xin nghỉ, trước chứ không sau: số ngày còn lại là thứ quyết định người ta chọn loại đơn nào, và đọc nó sau khi đã điền xong form thì đã muộn.
+
+Thẻ hiện **cả phép cộng**, không chỉ số dư — *"được hưởng 12 + tồn 3 − đã dùng 2,5"*. Câu hỏi thật không phải "tôi còn mấy ngày" mà là "vì sao tôi còn ngần này"; hiện mỗi số dư thì mọi thắc mắc đều dồn về nhân sự.
+
+**Màn hình không tự tính chi phí của đơn đang gõ.** Nghỉ từ thứ sáu tới thứ hai tiêu 2,5 ngày chứ không phải 4 — chép luật đó xuống trình duyệt là hai nơi cùng định nghĩa "một ngày phép", và chúng sẽ lệch nhau ở lần công ty đổi lịch tuần đầu tiên. Thẻ chỉ nói số còn lại; server mới là nơi chặn, và câu lỗi của nó nói rõ đơn cần bao nhiêu ngày.
+
+Hai lời nhắc chủ động:
+
+- Năm ngoái còn dư mà năm nay chưa được chuyển → *"Năm 2025 bạn còn dư 3 ngày chưa được chuyển sang. Phép tồn không tự chuyển — hỏi nhân sự nếu bạn cần dùng."* Không nói ra thì người ta tưởng số đó đã mất.
+- Hết phép → chỉ thẳng sang loại **Nghỉ không lương**, cùng câu mà API trả về.
+
+Tab **Quỹ phép** chỉ hiện cho người xem được đội. Nhân viên thường đã có thẻ của chính mình ngay trên ô xin nghỉ, nên một tab riêng để xem lại đúng con số đó là thừa.
+
+Trong bảng của nhân sự, ô "Phép tồn năm trước" có **một nút điền sẵn** số dư năm trước (kẹp theo trần công ty). Không có nó thì nhân sự phải đổi năm, ghi ra giấy, rồi đổi về — và một phần sẽ gõ nhầm. Vẫn là một cú bấm có chủ ý, không phải phép cộng tự động.
+
+Năm hiện tại lấy **từ server**, không từ `new Date()`: đồng hồ máy người dùng có thể lệch, và trong bảy tiếng đầu ngày 01/01 giờ Việt Nam thì một máy đặt múi giờ khác vẫn đang ở năm cũ.
+
 ##### Hai thứ lộ ra khi làm
 
 **`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả những tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ. Đã bọc thành một hàm trả về kiểu chắc chắn thay vì rải `?->` — `?->` sẽ biến một lỗi lập trình thành một con số 0 im lặng.
