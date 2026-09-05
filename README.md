@@ -26,7 +26,12 @@
 | **Chấm công** — giờ làm suy ra từ tương tác thật, bảng công tháng, duyệt kèm lý do | ✅ Đợt [3](#đợt-3--chấm-công--phần-đo-đã-xong) |
 | **Mức lương** — lịch sử theo khoảng hiệu lực, quyền riêng, nhật ký cả việc xem | ✅ [Mức lương](#mức-lương--phần-đặt-và-xem-đã-xong) |
 | **Thưởng dự án** — quỹ có điều kiện, chia kèm lý do, không có khoản phạt | ✅ [Thưởng dự án](#thưởng-dự-án--quỹ-và-chia-thủ-công-đã-xong) |
-| **Mô hình dữ liệu** — 21 model, 24 migration, 42 bảng: nhân sự + dự án + task + chấm công + lương + thưởng | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
+| **Chốt sổ kỳ công** — khoá giờ công, đơn từ và báo cáo ngày của một tháng; giám đốc mở khoá kèm lý do | ✅ [Chốt sổ](#chốt-sổ-kỳ-công--đã-xong) |
+| **Đơn giải trình công** — nhân viên tự khai ngày đo thiếu, quản lý duyệt thì ghi thẳng vào bảng công | ✅ [Giải trình](#đơn-giải-trình-công--đã-xong) |
+| **Quỹ phép năm** — Điều 113 và 114, phép tồn năm trước, trừ theo **ngày công** chứ không theo ngày lịch | ✅ [Quỹ phép](#quỹ-phép-năm--đã-xong) |
+| **Làm thêm giờ** — đăng ký trước mới được tính, hệ số 150/200/300%, ba trần của Điều 107 | ✅ [Làm thêm giờ](#làm-thêm-giờ--đã-xong) |
+| **Bảng kê lương** — khấu trừ theo giờ công thực tế, cộng tay các dòng ra đúng tổng | ✅ [Bảng kê lương](#bảng-kê-lương--đã-xong) |
+| **Mô hình dữ liệu** — 29 model, 35 migration, 51 bảng: nhân sự + dự án + task + chấm công + đơn từ + quỹ phép + làm thêm giờ + lương + thưởng | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
 | **Nhập nhân viên từ CSV** — `php artisan users:import` | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
 | **API Task** — CRUD, lọc, đổi trạng thái, giao lại, dời hạn, việc của tôi / của đội, bàn giao hàng loạt | ✅ Mục [1.4](#14-api-task--đã-xong) |
 | **API Dự án** — CRUD, thành viên và vai trò trong dự án | ✅ Mục [1.4](#14-api-task--đã-xong) |
@@ -250,6 +255,7 @@ Bản đầu của `AppShell` trả về một ô vuông 40px giữa màn hình 
 - [Chấm công (đợt 3)](#đợt-3--chấm-công--phần-đo-đã-xong)
 - [Mức lương](#mức-lương--phần-đặt-và-xem-đã-xong)
 - [Thưởng dự án](#thưởng-dự-án--quỹ-và-chia-thủ-công-đã-xong)
+- [Đợt 4 — đơn từ, quỹ phép, làm thêm giờ và bảng lương](#đợt-4--đơn-từ-quỹ-phép-làm-thêm-giờ-và-bảng-lương--đã-xong)
 - [Các đợt tiếp theo](#các-đợt-tiếp-theo)
 - [Quyết định kiến trúc](#quyết-định-kiến-trúc-đã-chốt)
 - [Câu hỏi còn mở](#câu-hỏi-còn-mở)
@@ -1096,14 +1102,16 @@ Nguyên tắc giữ nguyên: package nào chưa hỗ trợ thì chờ hoặc t�
 
 Bốn nhóm chức năng khá độc lập, làm cuốn chiếu để sớm có thứ dùng được thật.
 
-**Lộ trình đã bị làm nhảy cóc theo yêu cầu thực tế** — chấm công (đợt 3), mức lương và thưởng dự án (đợt 5) làm trước khi đợt 1 khép lại. Ghi rõ vì nó tạo ra một hệ quả cần nhớ: mấy phần đó **đang thiếu mảnh của đợt 2 và 4** để hoàn chỉnh, chứ không phải làm dở.
+**Lộ trình đã bị làm nhảy cóc theo yêu cầu thực tế** — chấm công (đợt 3), mức lương và thưởng dự án (đợt 5) làm trước khi đợt 1 khép lại, rồi đợt 4 làm trọn trước khi đợt 1 khép.
+
+Ghi rõ vì nó từng tạo ra một hệ quả cần nhớ: mấy phần đó **thiếu mảnh của đợt 4** để hoàn chỉnh. Mảnh đó nay đã xong — chấm công có chốt sổ và có đường quy ra tiền, mức lương có bảng kê thật. Thứ còn thiếu giờ chỉ còn của **đợt 2** (ảnh minh chứng) và **đợt 5** (chấm điểm tự động).
 
 | Đợt | Nội dung | Trạng thái |
 |---|---|---|
 | **1** | Quản lý task, giao việc, comment, deadline | 🔨 Đang làm — xong 1.1 → 1.9 + nhân sự, tổng quan, giao diện. Kế tiếp: **1.10 vận hành & đưa vào sử dụng** |
 | **2** | Báo cáo tiến độ hằng ngày kèm ảnh | 🔄 **Phần chữ đã xong**; ảnh minh chứng chờ Cloudflare R2 |
 | **3** | Chấm công, ca làm việc, lịch nghỉ lễ | 🔄 Phần đo giờ **đã xong**; đối chiếu báo cáo và xuất Excel còn chờ |
-| **4** | Đơn nghỉ phép, quỹ phép, OT, chốt kỳ công | ⏳ Chờ — **chặn phần tính lương thật** |
+| **4** | Đơn nghỉ phép, quỹ phép, OT, chốt kỳ công, bảng lương | ✅ **Đã xong cả năm chặng** — xem [Đợt 4](#đợt-4--đơn-từ-quỹ-phép-làm-thêm-giờ-và-bảng-lương--đã-xong) |
 | **5** | Thưởng KPI theo dự án, dashboard cho lãnh đạo | 🔄 **Quỹ thưởng dự án và dashboard tổng quan đã xong**; chấm điểm tự động và báo cáo tháng còn chờ |
 
 ---
@@ -2166,7 +2174,7 @@ Ranh giới ngày lấy theo **giờ Việt Nam**, không dùng `today` của La
 
 API trả thêm `window.earliest` / `window.latest` để giao diện **đóng ô soạn** thay vì để người ta gõ xong vài trăm chữ rồi mới ăn 422. Frontend không tự tính từ `new Date()`: đồng hồ máy người dùng có thể lệch, và nhân viên đi công tác có thể đang ở múi giờ khác.
 
-**Duyệt ngày công** chặn cùng khuôn nhưng **chỉ phía tương lai** — quản lý vẫn phải xử lý được bảng công tháng trước. Khoá kỳ công là việc của đợt 4.
+**Duyệt ngày công** chặn cùng khuôn nhưng **chỉ phía tương lai** — quản lý vẫn phải xử lý được bảng công tháng trước. Cận dưới thật sự là [chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong), làm ở đợt 4.
 
 #### Nhắc nộp báo cáo cuối ngày
 
@@ -2344,7 +2352,7 @@ Chốt với công ty trước khi viết dòng nào: con số giờ **không t�
 | `attendances` bấm vào/ra + IP + thiết bị | `work_sessions` suy ra từ tương tác | Nút bấm tay thì người ta quên; IP/thiết bị không có mục đích dùng nên thu thập là vi phạm nguyên tắc tối thiểu hoá dữ liệu của Nghị định 13 |
 | `work_shifts` — ca chuẩn theo phòng | Hoãn | Giờ giấc đang linh hoạt, "đi muộn" chưa có nghĩa |
 | `attendance_policies` | Hoãn | Một chính sách thì chưa cần bảng chính sách. Cần khi có nhóm onsite |
-| Khoá kỳ công (đợt 4) | Giữ ở đợt 4 | Không trừ lương tự động thì chưa cần khoá sổ |
+| Khoá kỳ công (đợt 4) | ✅ Đã làm ở đợt 4 | Lúc đó chưa trừ lương tự động nên chưa cần khoá sổ. Nay có bảng kê lương thì nó là nền móng — xem [Chốt sổ](#chốt-sổ-kỳ-công--đã-xong) |
 
 **Thứ giữ lại từ đợt 4 và kéo lên ngay: lý do bắt buộc.** *"Duyệt không trừ tuỳ hoàn cảnh"* chính là loại quyết định sinh tranh cãi sáu tháng sau — *"sao tháng trước anh bỏ qua cho tôi mà tháng này lại tính?"* Không ghi ai quyết định và vì sao thì không ai trả lời được. Lý do tối thiểu 5 ký tự: không có mức sàn thì trường này đầy những dòng "ok" và "x", vẫn không ai hiểu gì mà lại tưởng đã ghi.
 
@@ -2509,7 +2517,7 @@ Phép đếm nằm **trong giao dịch** và dùng `lockForUpdate`, cùng lý do
 
 ##### Chỉ áp cho nghỉ không lương
 
-Phép năm sẽ có quỹ riêng ở đợt 4 (`leave_balances`); nghỉ ốm và việc riêng là chuyện chính sách, không phải một con số chặn cứng.
+Phép năm có quỹ riêng (`leave_balances`) — xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong). Nghỉ ốm và việc riêng vẫn là chuyện chính sách, không phải một con số chặn cứng; chúng chỉ được phân loại có lương hay không ở `LeaveType::isPaidLeave()`, để bảng kê lương biết ngày nào bị trừ.
 
 #### Phạm vi cố ý hẹp
 
@@ -3086,7 +3094,45 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 
 ---
 
-### Đợt 4 — Phần còn lại: quỹ phép, OT, chốt kỳ công
+### Đợt 4 — Đơn từ, quỹ phép, làm thêm giờ và bảng lương ✅ Đã xong
+
+Năm chặng, làm theo đúng thứ tự phụ thuộc. **Chốt sổ trước**, vì mọi phép tính tiền đều dựa vào một mốc nói rằng số liệu của kỳ đã đứng yên — trả lương từ những con số còn sửa được nghĩa là không bao giờ trả lời được câu *"phiếu lương này tính từ đâu ra"*.
+
+| # | Chặng | Thứ nó khoá lại |
+|---|---|---|
+| 1 | Chốt sổ kỳ công + nhật ký kiểm toán | Sau khi chốt, không ai sửa được giờ công, đơn từ hay báo cáo ngày của kỳ — kể cả admin |
+| 2 | Đơn giải trình công | Nhân viên tự khai ngày đo thiếu; **chốt sổ bị chặn khi kỳ còn đơn treo** |
+| 3 | Quỹ phép năm | Một ngày phép **không phải** một ngày lịch: nghỉ T6→T2 tiêu 2,5 ngày, không phải 4 |
+| 4 | Làm thêm giờ | Duyệt trước mới được tính; hệ số **đóng băng lúc duyệt** |
+| 5 | Bảng kê lương | Giờ công, đơn nghỉ và làm thêm quy ra tiền; cộng tay các dòng ra đúng tổng |
+
+Ba con số công ty phải chốt đã chốt: **ngày công chuẩn theo lịch thực tế từng tháng**, **ân hạn 5 phút mỗi ngày**, **tính đúng số phút** (không làm tròn khối).
+
+##### Một sợi chỉ xuyên suốt năm chặng
+
+Bốn chỗ trong đợt này đều gặp cùng một bài toán: một miền cần câu trả lời mà chỉ miền khác biết, trong khi luật tầng cấm chúng gọi nhau.
+
+Cách giải giống nhau: khai câu hỏi ở **tầng Support** (`WorkCalendar`), để **Attendance cài đặt**, và ghép ở **Providers**. Miền Leave hỏi *"khoảng này có bao nhiêu ngày công"* để tính quỹ phép; miền Payroll hỏi *"ngày này thuộc loại nào"* để chọn hệ số làm thêm. Không miền nào biết miền nào.
+
+Chỗ nào cần biết **nhiều miền cùng lúc** thì nằm ở tầng Http — `GuardsClosedPeriods`, `GuardsPendingWork`, `PayslipAssembler`. Đó là một trong hai tầng được phép, và ba lớp đó đều ghi rõ vì sao chúng ở đấy.
+
+##### Ba lỗi thật mà test bắt được trước người dùng
+
+- **Phép kiểm "giờ làm thêm phải ngoài ca" không biết tới ngày lễ.** `WorkWeek::shiftFor()` chỉ biết hôm đó là thứ mấy, nên một ngày lễ rơi vào thứ hai vẫn trả về ca ngày thường — đăng ký làm thêm 9h–11h ngày Quốc khánh bị từ chối oan, với câu lỗi nói về một ca không hề tồn tại.
+- **`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ trong phép tính quỹ phép.
+- **`bcmath` cắt chứ không làm tròn.** `bcdiv('20','3',2)` ra 6,66 chứ không phải 6,67 — với ba mươi người mười hai tháng thì lệch một khoản có người sẽ hỏi.
+
+##### Chưa làm, cố ý
+
+| Bỏ qua | Vì sao |
+|---|---|
+| Thuế TNCN, BHXH, công đoàn phí | Mỗi thứ là một chính sách riêng có kỳ hiệu lực riêng — biểu thuế luỹ tiến, mức đóng theo vùng, trần đóng |
+| Nghỉ bù thay tiền làm thêm (Điều 98 khoản 3) | Công ty chưa chốt chính sách |
+| Phụ cấp làm đêm (+30%/20%, Điều 98 khoản 2–3) | Công ty chưa có ca đêm. Ca làm thêm vắt qua nửa đêm bị chặn thẳng ở ô nhập |
+| Xuất Excel bảng kê cho kế toán | Cần chốt định dạng với kế toán trước |
+
+Ba mục đầu thêm được mà không làm dữ liệu cũ đổi nghĩa: `rate_percent` trên từng đơn đã đóng băng con số của lúc duyệt.
+
 
 - [x] **Quỹ phép năm** (`leave_balances`) — theo Điều 113 và 114, phép tồn năm trước. Xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong)
 - [x] **Đăng ký làm thêm giờ** (`overtime_requests`) — duyệt trước mới được tính, hệ số 150/200/300%. Xem [Làm thêm giờ](#làm-thêm-giờ--đã-xong)
@@ -3419,7 +3465,7 @@ Khấu trừ  = (Số phút thiếu - Số phút ân hạn) / 60 × Lương gi�
 - [x] **Phút ân hạn**: **5 phút**, áp cho từng ngày. Khớp ngưỡng về sớm hiện hành.
 - [x] **Quy tắc làm tròn**: **tính đúng số phút**. Có tham số `payroll.shortfall_round_to_minutes` nếu công ty đổi ý.
 
-### Bảng kê lương ✅ Đã xong
+#### Bảng kê lương ✅ Đã xong
 
 Chỗ mọi thứ của đợt 4 quy ra tiền: giờ công đã có người duyệt, đơn nghỉ đã duyệt, làm thêm giờ đã duyệt, và mức lương đang hiệu lực.
 
@@ -3496,7 +3542,7 @@ Không nạp bảng mức lương khi đang xem phiếu: đó là một lượt 
 
 ### Mức lương ✅ Phần đặt và xem đã xong
 
-Làm sớm hơn lộ trình, theo yêu cầu. Đây mới là **mức lương** (đặt và xem), chưa phải bảng lương tính ra tiền phải trả — phần đó cần chốt kỳ công ở đợt 4 và định dạng xuất cho kế toán.
+Làm sớm hơn lộ trình, theo yêu cầu. Đây là **mức lương** — đặt và xem lịch sử theo khoảng hiệu lực. Phần tính ra tiền phải trả nằm ở [Bảng kê lương](#bảng-kê-lương--đã-xong) của đợt 4; định dạng xuất cho kế toán thì vẫn còn chờ.
 
 | Trước | Sau |
 |---|---|
