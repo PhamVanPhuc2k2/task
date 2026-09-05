@@ -11,6 +11,55 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attendance_adjustments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned NOT NULL,
+  `work_date` date NOT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `requested_minutes` smallint unsigned DEFAULT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `approved_minutes` smallint unsigned DEFAULT NULL,
+  `reviewed_by` bigint unsigned DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `review_note` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attendance_adjustments_uuid_unique` (`uuid`),
+  KEY `attendance_adjustments_reviewed_by_foreign` (`reviewed_by`),
+  KEY `attendance_adjustments_user_id_work_date_index` (`user_id`,`work_date`),
+  KEY `attendance_adjustments_status_work_date_index` (`status`,`work_date`),
+  KEY `attendance_adjustments_status_created_at_index` (`status`,`created_at`),
+  CONSTRAINT `attendance_adjustments_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `attendance_adjustments_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attendance_periods` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `period` char(7) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `closed_at` timestamp NOT NULL,
+  `closed_by` bigint unsigned DEFAULT NULL,
+  `reopened_at` timestamp NULL DEFAULT NULL,
+  `reopened_by` bigint unsigned DEFAULT NULL,
+  `reopen_reason` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attendance_periods_uuid_unique` (`uuid`),
+  UNIQUE KEY `attendance_periods_period_unique` (`period`),
+  KEY `attendance_periods_closed_by_foreign` (`closed_by`),
+  KEY `attendance_periods_reopened_by_foreign` (`reopened_by`),
+  CONSTRAINT `attendance_periods_closed_by_foreign` FOREIGN KEY (`closed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `attendance_periods_reopened_by_foreign` FOREIGN KEY (`reopened_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `bonus_allocations` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -178,7 +227,9 @@ CREATE TABLE `late_arrival_requests` (
   `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint unsigned NOT NULL,
   `date` date NOT NULL,
-  `expected_arrival` time NOT NULL,
+  `type` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'late',
+  `expected_arrival` time DEFAULT NULL,
+  `expected_departure` time DEFAULT NULL,
   `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `reviewed_by` bigint unsigned DEFAULT NULL,
@@ -192,9 +243,33 @@ CREATE TABLE `late_arrival_requests` (
   KEY `late_arrival_requests_user_id_date_index` (`user_id`,`date`),
   KEY `late_arrival_requests_status_date_index` (`status`,`date`),
   KEY `late_arrival_requests_status_created_at_index` (`status`,`created_at`),
+  KEY `late_arrival_requests_user_id_date_type_index` (`user_id`,`date`,`type`),
   CONSTRAINT `late_arrival_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `late_arrival_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `late_arrival_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_late_arrival_time_matches_type` CHECK ((((`type` = _utf8mb4'late') and (`expected_arrival` is not null) and (`expected_departure` is null)) or ((`type` = _utf8mb4'early') and (`expected_departure` is not null) and (`expected_arrival` is null))))
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leave_balances` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned NOT NULL,
+  `year` smallint unsigned NOT NULL,
+  `entitled_days_override` decimal(5,1) DEFAULT NULL,
+  `carried_over_days` decimal(5,1) NOT NULL DEFAULT '0.0',
+  `adjustment_days` decimal(5,1) NOT NULL DEFAULT '0.0',
+  `note` text COLLATE utf8mb4_unicode_ci,
+  `updated_by` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `leave_balances_user_id_year_unique` (`user_id`,`year`),
+  UNIQUE KEY `leave_balances_uuid_unique` (`uuid`),
+  KEY `leave_balances_updated_by_foreign` (`updated_by`),
+  CONSTRAINT `leave_balances_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `leave_balances_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -276,7 +351,7 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -314,6 +389,35 @@ CREATE TABLE `notifications` (
   PRIMARY KEY (`id`),
   KEY `notifications_notifiable_type_notifiable_id_index` (`notifiable_type`,`notifiable_id`),
   KEY `notifications_notifiable_type_notifiable_id_read_at_index` (`notifiable_type`,`notifiable_id`,`read_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `overtime_requests` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_id` bigint unsigned NOT NULL,
+  `work_date` date NOT NULL,
+  `start_time` time NOT NULL,
+  `end_time` time NOT NULL,
+  `minutes` smallint unsigned NOT NULL,
+  `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `rate_percent` smallint unsigned DEFAULT NULL,
+  `approved_minutes` smallint unsigned DEFAULT NULL,
+  `reviewed_by` bigint unsigned DEFAULT NULL,
+  `reviewed_at` timestamp NULL DEFAULT NULL,
+  `review_note` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `overtime_requests_uuid_unique` (`uuid`),
+  KEY `overtime_requests_reviewed_by_foreign` (`reviewed_by`),
+  KEY `overtime_requests_user_id_work_date_index` (`user_id`,`work_date`),
+  KEY `overtime_requests_status_work_date_index` (`status`,`work_date`),
+  KEY `overtime_requests_status_created_at_index` (`status`,`created_at`),
+  CONSTRAINT `overtime_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `overtime_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

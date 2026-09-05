@@ -3,10 +3,24 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Attendance\AttendanceTimelineController;
+use App\Http\Controllers\Api\V1\Attendance\CancelAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\CancelOvertimeController;
+use App\Http\Controllers\Api\V1\Attendance\ClosePeriodController;
 use App\Http\Controllers\Api\V1\Attendance\HeartbeatController;
+use App\Http\Controllers\Api\V1\Attendance\MyAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\MyAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\MyOvertimeController;
+use App\Http\Controllers\Api\V1\Attendance\OvertimePreviewController;
+use App\Http\Controllers\Api\V1\Attendance\PeriodController;
+use App\Http\Controllers\Api\V1\Attendance\ReopenPeriodController;
+use App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\ReviewOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewWorkDayController;
+use App\Http\Controllers\Api\V1\Attendance\SubmitAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\SubmitOvertimeController;
+use App\Http\Controllers\Api\V1\Attendance\TeamAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\TeamAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\TeamOvertimeController;
 use App\Http\Controllers\Api\V1\Attendance\WorkDayDetailController;
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
 use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
@@ -22,10 +36,13 @@ use App\Http\Controllers\Api\V1\Dashboard\OverviewController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Leave\CancelLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\CancelLeaveController;
+use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\MyLateArrivalController;
+use App\Http\Controllers\Api\V1\Leave\MyLeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\MyLeaveController;
 use App\Http\Controllers\Api\V1\Leave\ReviewLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\ReviewLeaveController;
+use App\Http\Controllers\Api\V1\Leave\SaveLeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\SubmitLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\SubmitLeaveController;
 use App\Http\Controllers\Api\V1\Leave\TeamLateArrivalController;
@@ -38,7 +55,9 @@ use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Payroll\AllocateBonusController;
 use App\Http\Controllers\Api\V1\Payroll\ChangeBonusPoolStatusController;
 use App\Http\Controllers\Api\V1\Payroll\MyBonusController;
+use App\Http\Controllers\Api\V1\Payroll\MyPayslipController;
 use App\Http\Controllers\Api\V1\Payroll\PayrollController;
+use App\Http\Controllers\Api\V1\Payroll\PayslipController;
 use App\Http\Controllers\Api\V1\Payroll\ProjectBonusController;
 use App\Http\Controllers\Api\V1\Projects\ProjectController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMemberController;
@@ -242,10 +261,74 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     */
     Route::get('/attendance/timeline', AttendanceTimelineController::class);
 
+    /*
+    | Đơn giải trình công — nhân viên tự nói ra vì sao một ngày đo thiếu.
+    |
+    | Trước đây `work_days` chỉ có một cửa vào: quản lý bấm nút. Người đi gặp
+    | khách cả ngày phải nhắn Zalo, và lý do thật của một ngày công bất thường
+    | nằm trong lịch sử chat của hai người. Từ khi có chốt sổ kỳ công thì chuyện
+    | đó thành hạn chót cứng — chốt rồi là không ai duyệt được nữa.
+    |
+    | Dùng chung quyền `attendance.review` với nút bấm tay: duyệt một đơn giải
+    | trình CHÍNH LÀ ra quyết định trên ngày công đó, chỉ khác ai khởi xướng.
+    |
+    | KHAI TRƯỚC /attendance/{user}/{date} — bắt buộc, không phải để cho đẹp.
+    | `GET /attendance/adjustments/me` khớp đúng dạng {user}/{date}, nên đặt sau
+    | thì Laravel hiểu "adjustments" là uuid người dùng và trả 404. Cùng cái bẫy
+    | đã ghi ngay bên dưới cho /attendance/me.
+    |
+    | Tham số {adjustment} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
+    */
+    Route::get('/attendance/adjustments/me', MyAdjustmentController::class);
+    Route::get('/attendance/adjustments/team', TeamAdjustmentController::class);
+    Route::post('/attendance/adjustments', SubmitAdjustmentController::class);
+    Route::post('/attendance/adjustments/{adjustment}/review', ReviewAdjustmentController::class);
+    Route::post('/attendance/adjustments/{adjustment}/cancel', CancelAdjustmentController::class);
+
+    /*
+    | Đăng ký làm thêm giờ — duyệt TRƯỚC mới được tính.
+    |
+    | Làm thêm giờ ra tiền ở mức 150–300% (Điều 98 Bộ luật Lao động 2019). Suy
+    | nó từ giờ ngồi trước máy là để hệ thống tự ký một khoản chi mà không ai
+    | quyết định — một cái tab quên đóng qua đêm sẽ thành mười tiếng làm thêm
+    | ngày nghỉ.
+    |
+    | Dùng chung quyền `attendance.review` với nút bấm tay và màn giải trình:
+    | duyệt làm thêm là quyết định của người GIAO VIỆC, mà đó cũng chính là
+    | người quyết định ngày công của phòng.
+    |
+    | KHAI TRƯỚC /attendance/{user}/{date}, cùng lý do với khối giải trình:
+    | `GET /attendance/overtime/me` khớp đúng dạng {user}/{date}.
+    |
+    | Tham số {overtime} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
+    */
+    // Hệ số của một ngày cụ thể, hỏi TRƯỚC khi đăng ký. Giao diện không tự
+    // tính được: hệ số phụ thuộc lịch tuần và bảng ngày lễ.
+    Route::get('/attendance/overtime/preview', OvertimePreviewController::class);
+    Route::get('/attendance/overtime/me', MyOvertimeController::class);
+    Route::get('/attendance/overtime/team', TeamOvertimeController::class);
+    Route::post('/attendance/overtime', SubmitOvertimeController::class);
+    Route::post('/attendance/overtime/{overtime}/review', ReviewOvertimeController::class);
+    Route::post('/attendance/overtime/{overtime}/cancel', CancelOvertimeController::class);
+
     // Khai báo SAU /attendance/me và /attendance/team, nếu không Laravel hiểu
     // "me" là uuid người dùng rồi trả 404.
     Route::get('/attendance/{user}/{date}', WorkDayDetailController::class);
     Route::post('/attendance/{user}/review', ReviewWorkDayController::class);
+
+    /*
+    | Chốt sổ kỳ công — nền móng của mọi phép tính tiền ở đợt 4.
+    |
+    | Hai quyền tách nhau: `attendance.period.close` cho giám đốc và admin,
+    | `attendance.period.reopen` CHỈ cho giám đốc. Chốt là việc hành chính cuối
+    | kỳ; mở khoá là việc đụng vào số liệu đã dùng để trả lương.
+    |
+    | Khai TRƯỚC /attendance/{user}/{date}? Không cần — `periods` không khớp
+    | dạng {user} vì route đó nhận uuid, nhưng khai ở đây cho gần nhóm chấm công.
+    */
+    Route::get('/attendance/periods', [PeriodController::class, 'index']);
+    Route::post('/attendance/periods/close', ClosePeriodController::class);
+    Route::post('/attendance/periods/reopen', ReopenPeriodController::class);
 
     // ── Báo cáo ngày ─────────────────────────────────
     // Một báo cáo mỗi người mỗi ngày. Màn của quản lý trả về CẢ người chưa nộp
@@ -263,6 +346,23 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
      *
      * Tham số {leave} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
      */
+    /*
+    | Quỹ phép năm.
+    |
+    | Khai TRƯỚC /leave/{leave}/... cho gần nhóm đọc, và vì "balances" là một
+    | đoạn cố định: đặt lẫn vào giữa các route có tham số là mời người sau đọc
+    | nhầm thứ tự ưu tiên.
+    |
+    | Ba đường, ba mức quyền khác nhau:
+    |   - /leave/balance    quỹ của CHÍNH MÌNH, không cần quyền nào
+    |   - /leave/balances   bảng của phòng, cần leave.view.team hoặc .all
+    |   - POST .../{user}   SỬA quỹ, cần leave.balance.manage — quyền riêng, vì
+    |                       cộng thêm ngày phép là quyết định ra tiền
+    */
+    Route::get('/leave/balance', MyLeaveBalanceController::class);
+    Route::get('/leave/balances', [LeaveBalanceController::class, 'index']);
+    Route::post('/leave/balances/{user}', SaveLeaveBalanceController::class);
+
     Route::get('/leave/me', MyLeaveController::class);
     Route::post('/leave', SubmitLeaveController::class);
     Route::get('/leave/team', TeamLeaveController::class);
@@ -288,6 +388,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     // ── Lương ────────────────────────────────────────
     // Tách hẳn khỏi /users, có chủ ý: quản trị nhân sự và quản trị lương là hai
     // vai khác nhau, nên guard cũng phải tách. Xem PayrollController.
+    /*
+    | Bảng kê lương theo kỳ — nơi giờ công, đơn nghỉ và làm thêm giờ quy ra tiền.
+    |
+    | Khai TRƯỚC /payroll/{user}: "payslips" khớp đúng dạng {user}, nên đặt sau
+    | thì Laravel hiểu nó là uuid người dùng và trả 404. Cùng cái bẫy đã gặp ở
+    | /attendance/adjustments/me và /attendance/overtime/me.
+    |
+    | Phiếu của kỳ CHƯA CHỐT là bản tạm — không chặn xem, nhưng `is_final` nói
+    | thẳng ra, vì một đơn giải trình được duyệt chiều nay sẽ đổi số giờ thiếu
+    | của cả tháng.
+    */
+    Route::get('/payroll/payslips', [PayslipController::class, 'index']);
+    Route::get('/payroll/payslips/me', MyPayslipController::class);
+
     Route::get('/payroll', [PayrollController::class, 'index']);
     Route::get('/payroll/{user}', [PayrollController::class, 'show']);
     Route::post('/payroll/{user}', [PayrollController::class, 'store']);

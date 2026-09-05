@@ -7,6 +7,7 @@ namespace App\Domain\Leave\Notifications;
 use App\Domain\Identity\Enums\NotificationType;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Notifications\PreferenceAwareNotification;
+use App\Support\Time\HumanTime;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -41,8 +42,8 @@ final class LeaveReviewedNotification extends PreferenceAwareNotification
     {
         $khoang = sprintf(
             '%s – %s',
-            $this->ngayViet($this->tuNgay),
-            $this->ngayViet($this->denNgay),
+            HumanTime::ngay($this->tuNgay),
+            HumanTime::ngay($this->denNgay),
         );
 
         $cau = $this->dongY
@@ -65,10 +66,5 @@ final class LeaveReviewedNotification extends PreferenceAwareNotification
     protected function extra(): array
     {
         return ['approved' => $this->dongY, 'start_date' => $this->tuNgay];
-    }
-
-    private function ngayViet(string $ngay): string
-    {
-        return implode('/', array_reverse(explode('-', $ngay)));
     }
 }

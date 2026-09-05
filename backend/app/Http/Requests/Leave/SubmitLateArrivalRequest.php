@@ -134,13 +134,6 @@ final class SubmitLateArrivalRequest extends FormRequest
         }
     }
 
-    /**
-     * Giờ tan ca của ngày người dùng đang xin nghỉ sớm.
-     *
-     * Ngày nghỉ hoặc ngày chưa gửi thì lùi về ca ngày làm cả ngày — luật ngày
-     * nghỉ không thuộc về ô nhập này, và trả `null` ở đây sẽ làm luật `before:`
-     * mất hiệu lực im lặng.
-     */
     /** Loại đơn đang nộp. Thiếu trường `type` thì coi như đi muộn. */
     private function loai(): AttendanceExceptionType
     {
@@ -151,6 +144,13 @@ final class SubmitLateArrivalRequest extends FormRequest
             : AttendanceExceptionType::Late;
     }
 
+    /**
+     * Giờ tan ca của ngày người dùng đang xin về sớm.
+     *
+     * Ngày nghỉ hoặc ngày chưa gửi thì lùi về ca ngày làm cả ngày — luật ngày
+     * nghỉ không thuộc về ô nhập này, và trả `null` ở đây sẽ làm luật `before:`
+     * mất hiệu lực im lặng.
+     */
     private function gioTanCa(): string
     {
         $ngay = $this->input('date');

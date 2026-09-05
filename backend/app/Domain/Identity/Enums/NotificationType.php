@@ -45,6 +45,30 @@ enum NotificationType: string
     case LateArrivalRequested = 'late_arrival.requested';
     case LateArrivalReviewed = 'late_arrival.reviewed';
 
+    /**
+     * Có nhân viên nộp đơn giải trình công cần duyệt.
+     *
+     * Khác đơn nghỉ và đơn đi muộn ở một điểm quyết định: đơn này có HẠN CHÓT
+     * cứng. Kỳ công chốt rồi thì không ai duyệt được nữa, kể cả giám đốc, nên
+     * một đơn treo qua ngày chốt là một ngày công sai vĩnh viễn.
+     */
+    case AdjustmentRequested = 'attendance.adjustment.requested';
+
+    /** Đơn giải trình của mình đã được duyệt hoặc bị từ chối. */
+    case AdjustmentReviewed = 'attendance.adjustment.reviewed';
+
+    /**
+     * Có nhân viên đăng ký làm thêm giờ cần duyệt.
+     *
+     * Gấp hơn mọi loại đơn khác ở một điểm: người ta đăng ký làm thêm cho TỐI
+     * NAY. Một thông báo tới sau khi họ đã về là một thông báo vô dụng, và tệ
+     * hơn — họ có thể đã ở lại làm mà chưa ai duyệt.
+     */
+    case OvertimeRequested = 'attendance.overtime.requested';
+
+    /** Đơn làm thêm giờ của mình đã được duyệt hoặc bị từ chối. */
+    case OvertimeReviewed = 'attendance.overtime.reviewed';
+
     public function label(): string
     {
         return match ($this) {
@@ -60,6 +84,10 @@ enum NotificationType: string
             self::LeaveReviewed => 'Đơn nghỉ đã được xử lý',
             self::LateArrivalRequested => 'Có đơn xin đi muộn cần duyệt',
             self::LateArrivalReviewed => 'Đơn xin đi muộn đã được xử lý',
+            self::AdjustmentRequested => 'Có đơn giải trình công cần duyệt',
+            self::AdjustmentReviewed => 'Đơn giải trình công đã được xử lý',
+            self::OvertimeRequested => 'Có đăng ký làm thêm giờ cần duyệt',
+            self::OvertimeReviewed => 'Đăng ký làm thêm giờ đã được xử lý',
         };
     }
 
@@ -78,6 +106,10 @@ enum NotificationType: string
             self::LeaveReviewed => 'Khi đơn xin nghỉ của bạn được duyệt hoặc bị từ chối.',
             self::LateArrivalRequested => 'Khi nhân viên bạn quản lý nộp đơn xin đi làm muộn.',
             self::LateArrivalReviewed => 'Khi đơn xin đi muộn của bạn được duyệt hoặc bị từ chối.',
+            self::AdjustmentRequested => 'Khi nhân viên bạn quản lý giải trình về một ngày công đo thiếu.',
+            self::AdjustmentReviewed => 'Khi đơn giải trình công của bạn được duyệt hoặc bị từ chối.',
+            self::OvertimeRequested => 'Khi nhân viên bạn quản lý đăng ký làm thêm giờ.',
+            self::OvertimeReviewed => 'Khi đăng ký làm thêm giờ của bạn được duyệt hoặc bị từ chối.',
         };
     }
 
@@ -111,8 +143,18 @@ enum NotificationType: string
             // treo trước khi nhân viên đã nghỉ mất rồi. Cả hai đều hiếm — vài
             // lần một tháng — nên không có nguy cơ dội thư.
             self::TaskAssigned, self::TaskOverdue, self::Mentioned, self::BonusLocked,
+            //
+            // Giải trình công bật email vì nó có HẠN CHÓT CỨNG: kỳ chốt rồi thì
+            // không ai duyệt được nữa, kể cả giám đốc. Một đơn nằm im trong ứng
+            // dụng tới lúc đó là một ngày công sai không sửa lại được.
             self::ReportMissing, self::LeaveRequested, self::LeaveReviewed,
-            self::LateArrivalRequested, self::LateArrivalReviewed => true,
+            self::LateArrivalRequested, self::LateArrivalReviewed,
+            self::AdjustmentRequested, self::AdjustmentReviewed,
+            //
+            // Làm thêm giờ bật email vì nó gấp theo GIỜ, không theo ngày: người
+            // ta đăng ký cho tối nay. Thông báo tới sau khi họ đã về là vô
+            // dụng — hoặc tệ hơn, họ đã ở lại làm mà chưa ai duyệt.
+            self::OvertimeRequested, self::OvertimeReviewed => true,
             // Nhận xét báo cáo là chuyện trao đổi hằng ngày, đọc trong ứng
             // dụng là đủ. Gửi email mỗi lần quản lý viết một câu thì hộp thư
             // đầy trong một tuần.

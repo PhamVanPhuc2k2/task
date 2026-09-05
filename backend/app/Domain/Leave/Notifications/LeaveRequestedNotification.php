@@ -7,6 +7,7 @@ namespace App\Domain\Leave\Notifications;
 use App\Domain\Identity\Enums\NotificationType;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Notifications\PreferenceAwareNotification;
+use App\Support\Time\HumanTime;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -49,8 +50,8 @@ final class LeaveRequestedNotification extends PreferenceAwareNotification
             $this->tenNguoiNop,
             mb_strtolower($this->loai),
             $this->soNgay,
-            $this->ngayViet($this->tuNgay),
-            $this->ngayViet($this->denNgay),
+            HumanTime::ngay($this->tuNgay),
+            HumanTime::ngay($this->denNgay),
         );
     }
 
@@ -65,10 +66,5 @@ final class LeaveRequestedNotification extends PreferenceAwareNotification
     protected function extra(): array
     {
         return ['start_date' => $this->tuNgay, 'end_date' => $this->denNgay];
-    }
-
-    private function ngayViet(string $ngay): string
-    {
-        return implode('/', array_reverse(explode('-', $ngay)));
     }
 }

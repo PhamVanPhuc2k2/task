@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/adjustments/{adjustment}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.cancelAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/late-arrivals/{lateArrival}/cancel": {
         parameters: {
             query?: never;
@@ -126,6 +142,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["leave.cancelLeave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime/{overtime}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.cancelOvertime"];
         delete?: never;
         options?: never;
         head?: never;
@@ -194,6 +226,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["tasks.changeTaskStatus"];
+        trace?: never;
+    };
+    "/attendance/periods/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.closePeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/comments/{comment}/attachments": {
@@ -324,6 +372,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/leave/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leaveBalance.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -364,6 +428,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth.me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/adjustments/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.myAdjustment"];
         put?: never;
         post?: never;
         delete?: never;
@@ -428,6 +508,54 @@ export interface paths {
             cookie?: never;
         };
         get: operations["leave.myLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.myLeaveBalance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.myOvertime"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payroll/payslips/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payroll.myPayslip"];
         put?: never;
         post?: never;
         delete?: never;
@@ -551,6 +679,22 @@ export interface paths {
         patch: operations["notificationSetting.update"];
         trace?: never;
     };
+    "/attendance/overtime/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.overtimePreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboard/overview": {
         parameters: {
             query?: never;
@@ -603,6 +747,38 @@ export interface paths {
         get: operations["payroll.show"];
         put?: never;
         post: operations["payroll.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payroll/payslips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payslip.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["period.index"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -705,6 +881,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/periods/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.reopenPeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/reset-password": {
         parameters: {
             query?: never;
@@ -747,6 +939,26 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["users.resetUserPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/adjustments/{adjustment}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description ⚠️ Cannot generate request documentation: Cannot evaluate validation rules (1 evaluators failed):
+         *       [NodeRulesEvaluator] Cannot access private constant App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController::PHUT_TOI_DA (at /var/www/html/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/ConstFetchEvaluator.php:42)
+         */
+        post: operations["attendance.reviewAdjustment"];
         delete?: never;
         options?: never;
         head?: never;
@@ -801,6 +1013,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/overtime/{overtime}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.reviewOvertime"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attendance/{user}/review": {
         parameters: {
             query?: never;
@@ -827,6 +1055,26 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["reports.saveDailyReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/balances/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description ⚠️ Cannot generate request documentation: Cannot evaluate validation rules (1 evaluators failed):
+         *       [NodeRulesEvaluator] Cannot access private constant App\Http\Controllers\Api\V1\Leave\SaveLeaveBalanceController::NGAY_TOI_DA (at /var/www/html/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/ConstFetchEvaluator.php:42)
+         */
+        post: operations["leave.saveLeaveBalance"];
         delete?: never;
         options?: never;
         head?: never;
@@ -913,6 +1161,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.submitAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/late-arrivals": {
         parameters: {
             query?: never;
@@ -939,6 +1203,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["leave.submitLeave"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.submitOvertime"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1030,6 +1310,22 @@ export interface paths {
         patch: operations["taskComment.update"];
         trace?: never;
     };
+    "/attendance/adjustments/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.teamAdjustment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attendance/team": {
         parameters: {
             query?: never;
@@ -1070,6 +1366,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["leave.teamLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/overtime/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.teamOvertime"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1376,9 +1688,13 @@ export interface components {
          *     | `leave.reviewed` <br/> Đơn nghỉ của mình đã được duyệt hoặc bị từ chối. |
          *     | `late_arrival.requested` <br/>  |
          *     | `late_arrival.reviewed` <br/>  |
+         *     | `attendance.adjustment.requested` <br/> Có nhân viên nộp đơn giải trình công cần duyệt. Khác đơn nghỉ và đơn đi muộn ở một điểm quyết định: đơn này có HẠN CHÓT cứng. Kỳ công chốt rồi thì không ai duyệt được nữa, kể cả giám đốc, nên một đơn treo qua ngày chốt là một ngày công sai vĩnh viễn. |
+         *     | `attendance.adjustment.reviewed` <br/> Đơn giải trình của mình đã được duyệt hoặc bị từ chối. |
+         *     | `attendance.overtime.requested` <br/> Có nhân viên đăng ký làm thêm giờ cần duyệt. Gấp hơn mọi loại đơn khác ở một điểm: người ta đăng ký làm thêm cho TỐI NAY. Một thông báo tới sau khi họ đã về là một thông báo vô dụng, và tệ hơn — họ có thể đã ở lại làm mà chưa ai duyệt. |
+         *     | `attendance.overtime.reviewed` <br/> Đơn làm thêm giờ của mình đã được duyệt hoặc bị từ chối. |
          * @enum {string}
          */
-        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed";
+        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed" | "attendance.adjustment.requested" | "attendance.adjustment.reviewed" | "attendance.overtime.requested" | "attendance.overtime.reviewed";
         /** PayrollRowResource */
         PayrollRowResource: {
             user: {
@@ -1668,6 +1984,48 @@ export interface components {
         };
         /** Stringable */
         Stringable: string;
+        /**
+         * SubmitAdjustmentRequest
+         * @description Nộp đơn giải trình cho một ngày công.
+         *
+         *     ## Không có khoảng ngày như đơn nghỉ
+         *
+         *     `LeaveWindow` trả lời câu "được xin nghỉ trước bao lâu, khai lùi bao xa" —
+         *     câu hỏi của một đơn hướng về tương lai. Giải trình hướng về quá khứ và chỉ có
+         *     hai cận:
+         *
+         *       - **Không quá hôm nay.** Giải trình một ngày chưa xảy ra là vô nghĩa, và
+         *         cho qua thì sinh ra những đơn được duyệt trước khi có gì để giải trình.
+         *       - **Không trước ngày vào làm.** Ngày trước đó không phải ngày công của
+         *         người này.
+         *
+         *     Cận dưới thật sự là **chốt sổ kỳ công**, và nó được kiểm ở controller chứ
+         *     không ở đây: nó là luật bắc qua nhiều miền, và câu lỗi của nó nói ra kỳ nào.
+         *
+         *     ## `today` phải là hôm nay theo GIỜ VIỆT NAM
+         *
+         *     Luật `before_or_equal:today` của Laravel so theo múi giờ ứng dụng (UTC). Từ
+         *     00:00 tới 07:00 giờ Việt Nam mỗi ngày, `today` của nó vẫn đang ở hôm trước —
+         *     nên người giải trình ngày hôm qua lúc 1h sáng sẽ bị từ chối nhầm. Cùng cái
+         *     bẫy đã ghi ở `ClosePeriodAction`.
+         */
+        SubmitAdjustmentRequest: {
+            /** Format: date */
+            work_date: string;
+            /**
+             * @description | Số phút đề nghị — KHÔNG bắt buộc, và đó là điểm chính.
+             *     |
+             *     | Người đi gặp khách cả ngày không đếm phút. Bắt nhập thì họ điền
+             *     | một con số bịa cho xong, và người duyệt mất luôn tín hiệu "người
+             *     | này không khẳng định con số nào".
+             */
+            requested_minutes?: number | null;
+            /**
+             * @description Tối thiểu 10 ký tự, cùng lý do với đơn nghỉ: không có mức sàn thì
+             *     trường này đầy những dòng "bận" và "đi công tác".
+             */
+            reason: string;
+        };
         /** SubmitLateArrivalRequest */
         SubmitLateArrivalRequest: {
             type?: components["schemas"]["AttendanceExceptionType"];
@@ -1714,6 +2072,45 @@ export interface components {
              *     | Cùng lý do với lý do duyệt ngày công: không có mức sàn thì trường
              *     | này đầy những dòng "bận" và "việc riêng" — vẫn không ai trả lời
              *     | được câu "vì sao", mà lại tưởng là đã ghi.
+             */
+            reason: string;
+        };
+        /**
+         * SubmitOvertimeRequest
+         * @description Đăng ký làm thêm giờ cho một khoảng giờ trong một ngày.
+         *
+         *     ## Dùng chung khoảng ngày với đơn nghỉ
+         *
+         *     Cùng một câu hỏi — *"được khai lùi bao xa, đăng ký trước bao lâu"* — nên hai
+         *     chỗ trả lời khác nhau là sai. Cùng lý do đã ghi ở `SubmitLateArrivalRequest`.
+         *
+         *     Phía quá khứ vẫn mở: người ta hay ở lại làm tối rồi hôm sau mới nhớ ra phải
+         *     đăng ký. Chặn cứng thì họ đi nhắn quản lý qua Zalo — đúng thứ tính năng này
+         *     sinh ra để gom vào. Nhưng đơn khai lùi vẫn phải qua tay người duyệt, và kỳ đã
+         *     chốt thì controller chặn.
+         *
+         *     ## Ba luật NGHIỆP VỤ không nằm ở đây
+         *
+         *     Giờ phải ngoài ca, không chồng lấn, và ba trần của Điều 107 — cả ba nằm trong
+         *     `SubmitOvertimeAction`, có khoá dòng. Chỗ này chỉ kiểm hình dạng dữ liệu và
+         *     thứ tự hai mốc giờ.
+         */
+        SubmitOvertimeRequest: {
+            /** Format: date */
+            work_date: string;
+            start_time: string;
+            /**
+             * @description | Giờ kết thúc phải SAU giờ bắt đầu, trong cùng một ngày.
+             *     |
+             *     | Ca làm thêm vắt qua nửa đêm chưa hỗ trợ: nó cần cả phụ cấp làm
+             *     | đêm (Điều 98 khoản 2) lẫn quy tắc chia phần cho hai ngày công, mà
+             *     | công ty hiện không có ca đêm. Chặn thẳng ở đây còn hơn nhận một
+             *     | đơn ra số phút âm rồi không ai hiểu con số đó từ đâu.
+             */
+            end_time: string;
+            /**
+             * @description Tối thiểu 10 ký tự, cùng lý do với các loại đơn khác: không có
+             *     mức sàn thì trường này đầy những dòng "làm nốt việc".
              */
             reason: string;
         };
@@ -1895,6 +2292,18 @@ export interface components {
                 late_arrival_max_per_month?: number;
                 early_leave_max_per_month?: number;
                 early_leave_grace_minutes?: number;
+                leave_annual_base_days?: number;
+                leave_annual_seniority_step?: number;
+                leave_annual_seniority_extra?: number;
+                leave_carry_over_max_days?: number;
+                overtime_rate_working?: number;
+                overtime_rate_weekly_rest?: number;
+                overtime_rate_holiday?: number;
+                overtime_max_minutes_day?: number;
+                overtime_max_minutes_month?: number;
+                overtime_max_minutes_year?: number;
+                payroll_grace_minutes?: number;
+                payroll_round_minutes?: number;
             };
         };
         /**
@@ -2302,6 +2711,72 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.cancelAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The adjustment UUID */
+                adjustment: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
     "leave.cancelLateArrival": {
         parameters: {
             query?: never;
@@ -2413,6 +2888,81 @@ export interface operations {
                                 by: string | null;
                                 at: string;
                                 note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.cancelOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The overtime UUID */
+                overtime: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
                             } | null;
                             user: {
                                 id: string;
@@ -2579,6 +3129,61 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "attendance.closePeriod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    period: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Đã chốt" | "Đã mở khoá lại";
+                            is_locked: boolean;
+                            closed_at: string;
+                            closed_by: string | null;
+                            reopened_at: string | null;
+                            reopened_by: string | null;
+                            reopen_reason: string | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -2871,6 +3476,71 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "leaveBalance.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            balances: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì công ty 250 người tưởng
+                             *     mình chỉ có 200. Quy ước chung của cả dự án.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 200;
+                            /**
+                             * @description Giao diện hỏi server thay vì tự suy từ danh sách quyền — thêm
+                             *     một quyền mới thì màn hình tự đúng.
+                             */
+                            can_manage: boolean;
+                            /**
+                             * @description | Chính sách hiện hành, để màn hình giải thích được con số.
+                             *     |
+                             *     | Nhân sự nhìn "12 ngày" mà không biết nó đến từ đâu thì mỗi lần
+                             *     | có người thắc mắc lại phải đi tra. Trần phép tồn cũng ở đây,
+                             *     | vì ô nhập cần nó để chặn ngay thay vì để API từ chối.
+                             */
+                            policy: {
+                                base_days: number;
+                                seniority_step_years: number;
+                                seniority_extra_days: number;
+                                carry_over_max_days: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "auth.login": {
         parameters: {
             query?: never;
@@ -2958,6 +3628,39 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: components["schemas"]["UserResource"] & Record<string, never>;
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "attendance.myAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
+                            total: number;
+                            /** @constant */
+                            limit: 100;
+                            /** @description Hôm nay theo GIỜ VIỆT NAM, không phải `now()` ở UTC. */
+                            latest_date: string;
+                        };
                     };
                 };
             };
@@ -3119,6 +3822,187 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "leave.myLeaveBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            /** @description Số được hưởng, đã áp ghi đè nếu có. */
+                            entitled_days: number;
+                            /**
+                             * @description Số hệ thống TỰ TÍNH theo Điều 113 và 114, giữ lại kể cả khi đã bị
+                             *     ghi đè: màn hình nói được "tự tính 12, nhân sự đặt 15".
+                             */
+                            computed_entitled_days: number;
+                            is_overridden: boolean;
+                            carried_over_days: number;
+                            adjustment_days: number;
+                            total_days: number;
+                            used_days: number;
+                            /**
+                             * @description Được phép ÂM — ai đó đã duyệt vượt quỹ. Kẹp về 0 ở đây sẽ giấu
+                             *     mất đúng cái tình huống cần người nhìn tới.
+                             */
+                            remaining_days: number;
+                            note: string | null;
+                            previous_remaining_days: number;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                                /**
+                                 * @description Ngày vào làm quyết định số phép được hưởng năm đầu. Hiện ra
+                                 *     để nhân sự đối chiếu được ngay khi con số trông lạ — và để
+                                 *     thấy ai đang thiếu ngày vào làm.
+                                 */
+                                joined_at: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "attendance.myOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100.
+                             */
+                            total: number;
+                            /** @constant */
+                            limit: 100;
+                            window: {
+                                earliest: string;
+                                latest: string;
+                            };
+                            policy: {
+                                rate_working_percent: Record<string, never> | null;
+                                rate_weekly_rest_percent: Record<string, never> | null;
+                                rate_holiday_percent: Record<string, never> | null;
+                                max_minutes_per_day: number;
+                                max_minutes_per_month: number;
+                                max_minutes_per_year: number;
+                            };
+                            used: {
+                                month: number;
+                                year: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "payroll.myPayslip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            /**
+                             * @description | Đã chốt sổ kỳ này chưa.
+                             *     |
+                             *     | Chốt sổ khoá giờ công, đơn từ và báo cáo ngày của kỳ — sau đó
+                             *     | không con số nào trên phiếu đổi được nữa. Trước đó thì phiếu là
+                             *     | bản tạm, và màn hình phải nói thẳng điều đó.
+                             */
+                            is_final: boolean;
+                            minutes: {
+                                /**
+                                 * @description Số phút chuẩn của kỳ THEO LỊCH THỰC TẾ — mẫu số của lương giờ.
+                                 *     Hiện ra ngay cạnh lương giờ để con số đó không đến từ hư không.
+                                 */
+                                standard: number;
+                                required: number;
+                                worked: number;
+                                paid_leave: number;
+                                unpaid_leave: number;
+                                shortfall: number;
+                                overtime: number;
+                            };
+                            money: {
+                                base_salary: string;
+                                allowance: string;
+                                hourly_rate: string;
+                                shortfall_deduction: string;
+                                unpaid_leave_deduction: string;
+                                overtime_pay: string;
+                                net_total: string;
+                            };
+                            /**
+                             * @description Gom theo hệ số, sắp từ thấp lên cao: phiếu của hai tháng phải đọc
+                             *     giống nhau, chứ không chạy theo thứ tự đơn được duyệt.
+                             */
+                            overtime_lines: unknown[];
+                            user: {
+                                id: string;
+                                name: string;
+                                employee_code: string | null;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
         };
     };
     "reports.myReports": {
@@ -3381,6 +4265,46 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.overtimePreview": {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            work_date: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /**
+                             * @description Con số này còn đổi được cho tới lúc duyệt — giao diện nói
+                             *     "dự kiến", cùng khuôn với `rate_is_final` trên từng đơn.
+                             */
+                            rate_is_final: boolean;
+                            shift: {
+                                start: string;
+                                end: string;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "dashboard.overview": {
         parameters: {
             query?: never;
@@ -3610,6 +4534,128 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "payslip.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            is_final: boolean;
+                            payslips: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì công ty 250 người tưởng
+                             *     mình chỉ có 200 — và với bảng lương thì đó là 50 người không
+                             *     được trả mà không ai nhận ra.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 200;
+                            /**
+                             * @description Tổng chi của kỳ, cộng từ đúng những dòng đang hiện. Kế toán
+                             *     cần con số này trước khi mở từng phiếu.
+                             */
+                            net_total: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "period.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            periods: string[];
+                            /**
+                             * @description Giao diện cần biết hiện nút nào, và hỏi server thay vì tự suy
+                             *     từ danh sách quyền — thêm một quyền mới thì giao diện tự đúng.
+                             */
+                            can_close: boolean;
+                            can_reopen: boolean;
+                            /** @description Kỳ mà nút "Chốt sổ" sẽ nhắm tới, kèm lý do nếu chưa bấm được. */
+                            closable: {
+                                period: string;
+                                pending: {
+                                    "\u0111\u01A1n gi\u1EA3i tr\u00ECnh c\u00F4ng": number;
+                                    /**
+                                     * @description | Đơn nghỉ tính theo GIAO NHAU, không theo ngày bắt đầu.
+                                     *     |
+                                     *     | Một đơn từ 30/08 sang 02/09 vẫn đổi số ngày công của tháng 8. Chỉ
+                                     *     | lọc `start_date` trong kỳ thì đơn vắt hai kỳ lọt qua — đúng chỗ
+                                     *     | dễ lọt nhất, cùng cái bẫy đã bịt ở `GuardsClosedPeriods`.
+                                     */
+                                    "\u0111\u01A1n ngh\u1EC9": number;
+                                    /**
+                                     * @description | Đơn làm thêm giờ còn treo cũng chặn chốt sổ, và đây là loại nặng
+                                     *     | nhất trong ba loại: người ta ĐÃ LÀM rồi. Chốt sổ mà bỏ lại nó là
+                                     *     | vứt đi một khoản tiền 150–300% cho công việc đã xong.
+                                     */
+                                    "\u0111\u0103ng k\u00FD l\u00E0m th\u00EAm gi\u1EDD": number;
+                                    "\u0111\u01A1n xin \u0111i mu\u1ED9n / v\u1EC1 s\u1EDBm": number;
+                                };
+                                ready: boolean;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
         };
     };
     "position.index": {
@@ -3983,6 +5029,66 @@ export interface operations {
             404: components["responses"]["ModelNotFoundException"];
         };
     };
+    "attendance.reopenPeriod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    period: string;
+                    /**
+                     * @description Tối thiểu 10 ký tự, cùng lý do với lý do đơn nghỉ: không có
+                     *     mức sàn thì trường này đầy những dòng "sửa" và "nhầm".
+                     */
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Đã chốt" | "Đã mở khoá lại";
+                            is_locked: boolean;
+                            closed_at: string;
+                            closed_by: string | null;
+                            reopened_at: string | null;
+                            reopened_by: string | null;
+                            reopen_reason: string | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "auth.resetPassword": {
         parameters: {
             query?: never;
@@ -4058,6 +5164,79 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.reviewAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự duyệt đơn giải trình của chính mình được.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "reports.reviewDailyReport": {
@@ -4315,6 +5494,109 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.reviewOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The overtime UUID */
+                overtime: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    approve: boolean;
+                    /**
+                     * @description | Số phút NGƯỜI DUYỆT chốt. Để trống thì lấy đúng số đã đăng ký.
+                     *     |
+                     *     | Trần trên là SỐ ĐÃ ĐĂNG KÝ, không phải trần của Điều 107: ba cái
+                     *     | trần đó đã được kiểm lúc nộp, và cho phép duyệt nhiều hơn số đã
+                     *     | đăng ký là mở một đường vòng qua chúng — người duyệt gõ 600 phút
+                     *     | vào một đơn 60 phút và không có gì chặn.
+                     */
+                    minutes?: number | null;
+                    /** @description Từ chối bắt buộc có lý do; duyệt thì không. */
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự duyệt đăng ký làm thêm giờ của chính mình được.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "attendance.reviewWorkDay": {
         parameters: {
             query?: never;
@@ -4430,6 +5712,76 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.saveLeaveBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            /** @description Số được hưởng, đã áp ghi đè nếu có. */
+                            entitled_days: number;
+                            /**
+                             * @description Số hệ thống TỰ TÍNH theo Điều 113 và 114, giữ lại kể cả khi đã bị
+                             *     ghi đè: màn hình nói được "tự tính 12, nhân sự đặt 15".
+                             */
+                            computed_entitled_days: number;
+                            is_overridden: boolean;
+                            carried_over_days: number;
+                            adjustment_days: number;
+                            total_days: number;
+                            used_days: number;
+                            /**
+                             * @description Được phép ÂM — ai đó đã duyệt vượt quỹ. Kẹp về 0 ở đây sẽ giấu
+                             *     mất đúng cái tình huống cần người nhìn tới.
+                             */
+                            remaining_days: number;
+                            note: string | null;
+                            previous_remaining_days: number;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                                /**
+                                 * @description Ngày vào làm quyết định số phép được hưởng năm đầu. Hiện ra
+                                 *     để nhân sự đối chiếu được ngay khi con số trông lạ — và để
+                                 *     thấy ai đang thiếu ngày vào làm.
+                                 */
+                                joined_at: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };
@@ -4690,6 +6042,58 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.submitAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitAdjustmentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "leave.submitLateArrival": {
         parameters: {
             query?: never;
@@ -4788,6 +6192,67 @@ export interface operations {
                                 by: string | null;
                                 at: string;
                                 note: string | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "attendance.submitOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitOvertimeRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            /**
+                             * @description `HH:MM` chứ không phải `HH:MM:SS` mà MySQL trả về: giây không
+                             *     mang thông tin nào ở đây, và để nguyên thì giao diện phải cắt.
+                             */
+                            start_time: string;
+                            end_time: string;
+                            minutes: number;
+                            reason: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /** @description `false` = con số này còn có thể đổi. Giao diện nói "dự kiến". */
+                            rate_is_final: boolean;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /** @description Số phút NGƯỜI DUYỆT chốt — có thể ít hơn số đã đăng ký. */
+                                approved_minutes: number | null;
                             } | null;
                             user: {
                                 id: string;
@@ -5171,6 +6636,67 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.teamAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description | Bọc trong `data` như ba đường anh em, KHÔNG dùng `data` + `meta`.
+             *     |
+             *     | `/late-arrivals/team` từng trả `data` là một MẢNG kèm `meta` riêng
+             *     | trong khi các đường cùng họ theo dạng `data: { requests, ... }`. Hậu
+             *     | quả: `undefined.length` làm sập cả tab — nhưng CHỈ với người có quyền
+             *     | duyệt, nên lỗi sống sót tới lúc có người duyệt mở nó ra.
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 100;
+                            /**
+                             * @description Đếm trên TRUY VẤN, không đếm trên trang đã lấy về: đơn chờ
+                             *     duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                             *     nhãn sẽ đứng im ở đúng con số trần và người duyệt tưởng mình
+                             *     đã xử lý gần hết.
+                             */
+                            pending: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "attendance.teamAttendance": {
         parameters: {
             query?: never;
@@ -5330,6 +6856,55 @@ export interface operations {
                              */
                             total: string;
                             can_approve: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
+    "attendance.teamOvertime": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            total: string;
+                            /** @constant */
+                            limit: 100;
+                            /**
+                             * @description Đếm trên TRUY VẤN, không đếm trên trang đã lấy về: đơn chờ
+                             *     duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                             *     nhãn đứng im ở đúng con số trần và người duyệt tưởng mình đã
+                             *     xử lý gần hết.
+                             */
+                            pending: string;
                         };
                     };
                 };

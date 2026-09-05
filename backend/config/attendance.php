@@ -126,4 +126,52 @@ return [
 
     'max_daily_minutes' => (int) env('ATTENDANCE_MAX_DAILY_MINUTES', 600),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Làm thêm giờ
+    |--------------------------------------------------------------------------
+    |
+    | Hệ số tiền lương làm thêm giờ, Điều 98 Bộ luật Lao động 2019:
+    |
+    |   - Ngày làm việc bình thường: ít nhất 150%
+    |   - Ngày nghỉ hằng tuần:       ít nhất 200%
+    |   - Ngày nghỉ lễ, tết:         ít nhất 300%
+    |
+    | Ghi bằng PHẦN TRĂM NGUYÊN chứ không phải hệ số thập phân, và đó là quyết
+    | định có chủ ý: người ta nói "hệ số 150%" chứ không nói "1,5", ô nhập ở màn
+    | Cài đặt nhận số nguyên, và cả module này không còn phép nhân số thực nào.
+    |
+    | Đây là MỨC SÀN theo luật. Công ty trả cao hơn thì đổi ở Cài đặt; đặt thấp
+    | hơn là trái luật, nên màn hình chặn xuống dưới mức sàn.
+    |
+    | CHƯA TÍNH phụ cấp làm đêm (Điều 98 khoản 2 và 3: thêm 30% cho giờ làm ban
+    | đêm, và thêm 20% nữa nếu là làm thêm giờ vào ban đêm). Công ty hiện không
+    | có ca đêm; khi có thì đây là chỗ thêm, và `rate_percent` trên từng đơn đã
+    | lưu sẵn con số của lúc duyệt nên dữ liệu cũ không đổi nghĩa.
+    |
+    */
+
+    'overtime' => [
+        'rate_working_percent' => (int) env('OVERTIME_RATE_WORKING', 150),
+        'rate_weekly_rest_percent' => (int) env('OVERTIME_RATE_WEEKLY_REST', 200),
+        'rate_holiday_percent' => (int) env('OVERTIME_RATE_HOLIDAY', 300),
+
+        /*
+        | Trần số giờ làm thêm, Điều 107 Bộ luật Lao động 2019:
+        |
+        |   - Không quá 50% số giờ làm việc bình thường trong 1 ngày
+        |   - Không quá 40 giờ trong 1 tháng
+        |   - Không quá 200 giờ trong 1 năm (một số ngành nghề được 300 giờ)
+        |
+        | Đếm theo PHÚT vì đơn đăng ký theo mốc giờ, và quy về giờ để hiển thị.
+        | Đếm cả đơn đang chờ duyệt: chỉ đếm đơn đã duyệt thì nộp năm đơn nhỏ
+        | cùng lúc là lách được, mỗi đơn nhìn riêng đều nằm trong trần.
+        |
+        | Đặt 0 để tắt một trần.
+        */
+        'max_minutes_per_day' => (int) env('OVERTIME_MAX_MINUTES_DAY', 240),
+        'max_minutes_per_month' => (int) env('OVERTIME_MAX_MINUTES_MONTH', 2400),
+        'max_minutes_per_year' => (int) env('OVERTIME_MAX_MINUTES_YEAR', 12000),
+    ],
+
 ];

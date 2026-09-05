@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Leave;
 use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\CancelLateArrivalAction;
 use App\Domain\Leave\Models\LateArrivalRequest;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsLateArrivals;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,7 @@ use Illuminate\Http\Response;
  */
 final class CancelLateArrivalController
 {
+    use GuardsClosedPeriods;
     use PresentsLateArrivals;
 
     public function __invoke(
@@ -31,6 +33,8 @@ final class CancelLateArrivalController
         $actor = $request->user();
 
         abort_unless($lateArrival->user_id === $actor->id, Response::HTTP_FORBIDDEN);
+
+        $this->guardPeriodOpen($lateArrival->date);
 
         return new JsonResponse([
             'data' => $this->presentLateArrival($action->execute($lateArrival)),

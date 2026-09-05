@@ -62,6 +62,30 @@ enum SettingKey: string
     case EarlyLeaveMaxPerMonth = 'early_leave_max_per_month';
     case EarlyLeaveGraceMinutes = 'early_leave_grace_minutes';
 
+    // ── Quỹ phép năm ─────────────────────────────────────────────────────
+    // Mặc định bám mức sàn Bộ luật Lao động 2019 (Điều 113, 114). Công ty hào
+    // phóng hơn thì đổi ở màn Cài đặt, không sửa mã.
+    case LeaveAnnualBaseDays = 'leave_annual_base_days';
+    case LeaveAnnualSeniorityStep = 'leave_annual_seniority_step';
+    case LeaveAnnualSeniorityExtra = 'leave_annual_seniority_extra';
+    case LeaveCarryOverMaxDays = 'leave_carry_over_max_days';
+
+    // ── Làm thêm giờ ─────────────────────────────────────────────────────
+    // Hệ số ghi bằng PHẦN TRĂM NGUYÊN: người ta nói "150%" chứ không nói "1,5",
+    // và ô nhập nhận số nguyên. Mặc định là mức sàn Điều 98 BLLĐ 2019.
+    case OvertimeRateWorking = 'overtime_rate_working';
+    case OvertimeRateWeeklyRest = 'overtime_rate_weekly_rest';
+    case OvertimeRateHoliday = 'overtime_rate_holiday';
+    case OvertimeMaxMinutesDay = 'overtime_max_minutes_day';
+    case OvertimeMaxMinutesMonth = 'overtime_max_minutes_month';
+    case OvertimeMaxMinutesYear = 'overtime_max_minutes_year';
+
+    // ── Bảng lương ───────────────────────────────────────────────────────
+    // Số ngày công chuẩn KHÔNG có ở đây: công ty chốt tính theo lịch thực tế
+    // từng tháng, nên nó suy từ lịch tuần chứ không phải một con số gõ tay.
+    case PayrollGraceMinutes = 'payroll_grace_minutes';
+    case PayrollRoundMinutes = 'payroll_round_minutes';
+
     /** Đường dẫn trong `Config`, hoặc `null` nếu khoá này không đi qua config. */
     public function configPath(): ?string
     {
@@ -92,6 +116,20 @@ enum SettingKey: string
             self::LateArrivalMaxPerMonth => 'leave.late_arrival_max_per_month',
             self::EarlyLeaveMaxPerMonth => 'leave.early_leave_max_per_month',
             self::EarlyLeaveGraceMinutes => 'leave.early_leave_grace_minutes',
+            self::LeaveAnnualBaseDays => 'leave.annual_base_days',
+            self::LeaveAnnualSeniorityStep => 'leave.annual_seniority_step_years',
+            self::LeaveAnnualSeniorityExtra => 'leave.annual_seniority_extra_days',
+            self::LeaveCarryOverMaxDays => 'leave.annual_carry_over_max_days',
+
+            self::OvertimeRateWorking => 'attendance.overtime.rate_working_percent',
+            self::OvertimeRateWeeklyRest => 'attendance.overtime.rate_weekly_rest_percent',
+            self::OvertimeRateHoliday => 'attendance.overtime.rate_holiday_percent',
+            self::OvertimeMaxMinutesDay => 'attendance.overtime.max_minutes_per_day',
+            self::OvertimeMaxMinutesMonth => 'attendance.overtime.max_minutes_per_month',
+            self::OvertimeMaxMinutesYear => 'attendance.overtime.max_minutes_per_year',
+
+            self::PayrollGraceMinutes => 'payroll.shortfall_grace_minutes',
+            self::PayrollRoundMinutes => 'payroll.shortfall_round_to_minutes',
         };
     }
 
@@ -109,7 +147,19 @@ enum SettingKey: string
             self::LeaveUnpaidMaxDaysYear,
             self::LateArrivalMaxPerMonth,
             self::EarlyLeaveMaxPerMonth,
-            self::EarlyLeaveGraceMinutes => SettingType::Integer,
+            self::EarlyLeaveGraceMinutes,
+            self::LeaveAnnualBaseDays,
+            self::LeaveAnnualSeniorityStep,
+            self::LeaveAnnualSeniorityExtra,
+            self::LeaveCarryOverMaxDays,
+            self::OvertimeRateWorking,
+            self::OvertimeRateWeeklyRest,
+            self::OvertimeRateHoliday,
+            self::OvertimeMaxMinutesDay,
+            self::OvertimeMaxMinutesMonth,
+            self::OvertimeMaxMinutesYear,
+            self::PayrollGraceMinutes,
+            self::PayrollRoundMinutes => SettingType::Integer,
 
             self::ReportReminderEnabled => SettingType::Boolean,
 
@@ -175,6 +225,21 @@ enum SettingKey: string
             self::LateArrivalMaxPerMonth => 'Số lần xin đi muộn tối đa mỗi tháng',
             self::EarlyLeaveMaxPerMonth => 'Số lần xin về sớm tối đa mỗi tháng',
             self::EarlyLeaveGraceMinutes => 'Về sớm bao nhiêu phút thì phải xin',
+
+            self::LeaveAnnualBaseDays => 'Số ngày phép năm cơ bản',
+            self::LeaveAnnualSeniorityStep => 'Cứ bao nhiêu năm thâm niên thì được thêm phép',
+            self::LeaveAnnualSeniorityExtra => 'Số ngày phép thêm cho mỗi mốc thâm niên',
+            self::LeaveCarryOverMaxDays => 'Trần phép tồn được chuyển sang năm sau',
+
+            self::OvertimeRateWorking => 'Hệ số làm thêm ngày thường (%)',
+            self::OvertimeRateWeeklyRest => 'Hệ số làm thêm ngày nghỉ tuần (%)',
+            self::OvertimeRateHoliday => 'Hệ số làm thêm ngày lễ (%)',
+            self::OvertimeMaxMinutesDay => 'Trần làm thêm mỗi ngày (phút)',
+            self::OvertimeMaxMinutesMonth => 'Trần làm thêm mỗi tháng (phút)',
+            self::OvertimeMaxMinutesYear => 'Trần làm thêm mỗi năm (phút)',
+
+            self::PayrollGraceMinutes => 'Thiếu bao nhiêu phút mỗi ngày thì bắt đầu trừ',
+            self::PayrollRoundMinutes => 'Làm tròn số phút thiếu (0 = tính đúng)',
         };
     }
 }

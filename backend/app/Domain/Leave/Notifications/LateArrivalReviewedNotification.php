@@ -7,6 +7,7 @@ namespace App\Domain\Leave\Notifications;
 use App\Domain\Identity\Enums\NotificationType;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Notifications\PreferenceAwareNotification;
+use App\Support\Time\HumanTime;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -42,7 +43,7 @@ final class LateArrivalReviewedNotification extends PreferenceAwareNotification
 
     public function message(User $notifiable): string
     {
-        $ngay = $this->ngayViet($this->ngay);
+        $ngay = HumanTime::ngay($this->ngay);
 
         if (! $this->dongY) {
             return sprintf(
@@ -72,10 +73,5 @@ final class LateArrivalReviewedNotification extends PreferenceAwareNotification
     protected function extra(): array
     {
         return ['date' => $this->ngay, 'approved' => $this->dongY];
-    }
-
-    private function ngayViet(string $ngay): string
-    {
-        return implode('/', array_reverse(explode('-', $ngay)));
     }
 }

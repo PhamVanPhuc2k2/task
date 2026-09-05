@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**775 test xanh** (4995 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**904 test xanh** (5476 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+29 model · 35 migration · 51 bảng · 113 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -26,7 +26,12 @@
 | **Chấm công** — giờ làm suy ra từ tương tác thật, bảng công tháng, duyệt kèm lý do | ✅ Đợt [3](#đợt-3--chấm-công--phần-đo-đã-xong) |
 | **Mức lương** — lịch sử theo khoảng hiệu lực, quyền riêng, nhật ký cả việc xem | ✅ [Mức lương](#mức-lương--phần-đặt-và-xem-đã-xong) |
 | **Thưởng dự án** — quỹ có điều kiện, chia kèm lý do, không có khoản phạt | ✅ [Thưởng dự án](#thưởng-dự-án--quỹ-và-chia-thủ-công-đã-xong) |
-| **Mô hình dữ liệu** — 21 model, 24 migration, 42 bảng: nhân sự + dự án + task + chấm công + lương + thưởng | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
+| **Chốt sổ kỳ công** — khoá giờ công, đơn từ và báo cáo ngày của một tháng; giám đốc mở khoá kèm lý do | ✅ [Chốt sổ](#chốt-sổ-kỳ-công--đã-xong) |
+| **Đơn giải trình công** — nhân viên tự khai ngày đo thiếu, quản lý duyệt thì ghi thẳng vào bảng công | ✅ [Giải trình](#đơn-giải-trình-công--đã-xong) |
+| **Quỹ phép năm** — Điều 113 và 114, phép tồn năm trước, trừ theo **ngày công** chứ không theo ngày lịch | ✅ [Quỹ phép](#quỹ-phép-năm--đã-xong) |
+| **Làm thêm giờ** — đăng ký trước mới được tính, hệ số 150/200/300%, ba trần của Điều 107 | ✅ [Làm thêm giờ](#làm-thêm-giờ--đã-xong) |
+| **Bảng kê lương** — khấu trừ theo giờ công thực tế, cộng tay các dòng ra đúng tổng | ✅ [Bảng kê lương](#bảng-kê-lương--đã-xong) |
+| **Mô hình dữ liệu** — 29 model, 35 migration, 51 bảng: nhân sự + dự án + task + chấm công + đơn từ + quỹ phép + làm thêm giờ + lương + thưởng | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
 | **Nhập nhân viên từ CSV** — `php artisan users:import` | ✅ Mục [1.3](#13-mô-hình-dữ-liệu--đã-xong) |
 | **API Task** — CRUD, lọc, đổi trạng thái, giao lại, dời hạn, việc của tôi / của đội, bàn giao hàng loạt | ✅ Mục [1.4](#14-api-task--đã-xong) |
 | **API Dự án** — CRUD, thành viên và vai trò trong dự án | ✅ Mục [1.4](#14-api-task--đã-xong) |
@@ -250,6 +255,7 @@ Bản đầu của `AppShell` trả về một ô vuông 40px giữa màn hình 
 - [Chấm công (đợt 3)](#đợt-3--chấm-công--phần-đo-đã-xong)
 - [Mức lương](#mức-lương--phần-đặt-và-xem-đã-xong)
 - [Thưởng dự án](#thưởng-dự-án--quỹ-và-chia-thủ-công-đã-xong)
+- [Đợt 4 — đơn từ, quỹ phép, làm thêm giờ và bảng lương](#đợt-4--đơn-từ-quỹ-phép-làm-thêm-giờ-và-bảng-lương--đã-xong)
 - [Các đợt tiếp theo](#các-đợt-tiếp-theo)
 - [Quyết định kiến trúc](#quyết-định-kiến-trúc-đã-chốt)
 - [Câu hỏi còn mở](#câu-hỏi-còn-mở)
@@ -1096,14 +1102,16 @@ Nguyên tắc giữ nguyên: package nào chưa hỗ trợ thì chờ hoặc t�
 
 Bốn nhóm chức năng khá độc lập, làm cuốn chiếu để sớm có thứ dùng được thật.
 
-**Lộ trình đã bị làm nhảy cóc theo yêu cầu thực tế** — chấm công (đợt 3), mức lương và thưởng dự án (đợt 5) làm trước khi đợt 1 khép lại. Ghi rõ vì nó tạo ra một hệ quả cần nhớ: mấy phần đó **đang thiếu mảnh của đợt 2 và 4** để hoàn chỉnh, chứ không phải làm dở.
+**Lộ trình đã bị làm nhảy cóc theo yêu cầu thực tế** — chấm công (đợt 3), mức lương và thưởng dự án (đợt 5) làm trước khi đợt 1 khép lại, rồi đợt 4 làm trọn trước khi đợt 1 khép.
+
+Ghi rõ vì nó từng tạo ra một hệ quả cần nhớ: mấy phần đó **thiếu mảnh của đợt 4** để hoàn chỉnh. Mảnh đó nay đã xong — chấm công có chốt sổ và có đường quy ra tiền, mức lương có bảng kê thật. Thứ còn thiếu giờ chỉ còn của **đợt 2** (ảnh minh chứng) và **đợt 5** (chấm điểm tự động).
 
 | Đợt | Nội dung | Trạng thái |
 |---|---|---|
 | **1** | Quản lý task, giao việc, comment, deadline | 🔨 Đang làm — xong 1.1 → 1.9 + nhân sự, tổng quan, giao diện. Kế tiếp: **1.10 vận hành & đưa vào sử dụng** |
 | **2** | Báo cáo tiến độ hằng ngày kèm ảnh | 🔄 **Phần chữ đã xong**; ảnh minh chứng chờ Cloudflare R2 |
 | **3** | Chấm công, ca làm việc, lịch nghỉ lễ | 🔄 Phần đo giờ **đã xong**; đối chiếu báo cáo và xuất Excel còn chờ |
-| **4** | Đơn nghỉ phép, quỹ phép, OT, chốt kỳ công | ⏳ Chờ — **chặn phần tính lương thật** |
+| **4** | Đơn nghỉ phép, quỹ phép, OT, chốt kỳ công, bảng lương | ✅ **Đã xong cả năm chặng** — xem [Đợt 4](#đợt-4--đơn-từ-quỹ-phép-làm-thêm-giờ-và-bảng-lương--đã-xong) |
 | **5** | Thưởng KPI theo dự án, dashboard cho lãnh đạo | 🔄 **Quỹ thưởng dự án và dashboard tổng quan đã xong**; chấm điểm tự động và báo cáo tháng còn chờ |
 
 ---
@@ -2166,7 +2174,7 @@ Ranh giới ngày lấy theo **giờ Việt Nam**, không dùng `today` của La
 
 API trả thêm `window.earliest` / `window.latest` để giao diện **đóng ô soạn** thay vì để người ta gõ xong vài trăm chữ rồi mới ăn 422. Frontend không tự tính từ `new Date()`: đồng hồ máy người dùng có thể lệch, và nhân viên đi công tác có thể đang ở múi giờ khác.
 
-**Duyệt ngày công** chặn cùng khuôn nhưng **chỉ phía tương lai** — quản lý vẫn phải xử lý được bảng công tháng trước. Khoá kỳ công là việc của đợt 4.
+**Duyệt ngày công** chặn cùng khuôn nhưng **chỉ phía tương lai** — quản lý vẫn phải xử lý được bảng công tháng trước. Cận dưới thật sự là [chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong), làm ở đợt 4.
 
 #### Nhắc nộp báo cáo cuối ngày
 
@@ -2344,7 +2352,7 @@ Chốt với công ty trước khi viết dòng nào: con số giờ **không t�
 | `attendances` bấm vào/ra + IP + thiết bị | `work_sessions` suy ra từ tương tác | Nút bấm tay thì người ta quên; IP/thiết bị không có mục đích dùng nên thu thập là vi phạm nguyên tắc tối thiểu hoá dữ liệu của Nghị định 13 |
 | `work_shifts` — ca chuẩn theo phòng | Hoãn | Giờ giấc đang linh hoạt, "đi muộn" chưa có nghĩa |
 | `attendance_policies` | Hoãn | Một chính sách thì chưa cần bảng chính sách. Cần khi có nhóm onsite |
-| Khoá kỳ công (đợt 4) | Giữ ở đợt 4 | Không trừ lương tự động thì chưa cần khoá sổ |
+| Khoá kỳ công (đợt 4) | ✅ Đã làm ở đợt 4 | Lúc đó chưa trừ lương tự động nên chưa cần khoá sổ. Nay có bảng kê lương thì nó là nền móng — xem [Chốt sổ](#chốt-sổ-kỳ-công--đã-xong) |
 
 **Thứ giữ lại từ đợt 4 và kéo lên ngay: lý do bắt buộc.** *"Duyệt không trừ tuỳ hoàn cảnh"* chính là loại quyết định sinh tranh cãi sáu tháng sau — *"sao tháng trước anh bỏ qua cho tôi mà tháng này lại tính?"* Không ghi ai quyết định và vì sao thì không ai trả lời được. Lý do tối thiểu 5 ký tự: không có mức sàn thì trường này đầy những dòng "ok" và "x", vẫn không ai hiểu gì mà lại tưởng đã ghi.
 
@@ -2509,7 +2517,7 @@ Phép đếm nằm **trong giao dịch** và dùng `lockForUpdate`, cùng lý do
 
 ##### Chỉ áp cho nghỉ không lương
 
-Phép năm sẽ có quỹ riêng ở đợt 4 (`leave_balances`); nghỉ ốm và việc riêng là chuyện chính sách, không phải một con số chặn cứng.
+Phép năm có quỹ riêng (`leave_balances`) — xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong). Nghỉ ốm và việc riêng vẫn là chuyện chính sách, không phải một con số chặn cứng; chúng chỉ được phân loại có lương hay không ở `LeaveType::isPaidLeave()`, để bảng kê lương biết ngày nào bị trừ.
 
 #### Phạm vi cố ý hẹp
 
@@ -3086,15 +3094,352 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 
 ---
 
-### Đợt 4 — Phần còn lại: quỹ phép, OT, chốt kỳ công
+### Đợt 4 — Đơn từ, quỹ phép, làm thêm giờ và bảng lương ✅ Đã xong
 
-- [ ] `leave_balances` — quỹ phép năm, phép tồn năm trước, phép ứng trước
-- [ ] `overtime_requests` — đăng ký OT, duyệt trước mới được tính
-- [ ] Hệ số OT theo luật: ngày thường 150%, ngày nghỉ 200%, ngày lễ 300%
-- [ ] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Nhân viên giải trình → leader duyệt → sửa công, giữ nguyên vết cũ
-- [ ] **Chốt kỳ công** — khoá sổ theo tháng, sau đó không ai sửa được kể cả admin trừ khi mở khoá có ghi lý do
-- [ ] **Nhật ký kiểm toán bất biến** — ai sửa công của ai, giá trị cũ, lý do
-- [ ] Tính khấu trừ theo giờ công thực tế (xem mục dưới)
+Năm chặng, làm theo đúng thứ tự phụ thuộc. **Chốt sổ trước**, vì mọi phép tính tiền đều dựa vào một mốc nói rằng số liệu của kỳ đã đứng yên — trả lương từ những con số còn sửa được nghĩa là không bao giờ trả lời được câu *"phiếu lương này tính từ đâu ra"*.
+
+| # | Chặng | Thứ nó khoá lại |
+|---|---|---|
+| 1 | Chốt sổ kỳ công + nhật ký kiểm toán | Sau khi chốt, không ai sửa được giờ công, đơn từ hay báo cáo ngày của kỳ — kể cả admin |
+| 2 | Đơn giải trình công | Nhân viên tự khai ngày đo thiếu; **chốt sổ bị chặn khi kỳ còn đơn treo** |
+| 3 | Quỹ phép năm | Một ngày phép **không phải** một ngày lịch: nghỉ T6→T2 tiêu 2,5 ngày, không phải 4 |
+| 4 | Làm thêm giờ | Duyệt trước mới được tính; hệ số **đóng băng lúc duyệt** |
+| 5 | Bảng kê lương | Giờ công, đơn nghỉ và làm thêm quy ra tiền; cộng tay các dòng ra đúng tổng |
+
+Ba con số công ty phải chốt đã chốt: **ngày công chuẩn theo lịch thực tế từng tháng**, **ân hạn 5 phút mỗi ngày**, **tính đúng số phút** (không làm tròn khối).
+
+##### Một sợi chỉ xuyên suốt năm chặng
+
+Bốn chỗ trong đợt này đều gặp cùng một bài toán: một miền cần câu trả lời mà chỉ miền khác biết, trong khi luật tầng cấm chúng gọi nhau.
+
+Cách giải giống nhau: khai câu hỏi ở **tầng Support** (`WorkCalendar`), để **Attendance cài đặt**, và ghép ở **Providers**. Miền Leave hỏi *"khoảng này có bao nhiêu ngày công"* để tính quỹ phép; miền Payroll hỏi *"ngày này thuộc loại nào"* để chọn hệ số làm thêm. Không miền nào biết miền nào.
+
+Chỗ nào cần biết **nhiều miền cùng lúc** thì nằm ở tầng Http — `GuardsClosedPeriods`, `GuardsPendingWork`, `PayslipAssembler`. Đó là một trong hai tầng được phép, và ba lớp đó đều ghi rõ vì sao chúng ở đấy.
+
+##### Ba lỗi thật mà test bắt được trước người dùng
+
+- **Phép kiểm "giờ làm thêm phải ngoài ca" không biết tới ngày lễ.** `WorkWeek::shiftFor()` chỉ biết hôm đó là thứ mấy, nên một ngày lễ rơi vào thứ hai vẫn trả về ca ngày thường — đăng ký làm thêm 9h–11h ngày Quốc khánh bị từ chối oan, với câu lỗi nói về một ca không hề tồn tại.
+- **`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ trong phép tính quỹ phép.
+- **`bcmath` cắt chứ không làm tròn.** `bcdiv('20','3',2)` ra 6,66 chứ không phải 6,67 — với ba mươi người mười hai tháng thì lệch một khoản có người sẽ hỏi.
+
+##### Chưa làm, cố ý
+
+| Bỏ qua | Vì sao |
+|---|---|
+| Thuế TNCN, BHXH, công đoàn phí | Mỗi thứ là một chính sách riêng có kỳ hiệu lực riêng — biểu thuế luỹ tiến, mức đóng theo vùng, trần đóng |
+| Nghỉ bù thay tiền làm thêm (Điều 98 khoản 3) | Công ty chưa chốt chính sách |
+| Phụ cấp làm đêm (+30%/20%, Điều 98 khoản 2–3) | Công ty chưa có ca đêm. Ca làm thêm vắt qua nửa đêm bị chặn thẳng ở ô nhập |
+| Xuất Excel bảng kê cho kế toán | Cần chốt định dạng với kế toán trước |
+
+Ba mục đầu thêm được mà không làm dữ liệu cũ đổi nghĩa: `rate_percent` trên từng đơn đã đóng băng con số của lúc duyệt.
+
+
+- [x] **Quỹ phép năm** (`leave_balances`) — theo Điều 113 và 114, phép tồn năm trước. Xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong)
+- [x] **Đăng ký làm thêm giờ** (`overtime_requests`) — duyệt trước mới được tính, hệ số 150/200/300%. Xem [Làm thêm giờ](#làm-thêm-giờ--đã-xong)
+- [x] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Xem [Đơn giải trình công](#đơn-giải-trình-công--đã-xong)
+- [x] **Chốt kỳ công** — khoá sổ theo tháng dương lịch. Xem [Chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong)
+- [x] **Nhật ký kiểm toán** — mọi lần chốt và mở khoá vào `payroll_audits`, bảng chỉ ghi thêm
+- [x] **Tính khấu trừ theo giờ công thực tế** + bảng kê lương. Xem [Bảng kê lương](#bảng-kê-lương--đã-xong)
+
+#### Chốt sổ kỳ công ✅ Đã xong
+
+Nền móng của cả đợt 4. **Trả lương từ những con số còn sửa được nghĩa là không bao giờ trả lời được câu *"phiếu lương này tính từ đâu ra"*** — nên trước mọi phép tính tiền, phải có một mốc nói rằng số liệu của kỳ đã đứng yên.
+
+Kỳ công theo **tháng dương lịch** — công ty đã chốt. Đơn giản nhất, và khớp với bảng công vốn đã xem theo tháng nên không có chỗ nào lệch.
+
+##### Chốt là khoá CẢ BA: giờ công, đơn từ, báo cáo ngày
+
+Khoá mỗi giờ công là chưa đủ. Một đơn nghỉ được duyệt sau khi chốt sẽ **đổi số ngày công đã dùng để tính lương** — ngày nghỉ được miễn chấm công — và không có gì báo. Rút một đơn đã duyệt cũng vậy, theo chiều ngược lại.
+
+Báo cáo ngày cũng khoá, vì đối chiếu giờ công với báo cáo là một trong những căn cứ người quản lý dùng khi quyết định chốt.
+
+Đọc thì vẫn đọc được bình thường — khoá chỉ chặn ghi.
+
+##### Đơn vắt hai kỳ: chỗ dễ lọt nhất
+
+Chỉ kiểm ngày bắt đầu thì đơn từ 30/08 sang 02/09 đi qua được nếu tháng 9 đang mở — và nó vẫn đổi số ngày công của tháng 8 đã chốt. Nên phép kiểm nhận **khoảng ngày**, và một truy vấn cho cả khoảng chứ không phải mỗi ngày một câu.
+
+##### Không chốt được kỳ chưa kết thúc
+
+Chốt giữa kỳ là khoá luôn những ngày chưa ai đi làm. Người ta phát hiện ra vào sáng hôm sau, khi nhịp tim chấm công không ghi được gì và không có lời giải thích nào trên màn hình.
+
+Mốc so sánh là **ngày công hôm nay theo giờ Việt Nam**: từ 00:00 tới 07:00 giờ Việt Nam mỗi ngày, `now()` của Laravel vẫn đang ở hôm trước, nên chốt lúc 1h sáng ngày 01/10 sẽ bị từ chối nhầm.
+
+##### Hai quyền, không phải một
+
+| | Chốt sổ | Mở khoá |
+|---|---|---|
+| Giám đốc | ✅ | ✅ |
+| Quản trị hệ thống | ✅ | ❌ |
+| Trưởng phòng | ❌ | ❌ |
+
+Chốt là việc hành chính cuối kỳ; mở khoá là việc đụng vào số liệu đã dùng để trả lương. Admin thường là IT chứ không phải người chịu trách nhiệm về con số lương.
+
+Đây là **ngoại lệ duy nhất** của quy tắc "admin có tất cả". Viết bằng `array_filter` trên `Permission::cases()` chứ không liệt kê tay cả bộ: giữ nguyên tính chất "quyền mới ở đợt sau tự động thuộc về admin", mà vẫn khoét được đúng một lỗ có lý do.
+
+##### Bảng thưa: không có dòng nghĩa là kỳ đang mở
+
+Cùng quy ước với `work_days` và `site_settings`. Sinh sẵn một dòng cho mọi tháng buộc phải có một job sinh dòng, và một tháng thiếu dòng vì job không chạy sẽ bị coi là "không tồn tại" thay vì "đang mở" — hỏng im lặng.
+
+##### Lịch sử nằm ở nhật ký, không nằm ở bảng kỳ công
+
+`attendance_periods` trả lời *"hiện giờ kỳ đó thế nào"*; `payroll_audits` trả lời *"đã đóng mở bao nhiêu lần, ai làm, vì sao"*. Tách hai vai trò vì chúng được đọc ở hai nhịp khác nhau: trạng thái bị hỏi ở **mọi** request ghi số liệu, còn lịch sử chỉ đọc khi có người đi tìm câu trả lời.
+
+Dùng lại `payroll_audits` chứ không dựng bảng thứ ba — nó vốn đã là nhật ký chỉ-ghi-thêm dạng tổng quát (`event`, `actor`, `subject`, `context`), và chốt sổ cùng họ với đổi mức lương: hành vi quyết định số liệu trả lương.
+
+Mở khoá **bắt buộc ghi lý do**, tối thiểu 10 ký tự. Ba tháng sau sẽ có người hỏi vì sao giờ công tháng 8 khác con số trên phiếu lương tháng 8.
+
+##### Luật bắc qua ba miền nên đặt ở tầng Http
+
+Attendance giữ kỳ công, còn thứ bị chặn nằm ở Report và Leave — mà các miền nghiệp vụ không được gọi nhau. `Http` là một trong hai tầng được phép biết nhiều miền, cùng lý do đã ghi ở `ResolvesApprovedLeave`.
+
+##### Hai thứ lộ ra khi làm
+
+**Kiến trúc test bắt tên phương thức controller.** `PeriodController::close()` và `reopen()` vi phạm luật "controller chỉ dùng tên RESTful" — đã tách thành `ClosePeriodController` và `ReopenPeriodController` với `__invoke`, đúng khuôn `SubmitLeaveController`.
+
+**`composer larastan:schema` hỏng trên Git Bash và cắt file schema về 0 byte.** Script khai `docker compose exec ... > file` với dấu nháy mà Git Bash phân tích khác; chạy trực tiếp thì đúng. Đáng sửa script, hoặc ít nhất ghi ra đây để lần sau không ai mất mười phút.
+
+##### Giao diện
+
+Trang **Chấm công** giờ có ba mục: *Bảng công* · *Giải trình* · *Chốt sổ*. Ba việc xoay quanh cùng một con số giờ, do cùng những người mở ra xem — tách thành ba mục điều hướng thì thanh bên dài thêm cho những thứ người ta tìm ở cùng chỗ. Cùng lý do đã áp cho cặp nghỉ phép / đi muộn.
+
+Mục *Chốt sổ* **chỉ hiện** cho người chốt hoặc mở khoá được. Hiện cho mọi người rồi để họ bấm vào ăn 403 là dạy người dùng rằng lỗi đỏ là chuyện bình thường.
+
+Màn chốt sổ đọc `can_close` và `can_reopen` **từ server** thay vì tự suy từ danh sách quyền, nên thêm một quyền ở đợt sau thì giao diện tự đúng. Nút "Chốt sổ" mờ khi kỳ còn đơn treo, và **luôn** kèm con số: còn bao nhiêu đơn, thuộc loại nào. Một nút mờ không lời giải thích là thứ người ta bấm ba lần rồi đi hỏi người khác.
+
+Bấm chốt hỏi lại một nhịp trước khi gửi: hành động này khoá số liệu đã dùng để trả lương, và **chỉ giám đốc mở khoá lại được** — admin bấm nhầm thì phải đi tìm người khác để gỡ.
+
+Chốt hoặc mở khoá xong thì làm mới **cả** bảng công, không chỉ danh sách kỳ: nút "Duyệt" trên bảng công và nút "Gửi đơn" ở màn giải trình vừa thành vô hiệu, và chỉ làm mới danh sách kỳ thì hai màn kia vẫn mời người ta bấm vào thứ chắc chắn trả lỗi.
+
+#### Đơn giải trình công ✅ Đã xong
+
+Trước phần này, `work_days` chỉ có **một cửa vào**: người quản lý bấm nút. Nhân viên đi gặp khách cả ngày, mất mạng, hay quên mở máy thì không có đường nào nói điều đó *trong hệ thống* — họ nhắn Zalo, quản lý nhớ thì bấm, quên thì thôi. Lý do thật của một ngày công bất thường nằm trong lịch sử chat của hai người.
+
+Từ khi có chốt sổ kỳ công, chuyện đó thành **hạn chót cứng**: chốt rồi thì không ai duyệt được nữa, kể cả giám đốc. Nên nhân viên phải có đường tự khởi xướng, và đường đó phải để lại vết.
+
+| Trước | Sau |
+|---|---|
+| Nhân viên nhắn Zalo cho quản lý | Nộp đơn trong hệ thống, có ngày và lý do |
+| Quản lý nhớ thì bấm "Bỏ qua" | Đơn nằm trong hộp duyệt tới khi được xử lý |
+| Lý do nằm trong chat | Lý do nằm cạnh con số, trên bảng công |
+| Chốt sổ vứt đơn đang treo, im lặng | Chốt sổ **bị chặn** khi kỳ còn đơn treo |
+
+##### Duyệt thì ghi bảng công qua đúng đường nút bấm tay vẫn đi
+
+`ReviewAdjustmentAction` gọi `ReviewWorkDayAction` chứ không tự ghi vào `work_days`. Luật *"chỉ 'bỏ qua' mới được ấn định số phút"* sống ở đó; chép lại phép ghi là hai chỗ cùng viết vào một bảng, và chúng sẽ lệch nhau ở lần đổi luật đầu tiên. Bảng công không cần biết con số đến từ nút bấm hay từ đơn.
+
+Quyết định luôn là `waived` — đó chính là nghĩa của một đơn giải trình được chấp nhận: *"giờ thấp nhưng có lý do chính đáng"*.
+
+##### Số phút của người duyệt thắng số người nộp xin
+
+Giao diện điền sẵn `requested_minutes` cho tiện, nhưng cái đi vào `work_days` là cái **người duyệt** gửi lên. Nếu không thì "duyệt" chỉ còn nghĩa là *"đồng ý với mọi con số nhân viên tự khai"*.
+
+`requested_minutes` được phép để trống, và đó là điểm chính: người đi gặp khách cả ngày không đếm phút. Bắt nhập thì họ điền một con số bịa cho xong, và người duyệt mất luôn tín hiệu *"người này không khẳng định con số nào"*.
+
+`approved_minutes` chép lại số đã duyệt **trên đơn này** và không bao giờ đổi nữa, trong khi `work_days.adjusted_minutes` là số *hiện hành* và có thể bị sửa thẳng sau đó. Hai câu hỏi khác nhau; gộp lại thì câu thứ hai không còn trả lời được.
+
+##### Chốt sổ bị chặn khi kỳ còn đơn treo
+
+Hạng mục quan trọng nhất, và là thứ nối hai chặng đầu của đợt 4 lại với nhau.
+
+Chốt sổ khoá **cả đơn từ**. Một đơn còn treo qua ngày chốt là đơn *không ai duyệt được nữa* — kể cả giám đốc, trừ khi mở khoá lại cả kỳ. Cách hỏng điển hình: giám đốc chốt tháng 8 vào ngày 02/09, ba đơn giải trình nộp hôm 31/08 chết theo, và ba người đó phát hiện ra khi bảng lương về.
+
+Phép kiểm đếm **ba loại đơn**, không phải một — đơn nghỉ và đơn đi muộn còn chờ cũng đổi số ngày công nếu được duyệt sau đó, nên chúng cũng mắc kẹt y hệt. Đơn nghỉ đếm theo **giao nhau** với kỳ, không theo ngày bắt đầu: một đơn từ 30/08 sang 02/09 vẫn đổi số ngày công của tháng 8.
+
+Thứ tự lỗi có chủ ý: **"kỳ chưa kết thúc" thắng "kỳ còn đơn treo"**, vì kỳ đang chạy thì còn đơn treo là chuyện đương nhiên và nói ngược lại sẽ khiến người ta đi xử lý đơn một cách vô ích.
+
+Màn chốt sổ trả kèm `closable` — kỳ sắp chốt là kỳ nào, còn bao nhiêu đơn mỗi loại, đã bấm được chưa. Giao diện **không** tự tính: nó phải biết hôm nay là ngày mấy theo giờ Việt Nam, và biết kỳ nào đã chốt — thứ trình duyệt không có cách nào suy ra. Một nút mờ không lời giải thích là thứ người ta bấm ba lần rồi đi hỏi người khác.
+
+##### Luật bắc qua hai miền nên đặt ở tầng Http
+
+`GuardsPendingWork` đọc `attendance_adjustments` (miền Attendance) cùng `leave_requests` và `late_arrival_requests` (miền Leave). Miền không được gọi miền, còn Http là một trong hai tầng được phép biết nhiều miền — cùng lý do đã ghi ở `GuardsClosedPeriods` và `ResolvesApprovedLeave`.
+
+##### Ba thứ lộ ra khi làm
+
+**Thứ tự khai route bắt buộc, không phải để cho đẹp.** `GET /attendance/adjustments/me` khớp đúng dạng `/attendance/{user}/{date}`, nên khai sau thì Laravel hiểu `adjustments` là uuid người dùng và trả 404. Cùng cái bẫy đã có sẵn với `/attendance/me`, và cả khối đơn giải trình phải nằm **trước** dòng đó.
+
+**`AdjustmentStatus` là bản sao thứ tư của cùng bốn trạng thái** — cạnh `LeaveStatus`, `BonusPoolStatus`, `DailyReportStatus`. Không gộp được: luật tầng cấm Attendance phụ thuộc Leave. Đây đã là nếp của dự án, và cái giá của hướng ngược lại — một enum dùng chung ở tầng Support — là mọi miền cùng phụ thuộc vào thứ không miền nào sở hữu.
+
+**`ngayViet()` từng có sáu bản sao**, mỗi lớp thông báo một bản. Sáu chỗ phải sửa nếu đổi cách viết ngày, và sửa năm chỗ thì người nhận thấy hai định dạng ngày khác nhau trong cùng một hộp thư, im lặng. Đã gom về `App\Support\Time\HumanTime`, cùng chỗ với `gioPhut()` và `ky()`.
+
+##### Giao diện
+
+Đường vào chính **không phải** một tab trống. Người ta phát hiện ra ngày công sai lúc đang *nhìn vào ô đó* trên lưới tháng, chứ không phải lúc mở màn giải trình rồi ngồi nhớ lại hôm ấy là ngày mấy. Nên hộp thoại chi tiết một ngày có nút **"Giải trình ngày này"** — bấm là nhảy sang màn giải trình với ngày điền sẵn.
+
+Nút đó chỉ hiện trên ngày của **chính người đang xem**: đơn giải trình là một lời khai, người khác khai hộ thì chữ ký nằm sai chỗ.
+
+Ô "Số giờ đề nghị" **không bắt buộc**, và đó là điểm chính. Người đi gặp khách cả ngày không đếm phút; bắt nhập thì họ điền một con số bịa cho xong, và người duyệt mất luôn tín hiệu *"người này không khẳng định con số nào"*. Trong hộp duyệt, con số ấy được **điền sẵn nhưng sửa được** — cái đi vào bảng công là con số người duyệt gửi lên.
+
+Khi đơn được duyệt, dòng kết quả nói ra **con số đã chốt**, không chỉ nói "đã duyệt". Hai số có thể khác nhau, và không nói thì người nộp phải tự mở bảng công đi so — phần lớn sẽ không so.
+
+Hộp duyệt chỉ hiện cho người **vừa xem được đội vừa có `attendance.review`**. Xem được đội là một chuyện, quyết định được ngày công là chuyện khác; hiện cho người chỉ xem được thì mọi nút trong đó đều dẫn tới 403.
+
+##### Một thứ lộ ra khi làm giao diện
+
+`LEAVE_STATUS_TONE` từng là bảng màu riêng của miền nghỉ phép. Đơn giải trình là loại đơn **thứ ba** đi qua đúng bốn trạng thái ấy, và ba bảng màu riêng sẽ lệch nhau ở lần đổi màu đầu tiên — lúc đó "đang chờ" có hai màu ở hai màn, và người dùng phải đọc chữ mới hiểu, đúng thứ mà màu sinh ra để khỏi phải làm.
+
+Đã chuyển thành `REQUEST_STATUS_TONE` ở `components/ui/pill`, khai lại bốn tên trạng thái tại chỗ thay vì import kiểu từ feature — luật `no-restricted-imports` cấm `components/ui` biết tới feature, và đây là bảng *màu* nên nó chỉ cần biết bốn cái tên. `LEAVE_STATUS_TONE` giữ nguyên làm bí danh nên không chỗ gọi nào phải sửa.
+
+#### Quỹ phép năm ✅ Đã xong
+
+Trước phần này, `LeaveType::Annual` chỉ là **một cái nhãn**: nó không trừ vào quỹ nào, và một người nộp ba mươi ngày phép năm cũng chẳng có gì chặn. Nhãn tồn tại từ đợt 1 chỉ để người duyệt biết mình đang duyệt cái gì.
+
+##### Số ngày được hưởng bám mức sàn của luật, nhưng đổi được
+
+| Nguồn | Quy tắc | Mặc định |
+|---|---|---|
+| Điều 113 BLLĐ 2019 | Ngày phép cơ bản mỗi năm | 12 |
+| Điều 114 | Cứ đủ N năm thâm niên thì thêm 1 ngày | 5 năm → +1 |
+| NĐ 145/2020 Điều 66 | Chưa làm đủ năm thì chia theo tỷ lệ tháng | — |
+
+Cả ba con số nằm trong **Cài đặt**, không viết cứng. Công ty hào phóng hơn luật là chuyện bình thường; viết cứng thì lần đầu đổi chính sách là một lần phải deploy.
+
+Một tháng được tính khi người đó đi làm **ít nhất nửa số ngày** của tháng ấy. Đếm tháng tròn thì người vào làm 02/03 và người vào làm 30/03 ra cùng một con số; đếm mọi tháng có chạm tới thì vào làm 31/03 cũng được trọn tháng 3. Ngưỡng nửa tháng gần với quy tắc 14 ngày công của BHXH, và quan trọng hơn: giải thích được cho người lao động bằng một câu.
+
+##### Đã dùng thì đếm NGÀY CÔNG, không đếm ngày lịch
+
+Đây là điểm quyết định của cả tính năng. Nghỉ từ thứ sáu tới thứ hai phủ **4 ngày lịch** nhưng chỉ tiêu **2,5 ngày phép** — thứ bảy nửa buổi, chủ nhật không tính. Nghỉ trùng ngày lễ không tiêu ngày phép nào, đúng như luật.
+
+Đếm ngày lịch thì một tuần nghỉ ăn 7 ngày trong quỹ 12 ngày, và quỹ phép năm thành một con số vô nghĩa.
+
+`LeaveRequest::dayCount()` vẫn đếm ngày lịch và vẫn đúng cho việc nó làm — hiển thị *"nghỉ 4 ngày"*. Hai con số khác nhau vì trả lời hai câu khác nhau; chú thích ở đó đã nói trước rằng ngày đổi sang đếm ngày công là ngày có quỹ phép để trừ vào.
+
+##### Một giao diện ở tầng Support, vì luật tầng cấm gọi thẳng
+
+Quỹ phép ở miền Leave, nhưng *"khoảng này có bao nhiêu ngày công"* chỉ trả lời được bằng lịch tuần và bảng ngày lễ — cả hai thuộc miền Attendance, mà Leave không được gọi sang.
+
+Nên câu hỏi khai ở `App\Support\Contracts\WorkingDays` (tầng dưới cùng, cả hai miền với tới được), câu trả lời do `CalendarWorkingDays` ở Attendance cài đặt, và `AppServiceProvider` ghép hai đầu — Providers là tầng duy nhất được phép biết cả hai. Đăng ký **singleton** vì bản cài đặt nhớ danh sách ngày lễ theo năm: một người có mười đơn nghỉ sẽ hỏi mười lần trong cùng một request.
+
+##### Bảng thưa: không có dòng nghĩa là "để hệ thống tự tính"
+
+`leave_balances` chỉ ghi những gì **con người quyết định** — chuyển phép tồn, thưởng thêm ngày, ghi đè hẳn con số. Sinh sẵn một dòng cho mỗi người mỗi năm là một bảng vài nghìn dòng mà 95% chỉ chép lại phép tính, cần một job chạy đầu năm, và một năm thiếu dòng vì job không chạy sẽ bị đọc thành *"người này không có ngày phép nào"*.
+
+Đặt tất cả về 0 thì **xoá dòng**. Một dòng toàn số 0 làm màn hình hiện "đã điều chỉnh" cho người chưa ai đụng vào, và nhân sự không có cách nào gỡ nhãn đó ra.
+
+`entitled_days_override` tách khỏi `adjustment_days` vì hai ý định khác nhau: ghi đè là *"đừng tính nữa, số đúng là 15"*; điều chỉnh là *"số tính ra đúng rồi, cộng thêm 2"* — nó cộng dồn lên phép tính nên năm sau thâm niên tăng thì vẫn tăng theo. Gộp một cột thì mọi người từng được thưởng ngày phép sẽ kẹt cứng ở con số của năm đó.
+
+Không lưu `used_days`: nó suy từ `leave_requests`, nguồn sự thật duy nhất. Lưu thêm một bản sao là mở đường cho hai con số lệch nhau sau lần đầu ai đó rút đơn — và bản sao thì không có gì báo khi nó sai.
+
+##### Vượt quỹ thì chặn, và câu lỗi chỉ đường
+
+> Quỹ phép năm 2026 chỉ còn 1 ngày, mà đơn này cần 2,5 ngày. **Nghỉ thêm thì nộp đơn nghỉ không lương.**
+
+*"Bạn đã hết phép năm"* là câu cụt: người ta vẫn cần nghỉ, và việc phải làm là nộp lại dưới dạng nghỉ không lương. Không nói ra thì họ đi hỏi nhân sự, mà nhân sự cũng chỉ trả lời đúng câu đó.
+
+Đơn vắt qua giao thừa kiểm quỹ của **cả hai năm**, mỗi năm phần của nó — cùng cách đã áp cho hạn mức nghỉ không lương.
+
+##### Sửa quỹ là quyền RIÊNG
+
+`leave.balance.manage`, **không** phải `leave.approve`. Duyệt một đơn nghỉ là quyết định về một lần vắng mặt; cộng thêm ngày phép là quyết định về cả năm — và phép chưa nghỉ hết phải được thanh toán khi thôi việc (Điều 113 khoản 4), tức là **nó ra tiền**.
+
+Trưởng phòng duyệt đơn nghỉ cho phòng mình là bình thường. Trưởng phòng tự cộng ngày phép cho phòng mình thì không. Quyền thuộc giám đốc và quản trị viên.
+
+Mọi lần sửa vào `payroll_audits` kèm **giá trị cũ lẫn mới** — cùng chỗ với đổi mức lương và chốt sổ kỳ công, cùng một họ: hành vi quyết định số tiền công ty phải trả.
+
+##### Giao diện
+
+Thẻ **Phép năm** đặt ngay trên ô xin nghỉ, trước chứ không sau: số ngày còn lại là thứ quyết định người ta chọn loại đơn nào, và đọc nó sau khi đã điền xong form thì đã muộn.
+
+Thẻ hiện **cả phép cộng**, không chỉ số dư — *"được hưởng 12 + tồn 3 − đã dùng 2,5"*. Câu hỏi thật không phải "tôi còn mấy ngày" mà là "vì sao tôi còn ngần này"; hiện mỗi số dư thì mọi thắc mắc đều dồn về nhân sự.
+
+**Màn hình không tự tính chi phí của đơn đang gõ.** Nghỉ từ thứ sáu tới thứ hai tiêu 2,5 ngày chứ không phải 4 — chép luật đó xuống trình duyệt là hai nơi cùng định nghĩa "một ngày phép", và chúng sẽ lệch nhau ở lần công ty đổi lịch tuần đầu tiên. Thẻ chỉ nói số còn lại; server mới là nơi chặn, và câu lỗi của nó nói rõ đơn cần bao nhiêu ngày.
+
+Hai lời nhắc chủ động:
+
+- Năm ngoái còn dư mà năm nay chưa được chuyển → *"Năm 2025 bạn còn dư 3 ngày chưa được chuyển sang. Phép tồn không tự chuyển — hỏi nhân sự nếu bạn cần dùng."* Không nói ra thì người ta tưởng số đó đã mất.
+- Hết phép → chỉ thẳng sang loại **Nghỉ không lương**, cùng câu mà API trả về.
+
+Tab **Quỹ phép** chỉ hiện cho người xem được đội. Nhân viên thường đã có thẻ của chính mình ngay trên ô xin nghỉ, nên một tab riêng để xem lại đúng con số đó là thừa.
+
+Trong bảng của nhân sự, ô "Phép tồn năm trước" có **một nút điền sẵn** số dư năm trước (kẹp theo trần công ty). Không có nó thì nhân sự phải đổi năm, ghi ra giấy, rồi đổi về — và một phần sẽ gõ nhầm. Vẫn là một cú bấm có chủ ý, không phải phép cộng tự động.
+
+Năm hiện tại lấy **từ server**, không từ `new Date()`: đồng hồ máy người dùng có thể lệch, và trong bảy tiếng đầu ngày 01/01 giờ Việt Nam thì một máy đặt múi giờ khác vẫn đang ở năm cũ.
+
+##### Hai thứ lộ ra khi làm
+
+**`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả những tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ. Đã bọc thành một hàm trả về kiểu chắc chắn thay vì rải `?->` — `?->` sẽ biến một lỗi lập trình thành một con số 0 im lặng.
+
+**Ngày phép là số thực, và đó là ngoại lệ có chủ ý.** Quy ước của dự án là cast tiền sang `decimal` để không bao giờ cộng trên số thực. Ngày phép không phải tiền: mọi giá trị đều là bội của 0,5, mà 0,5 biểu diễn chính xác được bằng số thực nhị phân. Cast sang `decimal` cho ra chuỗi, và cộng chuỗi thì mỗi chỗ dùng lại phải tự ép kiểu — đó mới là chỗ sinh lỗi.
+
+#### Làm thêm giờ ✅ Đã xong
+
+Làm thêm giờ ra tiền ở mức **150–300%** (Điều 98 BLLĐ 2019). Suy nó từ giờ ngồi trước máy là để hệ thống tự ký một khoản chi mà không ai quyết định — và một cái tab quên đóng qua đêm sẽ thành mười tiếng làm thêm ngày nghỉ. Đó cũng đúng là lý do `max_daily_minutes` tồn tại.
+
+Nên đây là một **đơn**: đăng ký mốc giờ và lý do, quản lý duyệt, và chỉ phần đã duyệt mới đi vào bảng lương.
+
+##### Hệ số suy từ loại ngày, và đóng băng lúc duyệt
+
+| Loại ngày | Hệ số | Nguồn |
+|---|---|---|
+| Ngày làm việc (kể cả thứ bảy nửa buổi) | 150% | Điều 98 |
+| Ngày nghỉ hằng tuần | 200% | Điều 98 |
+| Ngày nghỉ lễ, tết | 300% | Điều 98 |
+
+**Thứ bảy nửa buổi là ngày làm việc**, không phải ngày nghỉ hằng tuần — ngày nghỉ hằng tuần của công ty là chủ nhật. Điều 111 chỉ đòi mỗi tuần nghỉ ít nhất một ngày nên cách xếp này hợp lệ, nhưng nó là **chênh lệch 50% tiền công** nên phải nói ra chứ không để người sau tự suy. Có test khoá lại.
+
+`rate_percent` được ghi lúc **duyệt**, không phải lúc đăng ký. Loại ngày có thể đổi sau khi đơn đã nộp — nhân sự nhập thêm một ngày lễ, hoặc công ty đổi lịch tuần. Lúc đăng ký màn hình tính sống để người nộp biết mình sắp được trả bao nhiêu (`rate_is_final: false`); lúc duyệt con số được đóng băng, vì đó là thời điểm công ty cam kết trả.
+
+Ghi bằng **phần trăm nguyên** (150, 200, 300) chứ không phải hệ số thập phân: người ta nói *"hệ số 150%"*, ô nhập ở Cài đặt nhận số nguyên, và cả module không còn phép nhân số thực nào.
+
+**Cấu hình dưới mức sàn thì bị kẹp lên.** Trả dưới mức luật định là trái luật, và một con số gõ nhầm ở màn Cài đặt không nên biến thành một sai phạm im lặng kéo dài tới khi có người khiếu nại. Chiều ngược lại không kẹp — trả cao hơn luật là quyền của công ty.
+
+##### Ba trần của Điều 107
+
+Không quá 50% giờ làm bình thường trong 1 ngày (mặc định 4 giờ), 40 giờ mỗi tháng, 200 giờ mỗi năm. Kiểm theo thứ tự **hẹp dần ra rộng** — người nộp gặp trần gần nhất trước, và đó là trần họ làm được gì đó với nó: rút ngắn hôm nay dễ hơn là dời sang năm sau.
+
+Đếm cả đơn **đang chờ duyệt**: chỉ đếm đơn đã duyệt thì nộp năm đơn nhỏ cùng lúc là lách được. Cộng bằng `SUM(COALESCE(approved_minutes, minutes))` ở database — trần theo năm sẽ kéo về cả trăm dòng chỉ để cộng một con số.
+
+Màn đăng ký trả kèm **số đã dùng** tháng này và năm nay. Ba trần chồng lên nhau và người nộp không có cách nào tự biết; không nói ra thì họ gõ xong cả cái đơn rồi mới nhận một câu từ chối, và lần sau vẫn không đoán được.
+
+##### Giờ phải nằm ngoài ca, và một lỗi lộ ra khi làm
+
+*"Làm thêm 9h–11h"* vào một ngày làm việc là hai tiếng đã được trả lương bình thường rồi — trả thêm 150% cho nó là trả hai lần cho cùng một giờ làm. Chạm đúng biên **không** tính là giao nhau: làm thêm từ đúng giờ tan ca là trường hợp thường gặp nhất.
+
+Phép kiểm này ban đầu hỏi `WorkWeek::shiftFor()`, mà hàm đó **chỉ biết hôm đó là thứ mấy**. Hậu quả: một ngày lễ rơi vào thứ hai vẫn trả về ca ngày thường, nên đăng ký làm thêm 9h–11h ngày Quốc khánh bị từ chối oan — với câu lỗi nói về một ca không hề tồn tại hôm đó. Test bắt được trước khi ai đó gặp. Giờ hỏi `WorkCalendar`, thứ biết cả ngày lễ.
+
+##### Không hai khoảng giờ chồng lấn
+
+Một người làm thêm hai lần trong ngày là chuyện có thật — sáng sớm một tiếng, tối hai tiếng. Thứ bị cấm là hai đơn **phủ cùng một khoảng giờ**: cộng cả hai vào là trả tiền hai lần. Ràng buộc này không diễn đạt được bằng index nên nằm ở tầng nghiệp vụ, trong giao dịch có khoá dòng.
+
+##### Duyệt được ít hơn, không được nhiều hơn
+
+*"Đăng ký 3 tiếng, thực tế làm 2"* là chuyện thường, nên người duyệt sửa được số phút. Trần trên là **số đã đăng ký**: cho duyệt nhiều hơn là mở một đường vòng qua ba cái trần đã kiểm lúc nộp — người duyệt gõ 600 phút vào một đơn 60 phút và không có gì chặn.
+
+Dùng chung quyền `attendance.review` với nút bấm tay và màn giải trình, có chủ ý: duyệt làm thêm là quyết định của người **giao việc**, mà đó cũng chính là người quyết định ngày công của phòng. Khác với quỹ phép năm — thứ được tách thành quyền riêng vì nó là quyết định hành chính về cả năm, không phải về một buổi tối cụ thể.
+
+##### Đơn làm thêm treo là loại nặng nhất chặn chốt sổ
+
+Ba loại đơn chặn chốt sổ giờ thành bốn. Đây là loại nặng nhất: người ta **đã làm rồi**. Chốt sổ mà bỏ lại nó là vứt đi một khoản tiền 150–300% cho công việc đã xong.
+
+##### Giao diện
+
+Trang **Chấm công** giờ có bốn mục: *Bảng công · Giải trình · Làm thêm · Chốt sổ*. Ba mục đầu ai cũng thấy — cả ba đều có phần "của tôi" mà mọi nhân viên đều dùng tới.
+
+**Hệ số hỏi server theo từng ngày, không tự tính.** Hệ số phụ thuộc lịch tuần và bảng ngày lễ; chép cả hai xuống trình duyệt là hai nơi cùng định nghĩa "ngày lễ", và chúng sẽ lệch nhau ở lần nhân sự nhập thêm một ngày — lúc đó màn hình hứa 150% cho một ngày mà hệ thống trả 300%.
+
+Nhưng người dùng vẫn phải biết **trước** khi đăng ký: *"tối nay là chủ nhật, 200%"* là thông tin quyết định họ có nhận làm hay không. Nên có một đường riêng `GET /attendance/overtime/preview?date=` trả về loại ngày, hệ số dự kiến, và ca hôm đó. Kết quả nhớ theo ngày nên đổi qua đổi lại không gọi lại mạng.
+
+Tách khỏi `/attendance/overtime/me` chứ không thêm tham số vào đó: màn hình hỏi lại mỗi lần đổi ô ngày, và kéo về cả trăm đơn mỗi lần là một cách rất tốn kém để lấy hai con số.
+
+Hệ số hiện kèm chữ **"dự kiến"** cho tới khi đơn được duyệt — không nói ra thì người ta đinh ninh con số đã chắc.
+
+Ô đăng ký hiện sẵn **số đã dùng tháng này và năm nay** cạnh trần, tô đỏ khi chạm. Ba trần chồng lên nhau và người nộp không có cách nào tự biết.
+
+Trong hộp duyệt, ô "Số phút duyệt" điền sẵn số đã đăng ký nhưng **sửa được**, với `max` đúng bằng số đó — cho duyệt nhiều hơn là mở đường vòng qua ba cái trần đã kiểm lúc nộp.
+
+##### Chưa có: nghỉ bù và phụ cấp làm đêm
+
+Điều 98 khoản 3 cho phép thoả thuận nghỉ bù thay vì trả tiền; khoản 2–3 cộng thêm 30%/20% cho giờ làm ban đêm. Công ty hiện không có ca đêm và chưa chốt chính sách nghỉ bù. Ca vắt qua nửa đêm cũng bị chặn thẳng ở ô nhập — nó cần cả hai thứ trên cộng quy tắc chia phần cho hai ngày công.
+
+Khi có thì thêm cột; các đơn cũ giữ nguyên nghĩa vì `rate_percent` đã đóng băng con số của lúc duyệt.
+
+##### Ba lần đổi tên, vì cùng một lý do
+
+`WorkingDays` → **`WorkCalendar`**: giao diện giờ trả lời hai câu — đếm ngày công, và *"ngày này thuộc loại nào"*. Cái tên cũ chỉ mô tả câu thứ nhất.
+
+`AdjustmentStatus` → **`RequestStatus`**: miền Attendance giờ có hai loại đơn cùng một vòng đời. Giữ hai enum giống hệt trong cùng một miền là đúng thứ mà chú thích ở `LateArrivalRequest` đã lên án — *"tách ra chỉ để có tên khác là nhân đôi chỗ phải sửa"*. `AdjustmentNotEditableException` → `RequestNotEditableException` theo cùng lý do.
+
+Và `khoaKy()` chuyển từ file test vào `tests/Pest.php` — hàm khai trong một file test chỉ tồn tại khi file đó được nạp, nên chạy riêng file kia sẽ đỏ với "undefined function" trong khi chạy cả bộ vẫn xanh. Lần thứ tư mắc cái bẫy này.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 
@@ -3116,13 +3461,88 @@ Lương giờ = Lương tháng / Số ngày công chuẩn / Số giờ mỗi ca
 Khấu trừ  = (Số phút thiếu - Số phút ân hạn) / 60 × Lương giờ
 ```
 
-- [ ] Cấu hình **số ngày công chuẩn** — cố định 26 ngày hay theo lịch thực tế từng tháng?
-- [ ] Cấu hình **phút ân hạn** — trễ dưới bao nhiêu phút thì bỏ qua?
-- [ ] Cấu hình **quy tắc làm tròn** — tính đúng số phút, hay làm tròn lên block 15/30 phút?
+- [x] **Số ngày công chuẩn**: theo **lịch thực tế từng tháng** — công ty đã chốt. Suy từ lịch tuần, không có tham số nào để gõ sai.
+- [x] **Phút ân hạn**: **5 phút**, áp cho từng ngày. Khớp ngưỡng về sớm hiện hành.
+- [x] **Quy tắc làm tròn**: **tính đúng số phút**. Có tham số `payroll.shortfall_round_to_minutes` nếu công ty đổi ý.
+
+#### Bảng kê lương ✅ Đã xong
+
+Chỗ mọi thứ của đợt 4 quy ra tiền: giờ công đã có người duyệt, đơn nghỉ đã duyệt, làm thêm giờ đã duyệt, và mức lương đang hiệu lực.
+
+```
+lương giờ            = lương tháng ÷ (số phút chuẩn của kỳ ÷ 60)
+trừ thiếu giờ        = số phút thiếu       ÷ 60 × lương giờ
+trừ nghỉ không lương = số phút nghỉ KL     ÷ 60 × lương giờ
+tiền làm thêm        = Σ (số phút ÷ 60 × lương giờ × hệ số%)
+
+thực nhận = lương tháng + phụ cấp − trừ thiếu giờ − trừ nghỉ KL + làm thêm
+```
+
+##### Ba tham số, công ty đã chốt
+
+| Tham số | Chọn | Hệ quả |
+|---|---|---|
+| Số ngày công chuẩn | **Theo lịch thực tế từng tháng** | Lương giờ đổi theo tháng. Tháng 08/2026 = 21 ngày cả ngày + 5 ngày nửa buổi = 10.890 phút. |
+| Phút ân hạn | **5 phút**, theo từng ngày | Khớp ngưỡng về sớm hiện hành. Dời ngưỡng, không trừ vào số phút. |
+| Làm tròn | **Tính đúng số phút** | Minh bạch nhất. Có tham số nếu đổi ý. |
+
+Số ngày công chuẩn **không có tham số nào để gõ sai** — nó suy thẳng từ lịch tuần. Đổi lại là lương giờ đổi theo tháng, nên phiếu lương nói ra số phút chuẩn của kỳ ngay cạnh lương giờ.
+
+Ân hạn tính theo **từng ngày**, không theo cả kỳ: cộng dồn cả tháng rồi mới trừ một lần nghĩa là năm phút lẻ mỗi ngày thành gần hai tiếng cuối tháng, mà mục đích của ân hạn là bỏ qua những lệch vặt. Hệ quả kỹ thuật: số phút thiếu **không tính lại được** từ `phải có mặt − đã làm`, nên phải duyệt qua từng ngày thay vì cộng một câu SQL.
+
+##### Ngày lễ không cần một luật miễn trừ riêng
+
+`expectedMinutesOn()` trả 0 cho ngày lễ và ngày nghỉ hằng tuần, nên ngày lễ **rút số phút chuẩn xuống**. Không ai phải có mặt → không ai thiếu giờ → không ai bị trừ. Một dòng dữ liệu thay cho một nhánh `if`.
+
+Nghỉ phép năm đã duyệt cũng vậy: nó rút "số phút phải có mặt" xuống mà không rút mẫu số, nên người nghỉ phép nhận đủ lương. Nghỉ không lương thì rút số phút phải có mặt **và** đi vào một dòng trừ riêng — người đọc phải thấy được ngày nào bị trừ và vì sao.
+
+`LeaveType::isPaidLeave()` là **chỗ duy nhất** quyết định loại nghỉ nào có lương: phép năm và nghỉ ốm có, việc riêng và không lương thì không (Điều 113, 115). Chú thích ở enum đó từ đợt 1 đã nói trước rằng nó sẽ là chỗ gắn luật này.
+
+##### Phép tính thuần, tách khỏi việc đi gom số
+
+`BuildPayslipAction` **không đọc database**. Cùng đầu vào thì luôn ra cùng kết quả — với mã tính tiền thì đó không phải sự ngăn nắp mà là điều kiện để kiểm được: kỳ toàn ngày lễ, lương giờ chia cho 0, người chưa từng được đặt lương — mọi trường hợp biên dựng được bằng một dòng test, không cần người dùng và không cần bảng nào.
+
+Việc đi gom nằm ở `Http\Support\PayslipAssembler`: phiếu lương cần bốn miền (Attendance, Leave, Payroll, và lịch ở Support), mà luật tầng cấm Payroll gọi sang ba miền kia. Http là một trong hai tầng được phép biết nhiều miền — cùng lý do đã ghi ở `GuardsClosedPeriods`.
+
+##### Tiền tính bằng `bcmath`, và `bcmath` CẮT chứ không làm tròn
+
+`bcdiv('20','3',2)` ra `6,66` chứ không phải `6,67`. Với một dòng thì lệch một đồng; với ba mươi người mười hai tháng thì lệch một khoản có người sẽ hỏi. `App\Support\Money` gom lại: lương giờ giữ **6 chữ số** suốt phép tính, chỉ từng dòng tiền mới làm tròn nửa lên về **đồng** — tiền Việt Nam không có hào.
+
+**Tổng cộng từ các dòng đã làm tròn**, không tính lại ở độ chính xác cao. Người nhận lương sẽ cộng tay để đối chiếu; nếu tổng đi đường khác thì nó lệch vài đồng so với phép cộng ấy, và vài đồng lệch trên một phiếu lương là đủ để mất niềm tin vào cả bảng. Có test khoá đúng điều đó.
+
+Phép kiểm tỉnh táo của cả công thức: **không đi làm ngày nào thì khoản trừ phải bằng đúng lương tháng**. Nếu không thì lương giờ đang sai.
+
+##### Phiếu của kỳ chưa chốt là bản TẠM
+
+Không chặn xem — kế toán cần nhìn trước để biết tháng này rơi vào khoảng nào. Nhưng `is_final` nói thẳng ra và màn hình hiện điều đó: một đơn giải trình được duyệt chiều nay sẽ đổi số giờ thiếu của cả tháng.
+
+Đây là chỗ chặng 1 trả cổ tức: chốt sổ khoá giờ công, đơn từ và báo cáo ngày, nên sau khi chốt thì không con số nào trên phiếu đổi được nữa.
+
+##### Quyền và nhật ký
+
+`payroll.view.own` cho phiếu của mình, `payroll.view.all` cho bảng kê. Mở bảng kê **vào nhật ký kiểm toán**; mở phiếu của chính mình thì **không** — `payroll_audits` tồn tại để trả lời *"ai đã xem lương của người khác"*, và ghi cả lượt tự xem thì nhật ký đầy những dòng vô nghĩa đúng lúc cần tra cứu.
+
+Người chưa từng được đặt lương vẫn hiện trên bảng với số tiền bằng 0. Bỏ họ ra là làm một người biến mất khỏi bảng lương mà không ai biết vì sao — và đó đúng là người cần được chú ý.
+
+##### Chưa có
+
+Thuế thu nhập cá nhân, bảo hiểm xã hội, công đoàn phí. Ba khoản đó cần biểu thuế luỹ tiến, mức đóng theo vùng và trần đóng — mỗi thứ là một chính sách riêng có kỳ hiệu lực riêng. Phiếu này trả lời câu hẹp hơn: *"tiền công theo giờ làm việc thực tế của kỳ này là bao nhiêu"*.
+
+Phụ cấp không chia theo tỷ lệ giờ công — nó là khoản cố định hằng tháng. Mức lương lấy theo dòng hiệu lực vào **ngày cuối kỳ**, nên tăng lương giữa tháng thì mức mới áp cho cả kỳ; `salary_records` đã lưu đủ khoảng hiệu lực nếu công ty muốn chia theo tỷ lệ.
+
+##### Giao diện
+
+Trang **Lương** có hai mục: *Phiếu lương* (mặc định) và *Mức lương*. Phiếu lương là câu hỏi thường gặp hơn hẳn — *"tháng vừa rồi tôi được bao nhiêu, và vì sao"*.
+
+Phiếu hiện **đủ đường đi**: giờ chuẩn của kỳ, đã làm, phải có mặt, thiếu giờ, rồi từng dòng tiền kèm phép nhân của nó (*"7h45 × 55.096đ/giờ"*). Cộng tay các dòng ra đúng tổng.
+
+Kỳ mặc định do **server** chọn — giao diện không tự tính "tháng trước" từ `new Date()`. Nút lùi/tiến dựa trên kỳ mà phản hồi nói ra.
+
+Không nạp bảng mức lương khi đang xem phiếu: đó là một lượt gọi cho dữ liệu không hiện ra, **và nó ghi một dòng vào nhật ký kiểm toán**.
 
 ### Mức lương ✅ Phần đặt và xem đã xong
 
-Làm sớm hơn lộ trình, theo yêu cầu. Đây mới là **mức lương** (đặt và xem), chưa phải bảng lương tính ra tiền phải trả — phần đó cần chốt kỳ công ở đợt 4 và định dạng xuất cho kế toán.
+Làm sớm hơn lộ trình, theo yêu cầu. Đây là **mức lương** — đặt và xem lịch sử theo khoảng hiệu lực. Phần tính ra tiền phải trả nằm ở [Bảng kê lương](#bảng-kê-lương--đã-xong) của đợt 4; định dạng xuất cho kế toán thì vẫn còn chờ.
 
 | Trước | Sau |
 |---|---|
@@ -3133,7 +3553,7 @@ Làm sớm hơn lộ trình, theo yêu cầu. Đây mới là **mức lương** 
 - [x] Lịch sử mức lương theo khoảng hiệu lực, chỉ ghi thêm
 - [x] Nhân viên xem được mức và lịch sử của chính mình
 - [x] Nhật ký **cả việc xem lẫn việc sửa**
-- [ ] Bảng lương tính ra tiền phải trả — chờ chốt kỳ công (đợt 4)
+- [x] Bảng lương tính ra tiền phải trả — xem [Bảng kê lương](#bảng-kê-lương--đã-xong)
 - [ ] Xuất cho kế toán — chờ biết dùng phần mềm gì
 
 #### Không nằm trên bảng `users`

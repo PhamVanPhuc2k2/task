@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1\Reports;
 use App\Domain\Identity\Models\User;
 use App\Domain\Report\Actions\SaveDailyReportAction;
 use App\Domain\Task\Models\Task;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsDailyReports;
 use App\Http\Requests\Report\SaveDailyReportRequest;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class SaveDailyReportController
 {
+    use GuardsClosedPeriods;
     use PresentsDailyReports;
 
     public function __invoke(
@@ -36,6 +38,11 @@ final class SaveDailyReportController
 
         /** @var list<string> $uuids */
         $uuids = $request->array('task_ids');
+
+        // Kỳ đã chốt thì báo cáo của nó cũng đóng: đối chiếu giờ công với báo
+        // cáo là một trong những căn cứ người quản lý dùng khi chốt sổ, nên sửa
+        // báo cáo sau khi chốt là đổi căn cứ sau khi đã quyết định.
+        $this->guardPeriodOpen((string) $request->string('report_date'), 'report_date');
 
         $baoCao = $action->execute(
             nguoiViet: $actor,

@@ -56,6 +56,30 @@ export function Pill({
 }
 
 /**
+ * Trạng thái của một đơn có người duyệt, và màu của nó.
+ *
+ * Ở `components/ui` chứ không ở một feature nào: đơn nghỉ, đơn đi muộn và đơn
+ * giải trình công đi qua đúng một vòng đời, nên "đang chờ" phải có CÙNG MỘT MÀU
+ * ở cả ba chỗ. Mỗi feature giữ một bảng riêng là ba bảng sẽ lệch nhau ở lần đổi
+ * màu đầu tiên — và người dùng phải đọc chữ mới hiểu, đúng thứ màu sinh ra để
+ * khỏi phải làm.
+ *
+ * Khai lại bốn trạng thái tại chỗ thay vì import kiểu từ feature: luật
+ * no-restricted-imports cấm `components/ui` biết tới feature, và đây là bảng
+ * MÀU nên nó chỉ cần biết bốn cái tên.
+ */
+export type RequestStatusValue =
+  "pending" | "approved" | "rejected" | "cancelled";
+
+/** Chờ duyệt là thứ DUY NHẤT cần ai đó nhìn tới. */
+export const REQUEST_STATUS_TONE: Record<RequestStatusValue, string> = {
+  pending: "border-notice-line bg-notice-surface text-notice",
+  approved: "border-tone-line bg-tone-surface text-tone-ink",
+  rejected: "border-danger-line bg-danger-surface text-danger",
+  cancelled: "border-line bg-paper-sunken text-ink-faint",
+};
+
+/**
  * Avatar chữ. Đợt 1 chưa có ảnh đại diện nên dùng chữ cái đầu của tên.
  *
  * Màu nền lấy từ chính cái tên, không phải ngẫu nhiên: cùng một người luôn ra

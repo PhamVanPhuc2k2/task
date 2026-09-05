@@ -10,7 +10,10 @@ import {
   useMyAttendance,
   useTeamAttendance,
 } from "@/features/attendance/api/attendance-api";
+import { AdjustmentPanel } from "@/features/attendance/components/adjustment-panel";
 import { DayTimeline } from "@/features/attendance/components/day-timeline";
+import { OvertimePanel } from "@/features/attendance/components/overtime-panel";
+import { PeriodPanel } from "@/features/attendance/components/period-panel";
 import { ReviewDialog } from "@/features/attendance/components/review-dialog";
 import {
   formatMinutes,
@@ -37,6 +40,24 @@ export default function AttendancePage() {
   const [thang, setThang] = useState(() => thangHienTai());
 
   /*
+  | Ba việc, một trang.
+  |
+  | Bảng công, giải trình và chốt sổ đều xoay quanh cùng một con số giờ, do
+  | cùng những người mở ra xem. Tách thành ba mục điều hướng thì thanh bên dài
+  | thêm cho những thứ người ta tìm ở cùng chỗ — cùng lý do đã ghi ở trang Nghỉ
+  | phép cho cặp nghỉ phép / đi muộn.
+  */
+  const [mucXem, setMucXem] = useState<MucXem>("cong");
+
+  /*
+  | Ngày điền sẵn khi người dùng bấm "Giải trình ngày này" trong hộp thoại chi
+  | tiết. Đây là đường vào tự nhiên nhất của module: người ta phát hiện ra ngày
+  | công sai lúc đang NHÌN vào ô đó, chứ không phải lúc mở một tab trống rồi
+  | ngồi nhớ lại hôm ấy là ngày mấy.
+  */
+  const [giaiTrinhNgay, setGiaiTrinhNgay] = useState("");
+
+  /*
   | Hai cách xem, hai câu hỏi khác nhau.
   |
   | Lưới tháng: "tháng này ai làm bao nhiêu giờ". Dòng thời gian: "hôm nay ai
@@ -55,6 +76,18 @@ export default function AttendancePage() {
   const xemDoi =
     user?.permissions.some(
       (p) => p === "attendance.view.team" || p === "attendance.view.all",
+    ) === true;
+
+  // Xem được đội là một chuyện, quyết định được ngày công là chuyện khác. Hộp
+  // duyệt đơn giải trình chỉ hiện cho người làm được cả hai — hiện cho người
+  // chỉ xem được thì mọi nút trong đó đều dẫn tới 403.
+  const duyetCongDuoc =
+    user?.permissions.some((p) => p === "attendance.review") === true;
+
+  const chotSoDuoc =
+    user?.permissions.some(
+      (p) =>
+        p === "attendance.period.close" || p === "attendance.period.reopen",
     ) === true;
 
   const cuaToi = useMyAttendance(thang);
@@ -78,169 +111,192 @@ export default function AttendancePage() {
           </p>
         </div>
 
-        <ChonThang value={thang} onChange={setThang} />
+        {mucXem === "cong" && <ChonThang value={thang} onChange={setThang} />}
       </header>
 
-      {/* ── Của tôi ─────────────────────────────────── */}
-      <section className="tone-card rounded-2xl p-5">
-        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-          <h2 className="text-[0.95rem] font-semibold tracking-tight">
-            Giờ làm của tôi
-          </h2>
+      <ChonMuc mucXem={mucXem} onChange={setMucXem} chotSoDuoc={chotSoDuoc} />
 
-          {cuaToi.data && (
-            <p className="text-ink-soft text-[0.85rem] tabular-nums">
-              <strong className="text-ink font-semibold">
-                {formatMinutes(cuaToi.data.total_minutes)}
-              </strong>{" "}
-              trong {cuaToi.data.days_worked} ngày
-            </p>
-          )}
-        </div>
+      {mucXem === "cong" && (
+        <>
+          {/* ── Của tôi ─────────────────────────────────── */}
+          <section className="tone-card rounded-2xl p-5">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+              <h2 className="text-[0.95rem] font-semibold tracking-tight">
+                Giờ làm của tôi
+              </h2>
 
-        {/* Nói thẳng ra thay vì để người dùng tự dò ba mươi ô. Đặt ở màn của
+              {cuaToi.data && (
+                <p className="text-ink-soft text-[0.85rem] tabular-nums">
+                  <strong className="text-ink font-semibold">
+                    {formatMinutes(cuaToi.data.total_minutes)}
+                  </strong>{" "}
+                  trong {cuaToi.data.days_worked} ngày
+                </p>
+              )}
+            </div>
+
+            {/* Nói thẳng ra thay vì để người dùng tự dò ba mươi ô. Đặt ở màn của
             chính mình trước màn của quản lý là có chủ ý: tự thấy rồi tự bù thì
             không cần ai hỏi tới. */}
-        {cuaToi.data !== undefined && cuaToi.data.missing_report_days > 0 && (
-          <p className="border-notice-line bg-notice-surface text-notice mb-4 rounded-xl border px-3 py-2 text-[0.84rem]">
-            Có <strong>{cuaToi.data.missing_report_days} ngày</strong> bạn có
-            giờ làm nhưng chưa nộp báo cáo. Bấm vào ô có chấm để xem ngày nào.
-          </p>
-        )}
+            {cuaToi.data !== undefined &&
+              cuaToi.data.missing_report_days > 0 && (
+                <p className="border-notice-line bg-notice-surface text-notice mb-4 rounded-xl border px-3 py-2 text-[0.84rem]">
+                  Có <strong>{cuaToi.data.missing_report_days} ngày</strong> bạn
+                  có giờ làm nhưng chưa nộp báo cáo. Bấm vào ô có chấm để xem
+                  ngày nào.
+                </p>
+              )}
 
-        {cuaToi.isPending && <Skeleton className="h-24" />}
+            {cuaToi.isPending && <Skeleton className="h-24" />}
 
-        {cuaToi.isError && (
-          <ErrorState
-            error={cuaToi.error}
-            onRetry={() => void cuaToi.refetch()}
-          />
-        )}
+            {cuaToi.isError && (
+              <ErrorState
+                error={cuaToi.error}
+                onRetry={() => void cuaToi.refetch()}
+              />
+            )}
 
-        {cuaToi.data && (
-          <>
-            <TomTat data={cuaToi.data} />
+            {cuaToi.data && (
+              <>
+                <TomTat data={cuaToi.data} />
 
-            <LichThang
-              days={cuaToi.data.days}
-              holidays={cuaToi.data.holidays}
-              cells={cuaToi.data.cells}
-              onPick={(date, cell) =>
-                user &&
-                setDangMo({
-                  userId: user.id,
-                  userName: user.name,
-                  date,
-                  cell,
-                })
-              }
-            />
-          </>
-        )}
-      </section>
+                <LichThang
+                  days={cuaToi.data.days}
+                  holidays={cuaToi.data.holidays}
+                  cells={cuaToi.data.cells}
+                  onPick={(date, cell) =>
+                    user &&
+                    setDangMo({
+                      userId: user.id,
+                      userName: user.name,
+                      date,
+                      cell,
+                    })
+                  }
+                />
+              </>
+            )}
+          </section>
 
-      {/* ── Của đội ─────────────────────────────────── */}
-      {xemDoi && (
-        <section className="tone-card rounded-2xl p-5">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-[0.95rem] font-semibold tracking-tight">
-              {cheDo === "thang" ? "Bảng công của đội" : "Hôm nay của đội"}
-            </h2>
+          {/* ── Của đội ─────────────────────────────────── */}
+          {xemDoi && (
+            <section className="tone-card rounded-2xl p-5">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-[0.95rem] font-semibold tracking-tight">
+                  {cheDo === "thang" ? "Bảng công của đội" : "Hôm nay của đội"}
+                </h2>
 
-            {/*
+                {/*
               Hai màn trả lời hai câu khác nhau, không phải hai cách hiển thị
               cùng một thứ: lưới tháng nói "ai làm bao nhiêu giờ", dòng thời
               gian nói "hôm nay ai đang làm và khoảng nào ngồi không".
             */}
-            <div
-              role="radiogroup"
-              aria-label="Cách xem"
-              className="border-line bg-paper-sunken inline-flex gap-0.5 rounded-xl border p-0.5"
-            >
-              {(
-                [
-                  ["thang", "Lưới tháng"],
-                  ["ngay", "Dòng thời gian"],
-                ] as const
-              ).map(([v, nhan]) => (
-                <button
-                  key={v}
-                  type="button"
-                  role="radio"
-                  aria-checked={cheDo === v}
-                  onClick={() => setCheDo(v)}
-                  className={cn(
-                    "focus-frame rounded-lg px-3 py-1.5 text-[0.82rem] font-medium transition-colors",
-                    cheDo === v
-                      ? "bg-paper-raised text-ink shadow-card"
-                      : "text-ink-faint hover:text-ink-soft",
-                  )}
+                <div
+                  role="radiogroup"
+                  aria-label="Cách xem"
+                  className="border-line bg-paper-sunken inline-flex gap-0.5 rounded-xl border p-0.5"
                 >
-                  {nhan}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {cheDo === "ngay" && (
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <label
-                  htmlFor="ngay-dong-thoi-gian"
-                  className="text-ink-soft text-[0.84rem] font-medium"
-                >
-                  Ngày
-                </label>
-                <input
-                  id="ngay-dong-thoi-gian"
-                  type="date"
-                  value={ngayXem}
-                  onChange={(e) => setNgayXem(e.target.value)}
-                  className="focus-frame border-line bg-paper-raised rounded-lg border px-2.5 py-1.5 text-[0.84rem]"
-                />
+                  {(
+                    [
+                      ["thang", "Lưới tháng"],
+                      ["ngay", "Dòng thời gian"],
+                    ] as const
+                  ).map(([v, nhan]) => (
+                    <button
+                      key={v}
+                      type="button"
+                      role="radio"
+                      aria-checked={cheDo === v}
+                      onClick={() => setCheDo(v)}
+                      className={cn(
+                        "focus-frame rounded-lg px-3 py-1.5 text-[0.82rem] font-medium transition-colors",
+                        cheDo === v
+                          ? "bg-paper-raised text-ink shadow-card"
+                          : "text-ink-faint hover:text-ink-soft",
+                      )}
+                    >
+                      {nhan}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {dongThoiGian.isPending && <Skeleton className="h-48" />}
+              {cheDo === "ngay" && (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <label
+                      htmlFor="ngay-dong-thoi-gian"
+                      className="text-ink-soft text-[0.84rem] font-medium"
+                    >
+                      Ngày
+                    </label>
+                    <input
+                      id="ngay-dong-thoi-gian"
+                      type="date"
+                      value={ngayXem}
+                      onChange={(e) => setNgayXem(e.target.value)}
+                      className="focus-frame border-line bg-paper-raised rounded-lg border px-2.5 py-1.5 text-[0.84rem]"
+                    />
+                  </div>
 
-              {dongThoiGian.isError && (
+                  {dongThoiGian.isPending && <Skeleton className="h-48" />}
+
+                  {dongThoiGian.isError && (
+                    <ErrorState
+                      error={dongThoiGian.error}
+                      onRetry={() => void dongThoiGian.refetch()}
+                    />
+                  )}
+
+                  {dongThoiGian.data && (
+                    <DayTimeline data={dongThoiGian.data} />
+                  )}
+                </div>
+              )}
+
+              {cheDo === "thang" && cuaDoi.isPending && (
+                <Skeleton className="h-48" />
+              )}
+
+              {cheDo === "thang" && cuaDoi.isError && (
                 <ErrorState
-                  error={dongThoiGian.error}
-                  onRetry={() => void dongThoiGian.refetch()}
+                  error={cuaDoi.error}
+                  onRetry={() => void cuaDoi.refetch()}
                 />
               )}
 
-              {dongThoiGian.data && <DayTimeline data={dongThoiGian.data} />}
-            </div>
+              {cheDo === "thang" && cuaDoi.data && (
+                <BangDoi
+                  rows={cuaDoi.data.rows}
+                  days={cuaDoi.data.days}
+                  holidays={cuaDoi.data.holidays}
+                  onPick={(row, date) =>
+                    setDangMo({
+                      userId: row.user.id,
+                      userName: row.user.name,
+                      date,
+                      cell: row.cells[date],
+                    })
+                  }
+                />
+              )}
+            </section>
           )}
-
-          {cheDo === "thang" && cuaDoi.isPending && (
-            <Skeleton className="h-48" />
-          )}
-
-          {cheDo === "thang" && cuaDoi.isError && (
-            <ErrorState
-              error={cuaDoi.error}
-              onRetry={() => void cuaDoi.refetch()}
-            />
-          )}
-
-          {cheDo === "thang" && cuaDoi.data && (
-            <BangDoi
-              rows={cuaDoi.data.rows}
-              days={cuaDoi.data.days}
-              holidays={cuaDoi.data.holidays}
-              onPick={(row, date) =>
-                setDangMo({
-                  userId: row.user.id,
-                  userName: row.user.name,
-                  date,
-                  cell: row.cells[date],
-                })
-              }
-            />
-          )}
-        </section>
+        </>
       )}
+
+      {mucXem === "giaitrinh" && (
+        <AdjustmentPanel
+          canReview={xemDoi && duyetCongDuoc}
+          initialDate={giaiTrinhNgay}
+        />
+      )}
+
+      {mucXem === "lamthem" && (
+        <OvertimePanel canReview={xemDoi && duyetCongDuoc} />
+      )}
+
+      {mucXem === "chotso" && <PeriodPanel enabled={chotSoDuoc} />}
 
       {dangMo && (
         <ReviewDialog
@@ -254,8 +310,76 @@ export default function AttendancePage() {
           canReview={
             (cuaDoi.data?.can_review ?? false) && dangMo.userId !== user?.id
           }
+          /*
+          | Chỉ ngày CỦA CHÍNH MÌNH mới giải trình được — đơn giải trình là một
+          | lời khai, người khác khai hộ thì chữ ký nằm sai chỗ. Backend cũng
+          | chặn; đây chỉ là để nút không hiện ra rồi bấm vào ăn lỗi.
+          */
+          onExplain={
+            dangMo.userId === user?.id
+              ? () => {
+                  setGiaiTrinhNgay(dangMo.date);
+                  setMucXem("giaitrinh");
+                  setDangMo(null);
+                }
+              : undefined
+          }
         />
       )}
+    </div>
+  );
+}
+
+type MucXem = "cong" | "giaitrinh" | "lamthem" | "chotso";
+
+/**
+ * Bộ chọn ba chế độ, cùng khuôn với trang Nghỉ phép.
+ *
+ * "Chốt sổ" chỉ hiện cho người chốt hoặc mở khoá được. Hiện cho mọi người rồi
+ * để họ bấm vào ăn 403 là dạy người dùng rằng lỗi đỏ là chuyện bình thường.
+ *
+ * Ba mục còn lại thì ai cũng thấy: bảng công, giải trình và làm thêm giờ đều có
+ * phần "của tôi" mà mọi nhân viên đều dùng tới.
+ */
+function ChonMuc({
+  mucXem,
+  onChange,
+  chotSoDuoc,
+}: {
+  mucXem: MucXem;
+  onChange: (v: MucXem) => void;
+  chotSoDuoc: boolean;
+}) {
+  const muc: { v: MucXem; nhan: string }[] = [
+    { v: "cong", nhan: "Bảng công" },
+    { v: "giaitrinh", nhan: "Giải trình" },
+    { v: "lamthem", nhan: "Làm thêm" },
+    ...(chotSoDuoc ? [{ v: "chotso" as const, nhan: "Chốt sổ" }] : []),
+  ];
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Chế độ xem"
+      className="border-line bg-paper-sunken inline-flex gap-0.5 rounded-xl border p-0.5"
+    >
+      {muc.map((m) => (
+        <button
+          key={m.v}
+          type="button"
+          role="radio"
+          aria-checked={mucXem === m.v}
+          onClick={() => onChange(m.v)}
+          className={cn(
+            "focus-frame rounded-lg px-4 py-1.5 text-[0.86rem] font-medium transition-colors",
+            mucXem === m.v
+              ? "bg-paper-raised text-ink shadow-card"
+              : "text-ink-faint hover:text-ink-soft",
+          )}
+        >
+          {m.nhan}
+        </button>
+      ))}
     </div>
   );
 }

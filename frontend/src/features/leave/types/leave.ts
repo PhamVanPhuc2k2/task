@@ -1,5 +1,7 @@
 /** Khớp với App\Http\Controllers\Api\V1\Leave. */
 
+import { REQUEST_STATUS_TONE } from "@/components/ui/pill";
+
 export type LeaveStatusValue =
   "pending" | "approved" | "rejected" | "cancelled";
 
@@ -50,10 +52,12 @@ export interface TeamLeave {
   can_approve: boolean;
 }
 
-/** Màu của từng trạng thái. Chờ duyệt là thứ DUY NHẤT cần ai đó nhìn tới. */
-export const LEAVE_STATUS_TONE: Record<LeaveStatusValue, string> = {
-  pending: "border-notice-line bg-notice-surface text-notice",
-  approved: "border-tone-line bg-tone-surface text-tone-ink",
-  rejected: "border-danger-line bg-danger-surface text-danger",
-  cancelled: "border-line bg-paper-sunken text-ink-faint",
-};
+/**
+ * Màu của từng trạng thái.
+ *
+ * Bí danh của bảng dùng chung ở `components/ui/pill`. Đơn nghỉ, đơn đi muộn và
+ * đơn giải trình công cùng một vòng đời, nên "đang chờ" phải cùng một màu ở cả
+ * ba chỗ — giữ ba bảng riêng là ba bảng sẽ lệch nhau.
+ */
+export const LEAVE_STATUS_TONE: Record<LeaveStatusValue, string> =
+  REQUEST_STATUS_TONE;

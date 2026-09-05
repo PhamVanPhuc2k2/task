@@ -43,6 +43,16 @@ enum Permission: string
      */
     case ReviewAttendance = 'attendance.review';
 
+    /*
+     * Chốt sổ và mở khoá là HAI quyền, không phải một.
+     *
+     * Chốt là việc hành chính cuối kỳ. Mở khoá là việc đổi số liệu đã dùng để
+     * trả lương — mức trách nhiệm khác hẳn, nên công ty chốt: giám đốc và admin
+     * chốt được, nhưng chỉ giám đốc mở khoá được.
+     */
+    case ClosePeriod = 'attendance.period.close';
+    case ReopenPeriod = 'attendance.period.reopen';
+
     // ── Nghỉ phép ────────────────────────────────────
     /**
      * Nộp đơn và xem đơn của CHÍNH MÌNH không cần quyền nào — cùng khuôn với
@@ -57,6 +67,19 @@ enum Permission: string
     case ViewTeamLeave = 'leave.view.team';
     case ViewAllLeave = 'leave.view.all';
     case ApproveLeave = 'leave.approve';
+
+    /**
+     * Sửa quỹ phép năm của người khác: chuyển phép tồn, thưởng thêm, ghi đè.
+     *
+     * Quyền RIÊNG, cố ý không gộp vào `leave.approve`. Duyệt một đơn nghỉ là
+     * quyết định về MỘT lần vắng mặt; sửa quỹ phép là quyết định về cả năm, và
+     * phép chưa nghỉ hết phải được thanh toán khi thôi việc (Điều 113 khoản 4
+     * Bộ luật Lao động 2019) — tức là nó ra tiền.
+     *
+     * Trưởng phòng duyệt đơn nghỉ cho phòng mình là bình thường. Trưởng phòng
+     * tự cộng thêm ngày phép cho phòng mình thì không.
+     */
+    case ManageLeaveBalance = 'leave.balance.manage';
 
     // ── Báo cáo ngày ─────────────────────────────────
     /**
@@ -127,9 +150,12 @@ enum Permission: string
             self::ViewTeamAttendance => 'Xem giờ làm của phòng ban mình quản lý',
             self::ViewAllAttendance => 'Xem giờ làm toàn công ty',
             self::ReviewAttendance => 'Ghi nhận và bỏ qua ngày công',
+            self::ClosePeriod => 'Chốt sổ kỳ công',
+            self::ReopenPeriod => 'Mở khoá kỳ công đã chốt',
             self::ViewTeamLeave => 'Xem đơn nghỉ của phòng ban mình quản lý',
             self::ViewAllLeave => 'Xem đơn nghỉ toàn công ty',
             self::ApproveLeave => 'Duyệt đơn nghỉ',
+            self::ManageLeaveBalance => 'Sửa quỹ phép năm',
             self::ViewTeamReports => 'Xem báo cáo ngày của phòng ban mình quản lý',
             self::ReviewReports => 'Duyệt và hỏi lại báo cáo ngày',
             self::ViewOwnSalary => 'Xem mức lương của chính mình',

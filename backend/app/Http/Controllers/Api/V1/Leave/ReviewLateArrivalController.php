@@ -9,6 +9,7 @@ use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\ReviewLateArrivalAction;
 use App\Domain\Leave\Models\LateArrivalRequest;
 use App\Domain\Leave\Notifications\LateArrivalReviewedNotification;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsLateArrivals;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class ReviewLateArrivalController
 {
+    use GuardsClosedPeriods;
     use PresentsLateArrivals;
 
     public function __invoke(
@@ -62,6 +64,8 @@ final class ReviewLateArrivalController
             'note.required' => 'Từ chối thì phải ghi lý do — người nộp cần biết vì sao.',
             'note.min' => 'Lý do quá ngắn để người khác hiểu được.',
         ]);
+
+        $this->guardPeriodOpen($lateArrival->date);
 
         $moi = $action->execute(
             $lateArrival,

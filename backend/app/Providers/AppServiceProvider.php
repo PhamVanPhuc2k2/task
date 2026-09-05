@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Attendance\Support\CompanyWorkCalendar;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
+use App\Support\Contracts\WorkCalendar;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +24,20 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        /*
+        | Ghép câu hỏi "khoảng này có bao nhiêu ngày công" với bản cài đặt của nó.
+        |
+        | Quỹ phép năm ở miền Leave cần câu trả lời, nhưng nó chỉ tính được bằng
+        | lịch tuần và bảng ngày lễ — cả hai thuộc miền Attendance, mà luật tầng
+        | cấm Leave gọi thẳng sang. Giao diện khai ở tầng Support để cả hai miền
+        | với tới được, và chỗ ghép là đây: Providers là tầng duy nhất được phép
+        | biết cả hai đầu.
+        |
+        | Singleton chứ không `bind`: bản cài đặt nhớ danh sách ngày lễ theo năm
+        | trong bộ nhớ, và một người có mười đơn nghỉ sẽ hỏi mười lần trong cùng
+        | một request. Dựng lại mỗi lần là mười câu SQL cho cùng một danh sách.
+        */
+        $this->app->singleton(WorkCalendar::class, CompanyWorkCalendar::class);
     }
 
     public function boot(): void

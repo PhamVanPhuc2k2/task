@@ -78,10 +78,15 @@ const MIEN_KHAI_QUYEN = [
     // đúng điều đó — xem bên dưới.
     'V1/Attendance/MyAttendanceController.php' => 'Giờ làm của chính mình.',
     'V1/Attendance/HeartbeatController.php' => 'Ghi nhịp tim cho chính mình.',
+    'V1/Attendance/MyAdjustmentController.php' => 'Đơn giải trình công của chính mình.',
+    'V1/Attendance/SubmitAdjustmentController.php' => 'Giải trình ngày công của chính mình; đây là một lời khai, không khai hộ được.',
+    'V1/Attendance/MyOvertimeController.php' => 'Đăng ký làm thêm giờ của chính mình.',
+    'V1/Attendance/SubmitOvertimeController.php' => 'Đăng ký làm thêm cho chính mình; chữ ký nằm ở người sẽ ở lại làm.',
     'V1/Reports/MyReportsController.php' => 'Báo cáo ngày của chính mình.',
     'V1/Reports/SaveDailyReportController.php' => 'Lưu báo cáo của chính mình.',
     'V1/Tasks/MyTasksController.php' => 'Việc được giao cho chính mình.',
     'V1/Leave/MyLeaveController.php' => 'Đơn nghỉ của chính mình.',
+    'V1/Leave/MyLeaveBalanceController.php' => 'Quỹ phép năm của chính mình.',
     'V1/Leave/SubmitLeaveController.php' => 'Nộp đơn nghỉ cho chính mình; không nộp hộ được.',
     'V1/Leave/MyLateArrivalController.php' => 'Đơn xin đi muộn của chính mình.',
     'V1/Leave/SubmitLateArrivalController.php' => 'Nộp đơn đi muộn cho chính mình; không nộp hộ được.',
@@ -93,6 +98,7 @@ const MIEN_KHAI_QUYEN = [
     // thấy bộ lọc rỗng mà không hiểu vì sao.
     'V1/Organization/DepartmentController.php' => 'Danh mục phòng ban, chỉ đọc.',
     'V1/Organization/PositionController.php' => 'Danh mục chức vụ, chỉ đọc.',
+    'V1/Attendance/OvertimePreviewController.php' => 'Hệ số làm thêm của một ngày — chính sách công ty, không phải dữ liệu của ai.',
 ];
 
 /** Dấu hiệu cho thấy controller có kiểm quyền. */
