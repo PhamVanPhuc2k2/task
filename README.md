@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**822 test xanh** (5143 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**848 test xanh** (5244 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-27 model · 33 migration · 49 bảng · 102 endpoint API · 30 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+28 model · 34 migration · 50 bảng · 105 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3088,7 +3088,7 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 
 ### Đợt 4 — Phần còn lại: quỹ phép, OT, chốt kỳ công
 
-- [ ] `leave_balances` — quỹ phép năm, phép tồn năm trước, phép ứng trước
+- [x] **Quỹ phép năm** (`leave_balances`) — theo Điều 113 và 114, phép tồn năm trước. Xem [Quỹ phép năm](#quỹ-phép-năm--đã-xong)
 - [ ] `overtime_requests` — đăng ký OT, duyệt trước mới được tính
 - [ ] Hệ số OT theo luật: ngày thường 150%, ngày nghỉ 200%, ngày lễ 300%
 - [x] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Xem [Đơn giải trình công](#đơn-giải-trình-công--đã-xong)
@@ -3234,6 +3234,68 @@ Hộp duyệt chỉ hiện cho người **vừa xem được đội vừa có `a
 `LEAVE_STATUS_TONE` từng là bảng màu riêng của miền nghỉ phép. Đơn giải trình là loại đơn **thứ ba** đi qua đúng bốn trạng thái ấy, và ba bảng màu riêng sẽ lệch nhau ở lần đổi màu đầu tiên — lúc đó "đang chờ" có hai màu ở hai màn, và người dùng phải đọc chữ mới hiểu, đúng thứ mà màu sinh ra để khỏi phải làm.
 
 Đã chuyển thành `REQUEST_STATUS_TONE` ở `components/ui/pill`, khai lại bốn tên trạng thái tại chỗ thay vì import kiểu từ feature — luật `no-restricted-imports` cấm `components/ui` biết tới feature, và đây là bảng *màu* nên nó chỉ cần biết bốn cái tên. `LEAVE_STATUS_TONE` giữ nguyên làm bí danh nên không chỗ gọi nào phải sửa.
+
+#### Quỹ phép năm ✅ Đã xong
+
+Trước phần này, `LeaveType::Annual` chỉ là **một cái nhãn**: nó không trừ vào quỹ nào, và một người nộp ba mươi ngày phép năm cũng chẳng có gì chặn. Nhãn tồn tại từ đợt 1 chỉ để người duyệt biết mình đang duyệt cái gì.
+
+##### Số ngày được hưởng bám mức sàn của luật, nhưng đổi được
+
+| Nguồn | Quy tắc | Mặc định |
+|---|---|---|
+| Điều 113 BLLĐ 2019 | Ngày phép cơ bản mỗi năm | 12 |
+| Điều 114 | Cứ đủ N năm thâm niên thì thêm 1 ngày | 5 năm → +1 |
+| NĐ 145/2020 Điều 66 | Chưa làm đủ năm thì chia theo tỷ lệ tháng | — |
+
+Cả ba con số nằm trong **Cài đặt**, không viết cứng. Công ty hào phóng hơn luật là chuyện bình thường; viết cứng thì lần đầu đổi chính sách là một lần phải deploy.
+
+Một tháng được tính khi người đó đi làm **ít nhất nửa số ngày** của tháng ấy. Đếm tháng tròn thì người vào làm 02/03 và người vào làm 30/03 ra cùng một con số; đếm mọi tháng có chạm tới thì vào làm 31/03 cũng được trọn tháng 3. Ngưỡng nửa tháng gần với quy tắc 14 ngày công của BHXH, và quan trọng hơn: giải thích được cho người lao động bằng một câu.
+
+##### Đã dùng thì đếm NGÀY CÔNG, không đếm ngày lịch
+
+Đây là điểm quyết định của cả tính năng. Nghỉ từ thứ sáu tới thứ hai phủ **4 ngày lịch** nhưng chỉ tiêu **2,5 ngày phép** — thứ bảy nửa buổi, chủ nhật không tính. Nghỉ trùng ngày lễ không tiêu ngày phép nào, đúng như luật.
+
+Đếm ngày lịch thì một tuần nghỉ ăn 7 ngày trong quỹ 12 ngày, và quỹ phép năm thành một con số vô nghĩa.
+
+`LeaveRequest::dayCount()` vẫn đếm ngày lịch và vẫn đúng cho việc nó làm — hiển thị *"nghỉ 4 ngày"*. Hai con số khác nhau vì trả lời hai câu khác nhau; chú thích ở đó đã nói trước rằng ngày đổi sang đếm ngày công là ngày có quỹ phép để trừ vào.
+
+##### Một giao diện ở tầng Support, vì luật tầng cấm gọi thẳng
+
+Quỹ phép ở miền Leave, nhưng *"khoảng này có bao nhiêu ngày công"* chỉ trả lời được bằng lịch tuần và bảng ngày lễ — cả hai thuộc miền Attendance, mà Leave không được gọi sang.
+
+Nên câu hỏi khai ở `App\Support\Contracts\WorkingDays` (tầng dưới cùng, cả hai miền với tới được), câu trả lời do `CalendarWorkingDays` ở Attendance cài đặt, và `AppServiceProvider` ghép hai đầu — Providers là tầng duy nhất được phép biết cả hai. Đăng ký **singleton** vì bản cài đặt nhớ danh sách ngày lễ theo năm: một người có mười đơn nghỉ sẽ hỏi mười lần trong cùng một request.
+
+##### Bảng thưa: không có dòng nghĩa là "để hệ thống tự tính"
+
+`leave_balances` chỉ ghi những gì **con người quyết định** — chuyển phép tồn, thưởng thêm ngày, ghi đè hẳn con số. Sinh sẵn một dòng cho mỗi người mỗi năm là một bảng vài nghìn dòng mà 95% chỉ chép lại phép tính, cần một job chạy đầu năm, và một năm thiếu dòng vì job không chạy sẽ bị đọc thành *"người này không có ngày phép nào"*.
+
+Đặt tất cả về 0 thì **xoá dòng**. Một dòng toàn số 0 làm màn hình hiện "đã điều chỉnh" cho người chưa ai đụng vào, và nhân sự không có cách nào gỡ nhãn đó ra.
+
+`entitled_days_override` tách khỏi `adjustment_days` vì hai ý định khác nhau: ghi đè là *"đừng tính nữa, số đúng là 15"*; điều chỉnh là *"số tính ra đúng rồi, cộng thêm 2"* — nó cộng dồn lên phép tính nên năm sau thâm niên tăng thì vẫn tăng theo. Gộp một cột thì mọi người từng được thưởng ngày phép sẽ kẹt cứng ở con số của năm đó.
+
+Không lưu `used_days`: nó suy từ `leave_requests`, nguồn sự thật duy nhất. Lưu thêm một bản sao là mở đường cho hai con số lệch nhau sau lần đầu ai đó rút đơn — và bản sao thì không có gì báo khi nó sai.
+
+##### Vượt quỹ thì chặn, và câu lỗi chỉ đường
+
+> Quỹ phép năm 2026 chỉ còn 1 ngày, mà đơn này cần 2,5 ngày. **Nghỉ thêm thì nộp đơn nghỉ không lương.**
+
+*"Bạn đã hết phép năm"* là câu cụt: người ta vẫn cần nghỉ, và việc phải làm là nộp lại dưới dạng nghỉ không lương. Không nói ra thì họ đi hỏi nhân sự, mà nhân sự cũng chỉ trả lời đúng câu đó.
+
+Đơn vắt qua giao thừa kiểm quỹ của **cả hai năm**, mỗi năm phần của nó — cùng cách đã áp cho hạn mức nghỉ không lương.
+
+##### Sửa quỹ là quyền RIÊNG
+
+`leave.balance.manage`, **không** phải `leave.approve`. Duyệt một đơn nghỉ là quyết định về một lần vắng mặt; cộng thêm ngày phép là quyết định về cả năm — và phép chưa nghỉ hết phải được thanh toán khi thôi việc (Điều 113 khoản 4), tức là **nó ra tiền**.
+
+Trưởng phòng duyệt đơn nghỉ cho phòng mình là bình thường. Trưởng phòng tự cộng ngày phép cho phòng mình thì không. Quyền thuộc giám đốc và quản trị viên.
+
+Mọi lần sửa vào `payroll_audits` kèm **giá trị cũ lẫn mới** — cùng chỗ với đổi mức lương và chốt sổ kỳ công, cùng một họ: hành vi quyết định số tiền công ty phải trả.
+
+##### Hai thứ lộ ra khi làm
+
+**`CarbonImmutable::create()` khai kiểu trả về là `static|null`** vì nó nhận cả những tổ hợp không tồn tại (ngày 31 tháng 2). Larastan mức 8 bắt đúng bốn chỗ. Đã bọc thành một hàm trả về kiểu chắc chắn thay vì rải `?->` — `?->` sẽ biến một lỗi lập trình thành một con số 0 im lặng.
+
+**Ngày phép là số thực, và đó là ngoại lệ có chủ ý.** Quy ước của dự án là cast tiền sang `decimal` để không bao giờ cộng trên số thực. Ngày phép không phải tiền: mọi giá trị đều là bội của 0,5, mà 0,5 biểu diễn chính xác được bằng số thực nhị phân. Cast sang `decimal` cho ra chuỗi, và cộng chuỗi thì mỗi chỗ dùng lại phải tự ép kiểu — đó mới là chỗ sinh lỗi.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 

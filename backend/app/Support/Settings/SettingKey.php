@@ -62,6 +62,14 @@ enum SettingKey: string
     case EarlyLeaveMaxPerMonth = 'early_leave_max_per_month';
     case EarlyLeaveGraceMinutes = 'early_leave_grace_minutes';
 
+    // ── Quỹ phép năm ─────────────────────────────────────────────────────
+    // Mặc định bám mức sàn Bộ luật Lao động 2019 (Điều 113, 114). Công ty hào
+    // phóng hơn thì đổi ở màn Cài đặt, không sửa mã.
+    case LeaveAnnualBaseDays = 'leave_annual_base_days';
+    case LeaveAnnualSeniorityStep = 'leave_annual_seniority_step';
+    case LeaveAnnualSeniorityExtra = 'leave_annual_seniority_extra';
+    case LeaveCarryOverMaxDays = 'leave_carry_over_max_days';
+
     /** Đường dẫn trong `Config`, hoặc `null` nếu khoá này không đi qua config. */
     public function configPath(): ?string
     {
@@ -92,6 +100,10 @@ enum SettingKey: string
             self::LateArrivalMaxPerMonth => 'leave.late_arrival_max_per_month',
             self::EarlyLeaveMaxPerMonth => 'leave.early_leave_max_per_month',
             self::EarlyLeaveGraceMinutes => 'leave.early_leave_grace_minutes',
+            self::LeaveAnnualBaseDays => 'leave.annual_base_days',
+            self::LeaveAnnualSeniorityStep => 'leave.annual_seniority_step_years',
+            self::LeaveAnnualSeniorityExtra => 'leave.annual_seniority_extra_days',
+            self::LeaveCarryOverMaxDays => 'leave.annual_carry_over_max_days',
         };
     }
 
@@ -109,7 +121,11 @@ enum SettingKey: string
             self::LeaveUnpaidMaxDaysYear,
             self::LateArrivalMaxPerMonth,
             self::EarlyLeaveMaxPerMonth,
-            self::EarlyLeaveGraceMinutes => SettingType::Integer,
+            self::EarlyLeaveGraceMinutes,
+            self::LeaveAnnualBaseDays,
+            self::LeaveAnnualSeniorityStep,
+            self::LeaveAnnualSeniorityExtra,
+            self::LeaveCarryOverMaxDays => SettingType::Integer,
 
             self::ReportReminderEnabled => SettingType::Boolean,
 
@@ -175,6 +191,11 @@ enum SettingKey: string
             self::LateArrivalMaxPerMonth => 'Số lần xin đi muộn tối đa mỗi tháng',
             self::EarlyLeaveMaxPerMonth => 'Số lần xin về sớm tối đa mỗi tháng',
             self::EarlyLeaveGraceMinutes => 'Về sớm bao nhiêu phút thì phải xin',
+
+            self::LeaveAnnualBaseDays => 'Số ngày phép năm cơ bản',
+            self::LeaveAnnualSeniorityStep => 'Cứ bao nhiêu năm thâm niên thì được thêm phép',
+            self::LeaveAnnualSeniorityExtra => 'Số ngày phép thêm cho mỗi mốc thâm niên',
+            self::LeaveCarryOverMaxDays => 'Trần phép tồn được chuyển sang năm sau',
         };
     }
 }

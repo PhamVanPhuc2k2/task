@@ -33,6 +33,15 @@ enum PayrollAuditEvent: string
     case PeriodClosed = 'period_closed';
     case PeriodReopened = 'period_reopened';
 
+    /**
+     * Sửa quỹ phép năm của một người.
+     *
+     * Cũng ở nhật ký PAYROLL, và vì đúng lý do đó: phép chưa nghỉ hết phải được
+     * thanh toán khi thôi việc (Điều 113 khoản 4), nên cộng thêm một ngày phép
+     * là cộng thêm một khoản tiền công ty có thể phải trả.
+     */
+    case LeaveBalanceChanged = 'leave_balance_changed';
+
     public function label(): string
     {
         return match ($this) {
@@ -41,6 +50,7 @@ enum PayrollAuditEvent: string
             self::SalaryChanged => 'Đặt mức lương mới',
             self::PeriodClosed => 'Chốt sổ kỳ công',
             self::PeriodReopened => 'Mở khoá kỳ công',
+            self::LeaveBalanceChanged => 'Sửa quỹ phép năm',
         };
     }
 }

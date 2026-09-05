@@ -93,6 +93,10 @@ enum Role: string
                 Permission::ViewTeamLeave,
                 Permission::ViewAllLeave,
                 Permission::ApproveLeave,
+                // Sửa quỹ phép năm KHÔNG cấp cho trưởng phòng: duyệt một đơn
+                // nghỉ là quyết định về một lần vắng mặt, cộng thêm ngày phép
+                // là quyết định ra tiền cho cả năm.
+                Permission::ManageLeaveBalance,
                 Permission::ViewOwnSalary,
                 Permission::ViewAllSalary,
                 Permission::ManageSalary,

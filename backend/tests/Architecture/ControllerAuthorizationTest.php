@@ -84,6 +84,7 @@ const MIEN_KHAI_QUYEN = [
     'V1/Reports/SaveDailyReportController.php' => 'Lưu báo cáo của chính mình.',
     'V1/Tasks/MyTasksController.php' => 'Việc được giao cho chính mình.',
     'V1/Leave/MyLeaveController.php' => 'Đơn nghỉ của chính mình.',
+    'V1/Leave/MyLeaveBalanceController.php' => 'Quỹ phép năm của chính mình.',
     'V1/Leave/SubmitLeaveController.php' => 'Nộp đơn nghỉ cho chính mình; không nộp hộ được.',
     'V1/Leave/MyLateArrivalController.php' => 'Đơn xin đi muộn của chính mình.',
     'V1/Leave/SubmitLateArrivalController.php' => 'Nộp đơn đi muộn cho chính mình; không nộp hộ được.',

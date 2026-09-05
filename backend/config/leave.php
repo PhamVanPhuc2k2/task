@@ -99,4 +99,49 @@ return [
     'early_leave_max_per_month' => (int) env('EARLY_LEAVE_MAX_PER_MONTH', 3),
     'early_leave_grace_minutes' => (int) env('EARLY_LEAVE_GRACE_MINUTES', 5),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Quỹ phép năm
+    |--------------------------------------------------------------------------
+    |
+    | Mặc định bám Bộ luật Lao động 2019:
+    |
+    |   - Điều 113: 12 ngày phép/năm với điều kiện làm việc bình thường, cho
+    |     người làm đủ 12 tháng. Chưa đủ thì tính theo tỷ lệ số tháng làm việc
+    |     (Nghị định 145/2020, Điều 66).
+    |
+    |   - Điều 114: cứ đủ 5 năm làm việc cho cùng một người sử dụng lao động
+    |     thì được thêm 1 ngày.
+    |
+    | Ba con số dưới đây là MỨC SÀN theo luật, không phải mức công ty phải
+    | dùng. Công ty hào phóng hơn thì đổi ở màn Cài đặt, không sửa mã.
+    |
+    | CHÚ Ý: `annual_base_days = 0` nghĩa là công ty KHÔNG có phép năm, tức mọi
+    | đơn nghỉ phép năm đều bị chặn. Nó KHÔNG mang nghĩa "không giới hạn" như
+    | số 0 ở các hạn mức phía trên — đây là một cái quỹ, và quỹ rỗng thì rỗng.
+    |
+    */
+
+    'annual_base_days' => (int) env('LEAVE_ANNUAL_BASE_DAYS', 12),
+
+    'annual_seniority_step_years' => (int) env('LEAVE_ANNUAL_SENIORITY_STEP', 5),
+
+    'annual_seniority_extra_days' => (int) env('LEAVE_ANNUAL_SENIORITY_EXTRA', 1),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Trần phép tồn chuyển sang năm sau
+    |--------------------------------------------------------------------------
+    |
+    | Chỉ là TRẦN cho ô nhập của nhân sự, không phải phép chuyển tự động. Chuyển
+    | phép tồn là một quyết định có người chịu trách nhiệm — làm tự động thì
+    | không ai biết con số đến từ đâu, và nó lặng lẽ đúng hoặc lặng lẽ sai.
+    |
+    | Màn quỹ phép nói sẵn năm ngoái còn dư bao nhiêu, nên nhân sự không phải
+    | tự tính. Đặt 0 để cấm chuyển tiếp hoàn toàn.
+    |
+    */
+
+    'annual_carry_over_max_days' => (int) env('LEAVE_CARRY_OVER_MAX_DAYS', 5),
+
 ];

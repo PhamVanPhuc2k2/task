@@ -68,6 +68,19 @@ enum Permission: string
     case ViewAllLeave = 'leave.view.all';
     case ApproveLeave = 'leave.approve';
 
+    /**
+     * Sửa quỹ phép năm của người khác: chuyển phép tồn, thưởng thêm, ghi đè.
+     *
+     * Quyền RIÊNG, cố ý không gộp vào `leave.approve`. Duyệt một đơn nghỉ là
+     * quyết định về MỘT lần vắng mặt; sửa quỹ phép là quyết định về cả năm, và
+     * phép chưa nghỉ hết phải được thanh toán khi thôi việc (Điều 113 khoản 4
+     * Bộ luật Lao động 2019) — tức là nó ra tiền.
+     *
+     * Trưởng phòng duyệt đơn nghỉ cho phòng mình là bình thường. Trưởng phòng
+     * tự cộng thêm ngày phép cho phòng mình thì không.
+     */
+    case ManageLeaveBalance = 'leave.balance.manage';
+
     // ── Báo cáo ngày ─────────────────────────────────
     /**
      * `ViewReports` cũ (`report.view`) giữ nguyên cho báo cáo tổng hợp của lãnh
@@ -142,6 +155,7 @@ enum Permission: string
             self::ViewTeamLeave => 'Xem đơn nghỉ của phòng ban mình quản lý',
             self::ViewAllLeave => 'Xem đơn nghỉ toàn công ty',
             self::ApproveLeave => 'Duyệt đơn nghỉ',
+            self::ManageLeaveBalance => 'Sửa quỹ phép năm',
             self::ViewTeamReports => 'Xem báo cáo ngày của phòng ban mình quản lý',
             self::ReviewReports => 'Duyệt và hỏi lại báo cáo ngày',
             self::ViewOwnSalary => 'Xem mức lương của chính mình',

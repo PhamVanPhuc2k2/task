@@ -356,6 +356,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/leave/balances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leaveBalance.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -476,6 +492,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["leave.myLeave"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/balance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["leave.myLeaveBalance"];
         put?: never;
         post?: never;
         delete?: never;
@@ -927,6 +959,26 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["reports.saveDailyReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/leave/balances/{user}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description ⚠️ Cannot generate request documentation: Cannot evaluate validation rules (1 evaluators failed):
+         *       [NodeRulesEvaluator] Cannot access private constant App\Http\Controllers\Api\V1\Leave\SaveLeaveBalanceController::NGAY_TOI_DA (at /var/www/html/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/ConstFetchEvaluator.php:42)
+         */
+        post: operations["leave.saveLeaveBalance"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2071,6 +2123,10 @@ export interface components {
                 late_arrival_max_per_month?: number;
                 early_leave_max_per_month?: number;
                 early_leave_grace_minutes?: number;
+                leave_annual_base_days?: number;
+                leave_annual_seniority_step?: number;
+                leave_annual_seniority_extra?: number;
+                leave_carry_over_max_days?: number;
             };
         };
         /**
@@ -3168,6 +3224,71 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "leaveBalance.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            balances: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì công ty 250 người tưởng
+                             *     mình chỉ có 200. Quy ước chung của cả dự án.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 200;
+                            /**
+                             * @description Giao diện hỏi server thay vì tự suy từ danh sách quyền — thêm
+                             *     một quyền mới thì màn hình tự đúng.
+                             */
+                            can_manage: boolean;
+                            /**
+                             * @description | Chính sách hiện hành, để màn hình giải thích được con số.
+                             *     |
+                             *     | Nhân sự nhìn "12 ngày" mà không biết nó đến từ đâu thì mỗi lần
+                             *     | có người thắc mắc lại phải đi tra. Trần phép tồn cũng ở đây,
+                             *     | vì ô nhập cần nó để chặn ngay thay vì để API từ chối.
+                             */
+                            policy: {
+                                base_days: number;
+                                seniority_step_years: number;
+                                seniority_extra_days: number;
+                                carry_over_max_days: number;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "auth.login": {
         parameters: {
             query?: never;
@@ -3443,6 +3564,60 @@ export interface operations {
                                 earliest: string;
                                 latest: string;
                                 max_days: string;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
+    "leave.myLeaveBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            /** @description Số được hưởng, đã áp ghi đè nếu có. */
+                            entitled_days: number;
+                            /**
+                             * @description Số hệ thống TỰ TÍNH theo Điều 113 và 114, giữ lại kể cả khi đã bị
+                             *     ghi đè: màn hình nói được "tự tính 12, nhân sự đặt 15".
+                             */
+                            computed_entitled_days: number;
+                            is_overridden: boolean;
+                            carried_over_days: number;
+                            adjustment_days: number;
+                            total_days: number;
+                            used_days: number;
+                            /**
+                             * @description Được phép ÂM — ai đó đã duyệt vượt quỹ. Kẹp về 0 ở đây sẽ giấu
+                             *     mất đúng cái tình huống cần người nhìn tới.
+                             */
+                            remaining_days: number;
+                            note: string | null;
+                            previous_remaining_days: number;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                                /**
+                                 * @description Ngày vào làm quyết định số phép được hưởng năm đầu. Hiện ra
+                                 *     để nhân sự đối chiếu được ngay khi con số trông lạ — và để
+                                 *     thấy ai đang thiếu ngày vào làm.
+                                 */
+                                joined_at: string | null;
                             };
                         };
                     };
@@ -4955,6 +5130,76 @@ export interface operations {
                 };
             };
             401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
+    "leave.saveLeaveBalance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            year: number;
+                            /** @description Số được hưởng, đã áp ghi đè nếu có. */
+                            entitled_days: number;
+                            /**
+                             * @description Số hệ thống TỰ TÍNH theo Điều 113 và 114, giữ lại kể cả khi đã bị
+                             *     ghi đè: màn hình nói được "tự tính 12, nhân sự đặt 15".
+                             */
+                            computed_entitled_days: number;
+                            is_overridden: boolean;
+                            carried_over_days: number;
+                            adjustment_days: number;
+                            total_days: number;
+                            used_days: number;
+                            /**
+                             * @description Được phép ÂM — ai đó đã duyệt vượt quỹ. Kẹp về 0 ở đây sẽ giấu
+                             *     mất đúng cái tình huống cần người nhìn tới.
+                             */
+                            remaining_days: number;
+                            note: string | null;
+                            previous_remaining_days: number;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                                /**
+                                 * @description Ngày vào làm quyết định số phép được hưởng năm đầu. Hiện ra
+                                 *     để nhân sự đối chiếu được ngay khi con số trông lạ — và để
+                                 *     thấy ai đang thiếu ngày vào làm.
+                                 */
+                                joined_at: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
             422: components["responses"]["ValidationException"];
         };
     };

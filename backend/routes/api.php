@@ -30,10 +30,13 @@ use App\Http\Controllers\Api\V1\Dashboard\OverviewController;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\Leave\CancelLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\CancelLeaveController;
+use App\Http\Controllers\Api\V1\Leave\LeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\MyLateArrivalController;
+use App\Http\Controllers\Api\V1\Leave\MyLeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\MyLeaveController;
 use App\Http\Controllers\Api\V1\Leave\ReviewLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\ReviewLeaveController;
+use App\Http\Controllers\Api\V1\Leave\SaveLeaveBalanceController;
 use App\Http\Controllers\Api\V1\Leave\SubmitLateArrivalController;
 use App\Http\Controllers\Api\V1\Leave\SubmitLeaveController;
 use App\Http\Controllers\Api\V1\Leave\TeamLateArrivalController;
@@ -309,6 +312,23 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
      *
      * Tham số {leave} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
      */
+    /*
+    | Quỹ phép năm.
+    |
+    | Khai TRƯỚC /leave/{leave}/... cho gần nhóm đọc, và vì "balances" là một
+    | đoạn cố định: đặt lẫn vào giữa các route có tham số là mời người sau đọc
+    | nhầm thứ tự ưu tiên.
+    |
+    | Ba đường, ba mức quyền khác nhau:
+    |   - /leave/balance    quỹ của CHÍNH MÌNH, không cần quyền nào
+    |   - /leave/balances   bảng của phòng, cần leave.view.team hoặc .all
+    |   - POST .../{user}   SỬA quỹ, cần leave.balance.manage — quyền riêng, vì
+    |                       cộng thêm ngày phép là quyết định ra tiền
+    */
+    Route::get('/leave/balance', MyLeaveBalanceController::class);
+    Route::get('/leave/balances', [LeaveBalanceController::class, 'index']);
+    Route::post('/leave/balances/{user}', SaveLeaveBalanceController::class);
+
     Route::get('/leave/me', MyLeaveController::class);
     Route::post('/leave', SubmitLeaveController::class);
     Route::get('/leave/team', TeamLeaveController::class);
