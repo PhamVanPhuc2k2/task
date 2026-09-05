@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Attendance\HeartbeatController;
 use App\Http\Controllers\Api\V1\Attendance\MyAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\MyOvertimeController;
+use App\Http\Controllers\Api\V1\Attendance\OvertimePreviewController;
 use App\Http\Controllers\Api\V1\Attendance\PeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReopenPeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController;
@@ -299,6 +300,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     |
     | Tham số {overtime} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
     */
+    // Hệ số của một ngày cụ thể, hỏi TRƯỚC khi đăng ký. Giao diện không tự
+    // tính được: hệ số phụ thuộc lịch tuần và bảng ngày lễ.
+    Route::get('/attendance/overtime/preview', OvertimePreviewController::class);
     Route::get('/attendance/overtime/me', MyOvertimeController::class);
     Route::get('/attendance/overtime/team', TeamOvertimeController::class);
     Route::post('/attendance/overtime', SubmitOvertimeController::class);

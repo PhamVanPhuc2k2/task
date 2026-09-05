@@ -515,6 +515,45 @@ it('hộp duyệt trả đúng hình dạng, và nhân viên thường không v�
         ->assertForbidden();
 });
 
+it('hỏi trước được hệ số của một ngày, kèm ca hôm đó', function (): void {
+    /*
+    | "Tối nay là chủ nhật, 200%" là thông tin quyết định người ta có nhận làm
+    | hay không, và nó phải hiện TRƯỚC khi đăng ký. Giao diện không tự tính
+    | được: hệ số phụ thuộc lịch tuần và bảng ngày lễ.
+    */
+    [, $nv] = sepVaNhanVien();
+
+    $this->actingAs($nv)
+        ->getJson('/api/v1/attendance/overtime/preview?date=2026-09-11')
+        ->assertOk()
+        ->assertJsonPath('data.day_kind', 'working')
+        ->assertJsonPath('data.rate_percent', 150)
+        ->assertJsonPath('data.shift.start', '08:15')
+        ->assertJsonPath('data.shift.end', '17:30');
+
+    $this->actingAs($nv)
+        ->getJson('/api/v1/attendance/overtime/preview?date=2026-09-13')
+        ->assertOk()
+        ->assertJsonPath('data.rate_percent', 200)
+        // Ngày nghỉ không có ca, nên ô nhập giờ không bị chặn khoảng nào.
+        ->assertJsonPath('data.shift', null);
+});
+
+it('ngày lễ rơi vào thứ hai thì KHÔNG trả về ca nào', function (): void {
+    // Đọc thẳng WorkWeek::shiftFor() mà không kiểm loại ngày là đúng cái lỗi đã
+    // bắt được ở SubmitOvertimeAction — hôm đó không ai đi làm.
+    ngayLe('2026-09-14');
+
+    [, $nv] = sepVaNhanVien();
+
+    $this->actingAs($nv)
+        ->getJson('/api/v1/attendance/overtime/preview?date=2026-09-14')
+        ->assertOk()
+        ->assertJsonPath('data.day_kind', 'holiday')
+        ->assertJsonPath('data.rate_percent', 300)
+        ->assertJsonPath('data.shift', null);
+});
+
 // ── Giao với chốt sổ kỳ công ────────────────────────────────────────────
 
 it('kỳ đã chốt thì không đăng ký và không duyệt được', function (): void {

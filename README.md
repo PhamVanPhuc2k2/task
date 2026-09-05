@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**878 test xanh** (5354 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**880 test xanh** (5366 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-29 model · 35 migration · 51 bảng · 110 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+29 model · 35 migration · 51 bảng · 111 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3364,6 +3364,22 @@ Dùng chung quyền `attendance.review` với nút bấm tay và màn giải tr�
 ##### Đơn làm thêm treo là loại nặng nhất chặn chốt sổ
 
 Ba loại đơn chặn chốt sổ giờ thành bốn. Đây là loại nặng nhất: người ta **đã làm rồi**. Chốt sổ mà bỏ lại nó là vứt đi một khoản tiền 150–300% cho công việc đã xong.
+
+##### Giao diện
+
+Trang **Chấm công** giờ có bốn mục: *Bảng công · Giải trình · Làm thêm · Chốt sổ*. Ba mục đầu ai cũng thấy — cả ba đều có phần "của tôi" mà mọi nhân viên đều dùng tới.
+
+**Hệ số hỏi server theo từng ngày, không tự tính.** Hệ số phụ thuộc lịch tuần và bảng ngày lễ; chép cả hai xuống trình duyệt là hai nơi cùng định nghĩa "ngày lễ", và chúng sẽ lệch nhau ở lần nhân sự nhập thêm một ngày — lúc đó màn hình hứa 150% cho một ngày mà hệ thống trả 300%.
+
+Nhưng người dùng vẫn phải biết **trước** khi đăng ký: *"tối nay là chủ nhật, 200%"* là thông tin quyết định họ có nhận làm hay không. Nên có một đường riêng `GET /attendance/overtime/preview?date=` trả về loại ngày, hệ số dự kiến, và ca hôm đó. Kết quả nhớ theo ngày nên đổi qua đổi lại không gọi lại mạng.
+
+Tách khỏi `/attendance/overtime/me` chứ không thêm tham số vào đó: màn hình hỏi lại mỗi lần đổi ô ngày, và kéo về cả trăm đơn mỗi lần là một cách rất tốn kém để lấy hai con số.
+
+Hệ số hiện kèm chữ **"dự kiến"** cho tới khi đơn được duyệt — không nói ra thì người ta đinh ninh con số đã chắc.
+
+Ô đăng ký hiện sẵn **số đã dùng tháng này và năm nay** cạnh trần, tô đỏ khi chạm. Ba trần chồng lên nhau và người nộp không có cách nào tự biết.
+
+Trong hộp duyệt, ô "Số phút duyệt" điền sẵn số đã đăng ký nhưng **sửa được**, với `max` đúng bằng số đó — cho duyệt nhiều hơn là mở đường vòng qua ba cái trần đã kiểm lúc nộp.
 
 ##### Chưa có: nghỉ bù và phụ cấp làm đêm
 

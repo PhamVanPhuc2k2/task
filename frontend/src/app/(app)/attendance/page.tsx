@@ -12,6 +12,7 @@ import {
 } from "@/features/attendance/api/attendance-api";
 import { AdjustmentPanel } from "@/features/attendance/components/adjustment-panel";
 import { DayTimeline } from "@/features/attendance/components/day-timeline";
+import { OvertimePanel } from "@/features/attendance/components/overtime-panel";
 import { PeriodPanel } from "@/features/attendance/components/period-panel";
 import { ReviewDialog } from "@/features/attendance/components/review-dialog";
 import {
@@ -291,6 +292,10 @@ export default function AttendancePage() {
         />
       )}
 
+      {mucXem === "lamthem" && (
+        <OvertimePanel canReview={xemDoi && duyetCongDuoc} />
+      )}
+
       {mucXem === "chotso" && <PeriodPanel enabled={chotSoDuoc} />}
 
       {dangMo && (
@@ -325,13 +330,16 @@ export default function AttendancePage() {
   );
 }
 
-type MucXem = "cong" | "giaitrinh" | "chotso";
+type MucXem = "cong" | "giaitrinh" | "lamthem" | "chotso";
 
 /**
  * Bộ chọn ba chế độ, cùng khuôn với trang Nghỉ phép.
  *
  * "Chốt sổ" chỉ hiện cho người chốt hoặc mở khoá được. Hiện cho mọi người rồi
  * để họ bấm vào ăn 403 là dạy người dùng rằng lỗi đỏ là chuyện bình thường.
+ *
+ * Ba mục còn lại thì ai cũng thấy: bảng công, giải trình và làm thêm giờ đều có
+ * phần "của tôi" mà mọi nhân viên đều dùng tới.
  */
 function ChonMuc({
   mucXem,
@@ -345,6 +353,7 @@ function ChonMuc({
   const muc: { v: MucXem; nhan: string }[] = [
     { v: "cong", nhan: "Bảng công" },
     { v: "giaitrinh", nhan: "Giải trình" },
+    { v: "lamthem", nhan: "Làm thêm" },
     ...(chotSoDuoc ? [{ v: "chotso" as const, nhan: "Chốt sổ" }] : []),
   ];
 

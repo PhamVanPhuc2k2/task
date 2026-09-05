@@ -98,6 +98,7 @@ const MIEN_KHAI_QUYEN = [
     // thấy bộ lọc rỗng mà không hiểu vì sao.
     'V1/Organization/DepartmentController.php' => 'Danh mục phòng ban, chỉ đọc.',
     'V1/Organization/PositionController.php' => 'Danh mục chức vụ, chỉ đọc.',
+    'V1/Attendance/OvertimePreviewController.php' => 'Hệ số làm thêm của một ngày — chính sách công ty, không phải dữ liệu của ai.',
 ];
 
 /** Dấu hiệu cho thấy controller có kiểm quyền. */
