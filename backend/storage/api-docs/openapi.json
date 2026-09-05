@@ -1229,6 +1229,137 @@
                 }
             }
         },
+        "/attendance/periods/close": {
+            "post": {
+                "operationId": "attendance.closePeriod",
+                "tags": [
+                    "ClosePeriod"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}$"
+                                    }
+                                },
+                                "required": [
+                                    "period"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "period": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "\u0110\u00e3 ch\u1ed1t",
+                                                        "\u0110\u00e3 m\u1edf kho\u00e1 l\u1ea1i"
+                                                    ]
+                                                },
+                                                "is_locked": {
+                                                    "type": "boolean"
+                                                },
+                                                "closed_at": {
+                                                    "type": "string"
+                                                },
+                                                "closed_by": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopened_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopened_by": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopen_reason": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "period",
+                                                "status",
+                                                "status_label",
+                                                "is_locked",
+                                                "closed_at",
+                                                "closed_by",
+                                                "reopened_at",
+                                                "reopened_by",
+                                                "reopen_reason"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/comments/{comment}/attachments": {
             "post": {
                 "operationId": "commentAttachment.store",
@@ -3339,6 +3470,79 @@
                 }
             }
         },
+        "/attendance/periods": {
+            "get": {
+                "operationId": "period.index",
+                "tags": [
+                    "Period"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "periods": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "can_close": {
+                                                    "type": "boolean",
+                                                    "description": "Giao di\u1ec7n c\u1ea7n bi\u1ebft hi\u1ec7n n\u00fat n\u00e0o, v\u00e0 h\u1ecfi server thay v\u00ec t\u1ef1 suy\nt\u1eeb danh s\u00e1ch quy\u1ec1n \u2014 th\u00eam m\u1ed9t quy\u1ec1n m\u1edbi th\u00ec giao di\u1ec7n t\u1ef1 \u0111\u00fang."
+                                                },
+                                                "can_reopen": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "periods",
+                                                "can_close",
+                                                "can_reopen"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/positions": {
             "get": {
                 "operationId": "position.index",
@@ -4112,6 +4316,144 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/attendance/periods/reopen": {
+            "post": {
+                "operationId": "attendance.reopenPeriod",
+                "tags": [
+                    "ReopenPeriod"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "period": {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}$"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "description": "T\u1ed1i thi\u1ec3u 10 k\u00fd t\u1ef1, c\u00f9ng l\u00fd do v\u1edbi l\u00fd do \u0111\u01a1n ngh\u1ec9: kh\u00f4ng c\u00f3\nm\u1ee9c s\u00e0n th\u00ec tr\u01b0\u1eddng n\u00e0y \u0111\u1ea7y nh\u1eefng d\u00f2ng \"s\u1eeda\" v\u00e0 \"nh\u1ea7m\".",
+                                        "minLength": 10,
+                                        "maxLength": 1000
+                                    }
+                                },
+                                "required": [
+                                    "period",
+                                    "reason"
+                                ]
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "period": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "\u0110\u00e3 ch\u1ed1t",
+                                                        "\u0110\u00e3 m\u1edf kho\u00e1 l\u1ea1i"
+                                                    ]
+                                                },
+                                                "is_locked": {
+                                                    "type": "boolean"
+                                                },
+                                                "closed_at": {
+                                                    "type": "string"
+                                                },
+                                                "closed_by": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopened_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopened_by": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "reopen_reason": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "period",
+                                                "status",
+                                                "status_label",
+                                                "is_locked",
+                                                "closed_at",
+                                                "closed_by",
+                                                "reopened_at",
+                                                "reopened_by",
+                                                "reopen_reason"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"

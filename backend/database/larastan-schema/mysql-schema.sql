@@ -11,6 +11,29 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attendance_periods` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `period` char(7) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `closed_at` timestamp NOT NULL,
+  `closed_by` bigint unsigned DEFAULT NULL,
+  `reopened_at` timestamp NULL DEFAULT NULL,
+  `reopened_by` bigint unsigned DEFAULT NULL,
+  `reopen_reason` text COLLATE utf8mb4_unicode_ci,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attendance_periods_uuid_unique` (`uuid`),
+  UNIQUE KEY `attendance_periods_period_unique` (`period`),
+  KEY `attendance_periods_closed_by_foreign` (`closed_by`),
+  KEY `attendance_periods_reopened_by_foreign` (`reopened_by`),
+  CONSTRAINT `attendance_periods_closed_by_foreign` FOREIGN KEY (`closed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `attendance_periods_reopened_by_foreign` FOREIGN KEY (`reopened_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `bonus_allocations` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -178,7 +201,9 @@ CREATE TABLE `late_arrival_requests` (
   `uuid` char(36) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint unsigned NOT NULL,
   `date` date NOT NULL,
-  `expected_arrival` time NOT NULL,
+  `type` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'late',
+  `expected_arrival` time DEFAULT NULL,
+  `expected_departure` time DEFAULT NULL,
   `reason` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
   `reviewed_by` bigint unsigned DEFAULT NULL,
@@ -192,8 +217,10 @@ CREATE TABLE `late_arrival_requests` (
   KEY `late_arrival_requests_user_id_date_index` (`user_id`,`date`),
   KEY `late_arrival_requests_status_date_index` (`status`,`date`),
   KEY `late_arrival_requests_status_created_at_index` (`status`,`created_at`),
+  KEY `late_arrival_requests_user_id_date_type_index` (`user_id`,`date`,`type`),
   CONSTRAINT `late_arrival_requests_reviewed_by_foreign` FOREIGN KEY (`reviewed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `late_arrival_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+  CONSTRAINT `late_arrival_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_late_arrival_time_matches_type` CHECK ((((`type` = _utf8mb4'late') and (`expected_arrival` is not null) and (`expected_departure` is null)) or ((`type` = _utf8mb4'early') and (`expected_departure` is not null) and (`expected_arrival` is null))))
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -276,7 +303,7 @@ CREATE TABLE `migrations` (
   `migration` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;

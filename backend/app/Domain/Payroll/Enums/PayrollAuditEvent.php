@@ -22,12 +22,25 @@ enum PayrollAuditEvent: string
     /** Đặt mức lương mới. */
     case SalaryChanged = 'salary_changed';
 
+    /**
+     * Chốt sổ và mở khoá một kỳ công.
+     *
+     * Nằm ở nhật ký PAYROLL chứ không phải nhật ký nhân sự, vì đây là hành vi
+     * quyết định số liệu dùng để trả lương — cùng họ với việc đổi mức lương.
+     * Câu hỏi "vì sao số liệu tháng 9 đổi sau khi đã trả lương" phải có đáp án,
+     * và đáp án nằm ở đây.
+     */
+    case PeriodClosed = 'period_closed';
+    case PeriodReopened = 'period_reopened';
+
     public function label(): string
     {
         return match ($this) {
             self::ViewedList => 'Xem bảng lương',
             self::ViewedPerson => 'Xem lịch sử lương của một người',
             self::SalaryChanged => 'Đặt mức lương mới',
+            self::PeriodClosed => 'Chốt sổ kỳ công',
+            self::PeriodReopened => 'Mở khoá kỳ công',
         };
     }
 }

@@ -10,6 +10,7 @@ use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\SubmitLateArrivalAction;
 use App\Domain\Leave\Enums\AttendanceExceptionType;
 use App\Domain\Leave\Notifications\LateArrivalRequestedNotification;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsLateArrivals;
 use App\Http\Requests\Leave\SubmitLateArrivalRequest;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class SubmitLateArrivalController
 {
+    use GuardsClosedPeriods;
     use PresentsLateArrivals;
 
     public function __invoke(
@@ -40,6 +42,8 @@ final class SubmitLateArrivalController
             ?? AttendanceExceptionType::Late;
 
         $ngay = (string) $request->string('date');
+
+        $this->guardPeriodOpen($ngay);
 
         $don = $action->execute(
             nguoiNop: $actor,

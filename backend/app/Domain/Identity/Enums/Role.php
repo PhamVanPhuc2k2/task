@@ -51,7 +51,24 @@ enum Role: string
              * chọn để admin quản lý lương, nên giữ nguyên. Muốn tách sau này thì
              * liệt kê quyền tường minh ở đây thay vì `cases()`.
              */
-            self::Admin => Permission::cases(),
+            self::Admin => array_values(array_filter(
+                Permission::cases(),
+                /*
+                 * Ngoại lệ DUY NHẤT của "admin có tất cả".
+                 *
+                 * Mở khoá một kỳ đã chốt là đổi số liệu đã dùng để trả lương.
+                 * Công ty chốt: admin chốt sổ được, nhưng chỉ giám đốc mở khoá
+                 * — hai mức trách nhiệm khác nhau, và admin thường là IT chứ
+                 * không phải người chịu trách nhiệm về con số lương.
+                 *
+                 * Viết bằng `array_filter` chứ không liệt kê tay cả bộ: giữ
+                 * nguyên tính chất "quyền mới ở đợt sau tự động thuộc về admin",
+                 * mà vẫn khoét được đúng một lỗ có lý do. Liệt kê tay thì mỗi
+                 * quyền mới là một lần ai đó phải nhớ thêm vào — và quên thì
+                 * admin mất quyền mà không có gì báo.
+                 */
+                fn (Permission $p): bool => $p !== Permission::ReopenPeriod,
+            )),
 
             self::GiamDoc => [
                 Permission::ViewOwnTasks,
@@ -67,6 +84,10 @@ enum Role: string
                 Permission::ViewTeamAttendance,
                 Permission::ViewAllAttendance,
                 Permission::ReviewAttendance,
+                // Giám đốc chốt được VÀ mở khoá được. Admin chỉ chốt —
+                // xem Permission::ReopenPeriod.
+                Permission::ClosePeriod,
+                Permission::ReopenPeriod,
                 Permission::ViewTeamReports,
                 Permission::ReviewReports,
                 Permission::ViewTeamLeave,

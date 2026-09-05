@@ -9,6 +9,7 @@ use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\ReviewLeaveRequestAction;
 use App\Domain\Leave\Models\LeaveRequest;
 use App\Domain\Leave\Notifications\LeaveReviewedNotification;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsLeaveRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class ReviewLeaveController
 {
+    use GuardsClosedPeriods;
     use PresentsLeaveRequests;
 
     public function __invoke(
@@ -65,6 +67,9 @@ final class ReviewLeaveController
 
         $dongY = (bool) $duLieu['approve'];
         $ghiChu = isset($duLieu['note']) ? (string) $duLieu['note'] : null;
+
+        // Duyệt sau khi chốt sổ là đổi số ngày công đã dùng để trả lương.
+        $this->guardPeriodRangeOpen($leave->start_date, $leave->end_date);
 
         $moi = $action->execute($leave, $actor, $dongY, $ghiChu);
 

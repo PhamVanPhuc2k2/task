@@ -8,6 +8,7 @@ use App\Domain\Identity\Models\User;
 use App\Domain\Leave\Actions\SubmitLeaveRequestAction;
 use App\Domain\Leave\Enums\LeaveType;
 use App\Domain\Leave\Notifications\LeaveRequestedNotification;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Concerns\PresentsLeaveRequests;
 use App\Http\Requests\Leave\SubmitLeaveRequest;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Notification;
  */
 final class SubmitLeaveController
 {
+    use GuardsClosedPeriods;
     use PresentsLeaveRequests;
 
     public function __invoke(
@@ -31,6 +33,13 @@ final class SubmitLeaveController
     ): JsonResponse {
         /** @var User $actor */
         $actor = $request->user();
+
+        // Đơn nghỉ đổi số ngày công của kỳ, nên kỳ đã chốt thì không nhận
+        // đơn phủ vào đó nữa. Kiểm cả KHOẢNG vì đơn có thể vắt hai kỳ.
+        $this->guardPeriodRangeOpen(
+            (string) $request->string('start_date'),
+            (string) $request->string('end_date'),
+        );
 
         $don = $action->execute(
             nguoiNop: $actor,

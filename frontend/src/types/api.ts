@@ -196,6 +196,22 @@ export interface paths {
         patch: operations["tasks.changeTaskStatus"];
         trace?: never;
     };
+    "/attendance/periods/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.closePeriod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/comments/{comment}/attachments": {
         parameters: {
             query?: never;
@@ -609,6 +625,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["period.index"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/positions": {
         parameters: {
             query?: never;
@@ -700,6 +732,22 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["projectMember.destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/periods/reopen": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.reopenPeriod"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2582,6 +2630,61 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.closePeriod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    period: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Đã chốt" | "Đã mở khoá lại";
+                            is_locked: boolean;
+                            closed_at: string;
+                            closed_by: string | null;
+                            reopened_at: string | null;
+                            reopened_by: string | null;
+                            reopen_reason: string | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "commentAttachment.store": {
         parameters: {
             query?: never;
@@ -3612,6 +3715,51 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "period.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            periods: string[];
+                            /**
+                             * @description Giao diện cần biết hiện nút nào, và hỏi server thay vì tự suy
+                             *     từ danh sách quyền — thêm một quyền mới thì giao diện tự đúng.
+                             */
+                            can_close: boolean;
+                            can_reopen: boolean;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "position.index": {
         parameters: {
             query?: never;
@@ -3981,6 +4129,66 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.reopenPeriod": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    period: string;
+                    /**
+                     * @description Tối thiểu 10 ký tự, cùng lý do với lý do đơn nghỉ: không có
+                     *     mức sàn thì trường này đầy những dòng "sửa" và "nhầm".
+                     */
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Đã chốt" | "Đã mở khoá lại";
+                            is_locked: boolean;
+                            closed_at: string;
+                            closed_by: string | null;
+                            reopened_at: string | null;
+                            reopened_by: string | null;
+                            reopen_reason: string | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "auth.resetPassword": {

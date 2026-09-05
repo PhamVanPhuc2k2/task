@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**775 test xanh** (4995 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**792 test xanh** (5037 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-24 model · 25 migration · 44 bảng · 94 endpoint API · 26 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+26 model · 32 migration · 48 bảng · 97 endpoint API · 30 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3092,9 +3092,67 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 - [ ] `overtime_requests` — đăng ký OT, duyệt trước mới được tính
 - [ ] Hệ số OT theo luật: ngày thường 150%, ngày nghỉ 200%, ngày lễ 300%
 - [ ] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Nhân viên giải trình → leader duyệt → sửa công, giữ nguyên vết cũ
-- [ ] **Chốt kỳ công** — khoá sổ theo tháng, sau đó không ai sửa được kể cả admin trừ khi mở khoá có ghi lý do
-- [ ] **Nhật ký kiểm toán bất biến** — ai sửa công của ai, giá trị cũ, lý do
+- [x] **Chốt kỳ công** — khoá sổ theo tháng dương lịch. Xem [Chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong)
+- [x] **Nhật ký kiểm toán** — mọi lần chốt và mở khoá vào `payroll_audits`, bảng chỉ ghi thêm
 - [ ] Tính khấu trừ theo giờ công thực tế (xem mục dưới)
+
+#### Chốt sổ kỳ công ✅ Đã xong
+
+Nền móng của cả đợt 4. **Trả lương từ những con số còn sửa được nghĩa là không bao giờ trả lời được câu *"phiếu lương này tính từ đâu ra"*** — nên trước mọi phép tính tiền, phải có một mốc nói rằng số liệu của kỳ đã đứng yên.
+
+Kỳ công theo **tháng dương lịch** — công ty đã chốt. Đơn giản nhất, và khớp với bảng công vốn đã xem theo tháng nên không có chỗ nào lệch.
+
+##### Chốt là khoá CẢ BA: giờ công, đơn từ, báo cáo ngày
+
+Khoá mỗi giờ công là chưa đủ. Một đơn nghỉ được duyệt sau khi chốt sẽ **đổi số ngày công đã dùng để tính lương** — ngày nghỉ được miễn chấm công — và không có gì báo. Rút một đơn đã duyệt cũng vậy, theo chiều ngược lại.
+
+Báo cáo ngày cũng khoá, vì đối chiếu giờ công với báo cáo là một trong những căn cứ người quản lý dùng khi quyết định chốt.
+
+Đọc thì vẫn đọc được bình thường — khoá chỉ chặn ghi.
+
+##### Đơn vắt hai kỳ: chỗ dễ lọt nhất
+
+Chỉ kiểm ngày bắt đầu thì đơn từ 30/08 sang 02/09 đi qua được nếu tháng 9 đang mở — và nó vẫn đổi số ngày công của tháng 8 đã chốt. Nên phép kiểm nhận **khoảng ngày**, và một truy vấn cho cả khoảng chứ không phải mỗi ngày một câu.
+
+##### Không chốt được kỳ chưa kết thúc
+
+Chốt giữa kỳ là khoá luôn những ngày chưa ai đi làm. Người ta phát hiện ra vào sáng hôm sau, khi nhịp tim chấm công không ghi được gì và không có lời giải thích nào trên màn hình.
+
+Mốc so sánh là **ngày công hôm nay theo giờ Việt Nam**: từ 00:00 tới 07:00 giờ Việt Nam mỗi ngày, `now()` của Laravel vẫn đang ở hôm trước, nên chốt lúc 1h sáng ngày 01/10 sẽ bị từ chối nhầm.
+
+##### Hai quyền, không phải một
+
+| | Chốt sổ | Mở khoá |
+|---|---|---|
+| Giám đốc | ✅ | ✅ |
+| Quản trị hệ thống | ✅ | ❌ |
+| Trưởng phòng | ❌ | ❌ |
+
+Chốt là việc hành chính cuối kỳ; mở khoá là việc đụng vào số liệu đã dùng để trả lương. Admin thường là IT chứ không phải người chịu trách nhiệm về con số lương.
+
+Đây là **ngoại lệ duy nhất** của quy tắc "admin có tất cả". Viết bằng `array_filter` trên `Permission::cases()` chứ không liệt kê tay cả bộ: giữ nguyên tính chất "quyền mới ở đợt sau tự động thuộc về admin", mà vẫn khoét được đúng một lỗ có lý do.
+
+##### Bảng thưa: không có dòng nghĩa là kỳ đang mở
+
+Cùng quy ước với `work_days` và `site_settings`. Sinh sẵn một dòng cho mọi tháng buộc phải có một job sinh dòng, và một tháng thiếu dòng vì job không chạy sẽ bị coi là "không tồn tại" thay vì "đang mở" — hỏng im lặng.
+
+##### Lịch sử nằm ở nhật ký, không nằm ở bảng kỳ công
+
+`attendance_periods` trả lời *"hiện giờ kỳ đó thế nào"*; `payroll_audits` trả lời *"đã đóng mở bao nhiêu lần, ai làm, vì sao"*. Tách hai vai trò vì chúng được đọc ở hai nhịp khác nhau: trạng thái bị hỏi ở **mọi** request ghi số liệu, còn lịch sử chỉ đọc khi có người đi tìm câu trả lời.
+
+Dùng lại `payroll_audits` chứ không dựng bảng thứ ba — nó vốn đã là nhật ký chỉ-ghi-thêm dạng tổng quát (`event`, `actor`, `subject`, `context`), và chốt sổ cùng họ với đổi mức lương: hành vi quyết định số liệu trả lương.
+
+Mở khoá **bắt buộc ghi lý do**, tối thiểu 10 ký tự. Ba tháng sau sẽ có người hỏi vì sao giờ công tháng 8 khác con số trên phiếu lương tháng 8.
+
+##### Luật bắc qua ba miền nên đặt ở tầng Http
+
+Attendance giữ kỳ công, còn thứ bị chặn nằm ở Report và Leave — mà các miền nghiệp vụ không được gọi nhau. `Http` là một trong hai tầng được phép biết nhiều miền, cùng lý do đã ghi ở `ResolvesApprovedLeave`.
+
+##### Hai thứ lộ ra khi làm
+
+**Kiến trúc test bắt tên phương thức controller.** `PeriodController::close()` và `reopen()` vi phạm luật "controller chỉ dùng tên RESTful" — đã tách thành `ClosePeriodController` và `ReopenPeriodController` với `__invoke`, đúng khuôn `SubmitLeaveController`.
+
+**`composer larastan:schema` hỏng trên Git Bash và cắt file schema về 0 byte.** Script khai `docker compose exec ... > file` với dấu nháy mà Git Bash phân tích khác; chạy trực tiếp thì đúng. Đáng sửa script, hoặc ít nhất ghi ra đây để lần sau không ai mất mười phút.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 

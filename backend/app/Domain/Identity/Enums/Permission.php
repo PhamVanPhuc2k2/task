@@ -43,6 +43,16 @@ enum Permission: string
      */
     case ReviewAttendance = 'attendance.review';
 
+    /*
+     * Chốt sổ và mở khoá là HAI quyền, không phải một.
+     *
+     * Chốt là việc hành chính cuối kỳ. Mở khoá là việc đổi số liệu đã dùng để
+     * trả lương — mức trách nhiệm khác hẳn, nên công ty chốt: giám đốc và admin
+     * chốt được, nhưng chỉ giám đốc mở khoá được.
+     */
+    case ClosePeriod = 'attendance.period.close';
+    case ReopenPeriod = 'attendance.period.reopen';
+
     // ── Nghỉ phép ────────────────────────────────────
     /**
      * Nộp đơn và xem đơn của CHÍNH MÌNH không cần quyền nào — cùng khuôn với
@@ -127,6 +137,8 @@ enum Permission: string
             self::ViewTeamAttendance => 'Xem giờ làm của phòng ban mình quản lý',
             self::ViewAllAttendance => 'Xem giờ làm toàn công ty',
             self::ReviewAttendance => 'Ghi nhận và bỏ qua ngày công',
+            self::ClosePeriod => 'Chốt sổ kỳ công',
+            self::ReopenPeriod => 'Mở khoá kỳ công đã chốt',
             self::ViewTeamLeave => 'Xem đơn nghỉ của phòng ban mình quản lý',
             self::ViewAllLeave => 'Xem đơn nghỉ toàn công ty',
             self::ApproveLeave => 'Duyệt đơn nghỉ',

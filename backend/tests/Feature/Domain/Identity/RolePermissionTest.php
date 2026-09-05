@@ -50,13 +50,53 @@ it('giám đốc xem được toàn công ty nhưng không quản trị người
         ->and($giamDoc->can(Permission::ManageUsers->value))->toBeFalse();
 });
 
-it('quản trị viên có toàn bộ quyền', function (): void {
+it('quản trị viên có toàn bộ quyền, TRỪ mở khoá kỳ công', function (): void {
+    /*
+    | Ngoại lệ duy nhất của "admin có tất cả", và nó có chủ ý.
+    |
+    | Mở khoá một kỳ đã chốt là đổi số liệu đã dùng để trả lương. Công ty chốt:
+    | admin chốt sổ được, nhưng chỉ giám đốc mở khoá — admin thường là IT chứ
+    | không phải người chịu trách nhiệm về con số lương.
+    |
+    | Test này viết theo kiểu "mọi quyền TRỪ danh sách nêu tên" chứ không liệt
+    | kê tay cả bộ: quyền mới ở đợt sau vẫn tự động được kiểm, và ngoại lệ mới
+    | buộc phải khai ra ở đây mới qua được.
+    */
     $admin = User::factory()->create();
     $admin->assignRole(Role::Admin->value);
 
+    $ngoaiLe = [Permission::ReopenPeriod];
+
     foreach (Permission::cases() as $permission) {
-        expect($admin->can($permission->value))->toBeTrue();
+        expect($admin->can($permission->value))
+            ->toBe(! in_array($permission, $ngoaiLe, true), $permission->value);
     }
+});
+
+it('quản trị viên chốt được sổ nhưng không mở khoá được', function (): void {
+    // Vế thứ hai của cùng một quyết định, viết ra tường minh vì test trên đọc
+    // bằng danh sách ngoại lệ nên dễ lướt qua.
+    $admin = User::factory()->create();
+    $admin->assignRole(Role::Admin->value);
+
+    expect($admin->can(Permission::ClosePeriod->value))->toBeTrue()
+        ->and($admin->can(Permission::ReopenPeriod->value))->toBeFalse();
+});
+
+it('giám đốc chốt được VÀ mở khoá được', function (): void {
+    $gd = User::factory()->create();
+    $gd->assignRole(Role::GiamDoc->value);
+
+    expect($gd->can(Permission::ClosePeriod->value))->toBeTrue()
+        ->and($gd->can(Permission::ReopenPeriod->value))->toBeTrue();
+});
+
+it('trưởng phòng không chốt sổ được', function (): void {
+    $tp = User::factory()->create();
+    $tp->assignRole(Role::TruongPhong->value);
+
+    expect($tp->can(Permission::ClosePeriod->value))->toBeFalse()
+        ->and($tp->can(Permission::ReopenPeriod->value))->toBeFalse();
 });
 
 it('chạy seeder nhiều lần không nhân đôi vai trò hay quyền', function (): void {

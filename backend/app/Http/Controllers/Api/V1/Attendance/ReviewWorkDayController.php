@@ -8,6 +8,7 @@ use App\Domain\Attendance\Actions\ReviewWorkDayAction;
 use App\Domain\Attendance\Enums\AttendanceDecision;
 use App\Domain\Identity\Enums\Permission;
 use App\Domain\Identity\Models\User;
+use App\Http\Concerns\GuardsClosedPeriods;
 use App\Http\Requests\Attendance\ReviewWorkDayRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -28,6 +29,8 @@ use Illuminate\Http\Response;
  */
 final class ReviewWorkDayController
 {
+    use GuardsClosedPeriods;
+
     public function __invoke(
         ReviewWorkDayRequest $request,
         User $user,
@@ -48,6 +51,10 @@ final class ReviewWorkDayController
         );
 
         abort_unless($this->trongPhamVi($actor, $user), Response::HTTP_FORBIDDEN);
+
+        // Kỳ đã chốt thì số liệu của nó là căn cứ trả lương — không sửa được
+        // nữa, kể cả bởi người có quyền duyệt công.
+        $this->guardPeriodOpen((string) $request->string('work_date'), 'work_date');
 
         $ngay = $action->execute(
             nhanVien: $user,

@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Attendance\AttendanceTimelineController;
+use App\Http\Controllers\Api\V1\Attendance\ClosePeriodController;
 use App\Http\Controllers\Api\V1\Attendance\HeartbeatController;
 use App\Http\Controllers\Api\V1\Attendance\MyAttendanceController;
+use App\Http\Controllers\Api\V1\Attendance\PeriodController;
+use App\Http\Controllers\Api\V1\Attendance\ReopenPeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewWorkDayController;
 use App\Http\Controllers\Api\V1\Attendance\TeamAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\WorkDayDetailController;
@@ -246,6 +249,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     // "me" là uuid người dùng rồi trả 404.
     Route::get('/attendance/{user}/{date}', WorkDayDetailController::class);
     Route::post('/attendance/{user}/review', ReviewWorkDayController::class);
+
+    /*
+    | Chốt sổ kỳ công — nền móng của mọi phép tính tiền ở đợt 4.
+    |
+    | Hai quyền tách nhau: `attendance.period.close` cho giám đốc và admin,
+    | `attendance.period.reopen` CHỈ cho giám đốc. Chốt là việc hành chính cuối
+    | kỳ; mở khoá là việc đụng vào số liệu đã dùng để trả lương.
+    |
+    | Khai TRƯỚC /attendance/{user}/{date}? Không cần — `periods` không khớp
+    | dạng {user} vì route đó nhận uuid, nhưng khai ở đây cho gần nhóm chấm công.
+    */
+    Route::get('/attendance/periods', [PeriodController::class, 'index']);
+    Route::post('/attendance/periods/close', ClosePeriodController::class);
+    Route::post('/attendance/periods/reopen', ReopenPeriodController::class);
 
     // ── Báo cáo ngày ─────────────────────────────────
     // Một báo cáo mỗi người mỗi ngày. Màn của quản lý trả về CẢ người chưa nộp
