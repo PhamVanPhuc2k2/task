@@ -100,6 +100,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/adjustments/{adjustment}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.cancelAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/late-arrivals/{lateArrival}/cancel": {
         parameters: {
             query?: never;
@@ -380,6 +396,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["auth.me"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attendance/adjustments/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.myAdjustment"];
         put?: never;
         post?: never;
         delete?: never;
@@ -801,6 +833,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/adjustments/{adjustment}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description ⚠️ Cannot generate request documentation: Cannot evaluate validation rules (1 evaluators failed):
+         *       [NodeRulesEvaluator] Cannot access private constant App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController::PHUT_TOI_DA (at /var/www/html/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/ConstFetchEvaluator.php:42)
+         */
+        post: operations["attendance.reviewAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/{report}/review": {
         parameters: {
             query?: never;
@@ -961,6 +1013,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attendance/adjustments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["attendance.submitAdjustment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/late-arrivals": {
         parameters: {
             query?: never;
@@ -1076,6 +1144,22 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["taskComment.update"];
+        trace?: never;
+    };
+    "/attendance/adjustments/team": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.teamAdjustment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/attendance/team": {
@@ -1424,9 +1508,11 @@ export interface components {
          *     | `leave.reviewed` <br/> Đơn nghỉ của mình đã được duyệt hoặc bị từ chối. |
          *     | `late_arrival.requested` <br/>  |
          *     | `late_arrival.reviewed` <br/>  |
+         *     | `attendance.adjustment.requested` <br/> Có nhân viên nộp đơn giải trình công cần duyệt. Khác đơn nghỉ và đơn đi muộn ở một điểm quyết định: đơn này có HẠN CHÓT cứng. Kỳ công chốt rồi thì không ai duyệt được nữa, kể cả giám đốc, nên một đơn treo qua ngày chốt là một ngày công sai vĩnh viễn. |
+         *     | `attendance.adjustment.reviewed` <br/> Đơn giải trình của mình đã được duyệt hoặc bị từ chối. |
          * @enum {string}
          */
-        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed";
+        NotificationType: "task.assigned" | "task.due_soon" | "task.overdue" | "task.comment_added" | "task.mentioned" | "bonus.locked" | "report.reviewed" | "report.missing" | "leave.requested" | "leave.reviewed" | "late_arrival.requested" | "late_arrival.reviewed" | "attendance.adjustment.requested" | "attendance.adjustment.reviewed";
         /** PayrollRowResource */
         PayrollRowResource: {
             user: {
@@ -1716,6 +1802,48 @@ export interface components {
         };
         /** Stringable */
         Stringable: string;
+        /**
+         * SubmitAdjustmentRequest
+         * @description Nộp đơn giải trình cho một ngày công.
+         *
+         *     ## Không có khoảng ngày như đơn nghỉ
+         *
+         *     `LeaveWindow` trả lời câu "được xin nghỉ trước bao lâu, khai lùi bao xa" —
+         *     câu hỏi của một đơn hướng về tương lai. Giải trình hướng về quá khứ và chỉ có
+         *     hai cận:
+         *
+         *       - **Không quá hôm nay.** Giải trình một ngày chưa xảy ra là vô nghĩa, và
+         *         cho qua thì sinh ra những đơn được duyệt trước khi có gì để giải trình.
+         *       - **Không trước ngày vào làm.** Ngày trước đó không phải ngày công của
+         *         người này.
+         *
+         *     Cận dưới thật sự là **chốt sổ kỳ công**, và nó được kiểm ở controller chứ
+         *     không ở đây: nó là luật bắc qua nhiều miền, và câu lỗi của nó nói ra kỳ nào.
+         *
+         *     ## `today` phải là hôm nay theo GIỜ VIỆT NAM
+         *
+         *     Luật `before_or_equal:today` của Laravel so theo múi giờ ứng dụng (UTC). Từ
+         *     00:00 tới 07:00 giờ Việt Nam mỗi ngày, `today` của nó vẫn đang ở hôm trước —
+         *     nên người giải trình ngày hôm qua lúc 1h sáng sẽ bị từ chối nhầm. Cùng cái
+         *     bẫy đã ghi ở `ClosePeriodAction`.
+         */
+        SubmitAdjustmentRequest: {
+            /** Format: date */
+            work_date: string;
+            /**
+             * @description | Số phút đề nghị — KHÔNG bắt buộc, và đó là điểm chính.
+             *     |
+             *     | Người đi gặp khách cả ngày không đếm phút. Bắt nhập thì họ điền
+             *     | một con số bịa cho xong, và người duyệt mất luôn tín hiệu "người
+             *     | này không khẳng định con số nào".
+             */
+            requested_minutes?: number | null;
+            /**
+             * @description Tối thiểu 10 ký tự, cùng lý do với đơn nghỉ: không có mức sàn thì
+             *     trường này đầy những dòng "bận" và "đi công tác".
+             */
+            reason: string;
+        };
         /** SubmitLateArrivalRequest */
         SubmitLateArrivalRequest: {
             type?: components["schemas"]["AttendanceExceptionType"];
@@ -2348,6 +2476,72 @@ export interface operations {
                 };
             };
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "attendance.cancelAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The adjustment UUID */
+                adjustment: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+            404: components["responses"]["ModelNotFoundException"];
         };
     };
     "leave.cancelLateArrival": {
@@ -3067,6 +3261,39 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "attendance.myAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
+                            total: number;
+                            /** @constant */
+                            limit: 100;
+                            /** @description Hôm nay theo GIỜ VIỆT NAM, không phải `now()` ở UTC. */
+                            latest_date: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+        };
+    };
     "attendance.myAttendance": {
         parameters: {
             query?: never;
@@ -3738,6 +3965,23 @@ export interface operations {
                              */
                             can_close: boolean;
                             can_reopen: boolean;
+                            /** @description Kỳ mà nút "Chốt sổ" sẽ nhắm tới, kèm lý do nếu chưa bấm được. */
+                            closable: {
+                                period: string;
+                                pending: {
+                                    "\u0111\u01A1n gi\u1EA3i tr\u00ECnh c\u00F4ng": number;
+                                    /**
+                                     * @description | Đơn nghỉ tính theo GIAO NHAU, không theo ngày bắt đầu.
+                                     *     |
+                                     *     | Một đơn từ 30/08 sang 02/09 vẫn đổi số ngày công của tháng 8. Chỉ
+                                     *     | lọc `start_date` trong kỳ thì đơn vắt hai kỳ lọt qua — đúng chỗ
+                                     *     | dễ lọt nhất, cùng cái bẫy đã bịt ở `GuardsClosedPeriods`.
+                                     */
+                                    "\u0111\u01A1n ngh\u1EC9": number;
+                                    "\u0111\u01A1n xin \u0111i mu\u1ED9n / v\u1EC1 s\u1EDBm": number;
+                                };
+                                ready: boolean;
+                            } | null;
                         };
                     };
                 };
@@ -4266,6 +4510,79 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
+        };
+    };
+    "attendance.reviewAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /**
+             * @description An error
+             *
+             *     An error
+             */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    } | {
+                        /**
+                         * @description Error overview.
+                         * @example Không tự duyệt đơn giải trình của chính mình được.
+                         */
+                        message: string;
+                    };
+                };
+            };
+            422: components["responses"]["ValidationException"];
         };
     };
     "reports.reviewDailyReport": {
@@ -4898,6 +5215,58 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.submitAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitAdjustmentRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            work_date: string;
+                            reason: string;
+                            requested_minutes: number | null;
+                            status: string;
+                            /** @enum {string} */
+                            status_label: "Chờ duyệt" | "Đã duyệt" | "Từ chối" | "Đã rút";
+                            is_editable: boolean;
+                            created_at: string | null;
+                            review: {
+                                by: string | null;
+                                at: string;
+                                note: string | null;
+                                /**
+                                 * @description Số người DUYỆT chốt — có thể khác số đã xin, và người nộp cần
+                                 *     thấy ngay chứ không phải tự đi so lại bảng công.
+                                 */
+                                approved_minutes: number | null;
+                            } | null;
+                            user: {
+                                id: string;
+                                name: string;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "leave.submitLateArrival": {
         parameters: {
             query?: never;
@@ -5377,6 +5746,67 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "attendance.teamAdjustment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /**
+             * @description | Bọc trong `data` như ba đường anh em, KHÔNG dùng `data` + `meta`.
+             *     |
+             *     | `/late-arrivals/team` từng trả `data` là một MẢNG kèm `meta` riêng
+             *     | trong khi các đường cùng họ theo dạng `data: { requests, ... }`. Hậu
+             *     | quả: `undefined.length` làm sập cả tab — nhưng CHỈ với người có quyền
+             *     | duyệt, nên lỗi sống sót tới lúc có người duyệt mở nó ra.
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            requests: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì người có 120 đơn tưởng
+                             *     mình chỉ từng nộp 100. Quy ước chung của cả dự án.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 100;
+                            /**
+                             * @description Đếm trên TRUY VẤN, không đếm trên trang đã lấy về: đơn chờ
+                             *     duyệt được sắp lên đầu, nên khi số đơn chờ vượt trần thì viên
+                             *     nhãn sẽ đứng im ở đúng con số trần và người duyệt tưởng mình
+                             *     đã xử lý gần hết.
+                             */
+                            pending: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
         };
     };
     "attendance.teamAttendance": {

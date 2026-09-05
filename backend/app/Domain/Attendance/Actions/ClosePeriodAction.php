@@ -8,8 +8,6 @@ use App\Domain\Attendance\Enums\PeriodStatus;
 use App\Domain\Attendance\Models\AttendancePeriod;
 use App\Domain\Identity\Models\User;
 use App\Support\Exceptions\PeriodLockException;
-use App\Support\Time\WorkDate;
-use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
@@ -26,9 +24,8 @@ use Illuminate\Support\Facades\DB;
  * vào sáng hôm sau, khi nhịp tim chấm công không ghi được gì và không có lời
  * giải thích nào trên màn hình.
  *
- * Mốc so sánh là **ngày công hôm nay theo giờ Việt Nam**, không phải `now()` ở
- * UTC: từ 00:00 tới 07:00 giờ Việt Nam mỗi ngày, `now()` của Laravel vẫn đang ở
- * hôm trước, nên chốt lúc 1h sáng ngày 01/10 sẽ bị từ chối nhầm.
+ * Phép so sánh nằm ở `AttendancePeriod::daKetThuc()` vì tầng Http cũng cần đúng
+ * câu trả lời đó — xem chú thích ở đấy, kể cả cái bẫy múi giờ.
  *
  * ## Ghi nhật ký, và nhật ký nằm ở `payroll_audits`
  *
@@ -79,13 +76,7 @@ final class ClosePeriodAction
 
     private function kiemKyDaKetThuc(string $ky): void
     {
-        $homNay = WorkDate::from(Date::now());
-
-        $cuoiKy = CarbonImmutable::parse($ky.'-01', WorkDate::timezone())
-            ->endOfMonth()
-            ->toDateString();
-
-        if ($cuoiKy >= $homNay) {
+        if (! AttendancePeriod::daKetThuc($ky)) {
             throw PeriodLockException::chuaKetThuc($ky);
         }
     }

@@ -8,6 +8,7 @@ use App\Domain\Identity\Enums\NotificationType;
 use App\Domain\Identity\Models\User;
 use App\Domain\Identity\Notifications\PreferenceAwareNotification;
 use App\Domain\Leave\Enums\AttendanceExceptionType;
+use App\Support\Time\HumanTime;
 use Illuminate\Queue\SerializesModels;
 
 /**
@@ -56,14 +57,14 @@ final class LateArrivalRequestedNotification extends PreferenceAwareNotification
             ? sprintf(
                 '%s xin về sớm ngày %s, dự kiến rời lúc %s (sớm %d phút).',
                 $this->tenNguoiNop,
-                $this->ngayViet($this->ngay),
+                HumanTime::ngay($this->ngay),
                 $this->gioDuKien,
                 $this->soPhutLech,
             )
             : sprintf(
                 '%s xin đi muộn ngày %s, dự kiến đến lúc %s (muộn %d phút).',
                 $this->tenNguoiNop,
-                $this->ngayViet($this->ngay),
+                HumanTime::ngay($this->ngay),
                 $this->gioDuKien,
                 $this->soPhutLech,
             );
@@ -84,10 +85,5 @@ final class LateArrivalRequestedNotification extends PreferenceAwareNotification
             'type' => $this->loai->value,
             'expected_time' => $this->gioDuKien,
         ];
-    }
-
-    private function ngayViet(string $ngay): string
-    {
-        return implode('/', array_reverse(explode('-', $ngay)));
     }
 }

@@ -588,6 +588,181 @@
                 }
             }
         },
+        "/attendance/adjustments/{adjustment}/cancel": {
+            "post": {
+                "operationId": "attendance.cancelAdjustment",
+                "tags": [
+                    "CancelAdjustment"
+                ],
+                "parameters": [
+                    {
+                        "name": "adjustment",
+                        "in": "path",
+                        "required": true,
+                        "description": "The adjustment UUID",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "work_date": {
+                                                    "type": "string"
+                                                },
+                                                "reason": {
+                                                    "type": "string"
+                                                },
+                                                "requested_minutes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Ch\u1edd duy\u1ec7t",
+                                                        "\u0110\u00e3 duy\u1ec7t",
+                                                        "T\u1eeb ch\u1ed1i",
+                                                        "\u0110\u00e3 r\u00fat"
+                                                    ]
+                                                },
+                                                "is_editable": {
+                                                    "type": "boolean"
+                                                },
+                                                "created_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "review": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "by": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "at": {
+                                                            "type": "string"
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "approved_minutes": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "S\u1ed1 ng\u01b0\u1eddi DUY\u1ec6T ch\u1ed1t \u2014 c\u00f3 th\u1ec3 kh\u00e1c s\u1ed1 \u0111\u00e3 xin, v\u00e0 ng\u01b0\u1eddi n\u1ed9p c\u1ea7n\nth\u1ea5y ngay ch\u1ee9 kh\u00f4ng ph\u1ea3i t\u1ef1 \u0111i so l\u1ea1i b\u1ea3ng c\u00f4ng."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "by",
+                                                        "at",
+                                                        "note",
+                                                        "approved_minutes"
+                                                    ]
+                                                },
+                                                "user": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "department": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "department"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "work_date",
+                                                "reason",
+                                                "requested_minutes",
+                                                "status",
+                                                "status_label",
+                                                "is_editable",
+                                                "created_at",
+                                                "review",
+                                                "user"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/late-arrivals/{lateArrival}/cancel": {
             "post": {
                 "operationId": "leave.cancelLateArrival",
@@ -2082,6 +2257,64 @@
                 }
             }
         },
+        "/attendance/adjustments/me": {
+            "get": {
+                "operationId": "attendance.myAdjustment",
+                "tags": [
+                    "MyAdjustment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "requests": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Tr\u1ea3 t\u1ed5ng k\u00e8m tr\u1ea7n: c\u1eaft im l\u1eb7ng th\u00ec ng\u01b0\u1eddi c\u00f3 120 \u0111\u01a1n t\u01b0\u1edfng\nm\u00ecnh ch\u1ec9 t\u1eebng n\u1ed9p 100. Quy \u01b0\u1edbc chung c\u1ee7a c\u1ea3 d\u1ef1 \u00e1n.",
+                                                    "minimum": 0
+                                                },
+                                                "limit": {
+                                                    "type": "integer",
+                                                    "const": 100
+                                                },
+                                                "latest_date": {
+                                                    "type": "string",
+                                                    "description": "H\u00f4m nay theo GI\u1edc VI\u1ec6T NAM, kh\u00f4ng ph\u1ea3i `now()` \u1edf UTC."
+                                                }
+                                            },
+                                            "required": [
+                                                "requests",
+                                                "total",
+                                                "limit",
+                                                "latest_date"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/attendance/me": {
             "get": {
                 "operationId": "attendance.myAttendance",
@@ -3499,12 +3732,56 @@
                                                 },
                                                 "can_reopen": {
                                                     "type": "boolean"
+                                                },
+                                                "closable": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "description": "K\u1ef3 m\u00e0 n\u00fat \"Ch\u1ed1t s\u1ed5\" s\u1ebd nh\u1eafm t\u1edbi, k\u00e8m l\u00fd do n\u1ebfu ch\u01b0a b\u1ea5m \u0111\u01b0\u1ee3c.",
+                                                    "properties": {
+                                                        "period": {
+                                                            "type": "string"
+                                                        },
+                                                        "pending": {
+                                                            "type": "object",
+                                                            "properties": {
+                                                                "\u0111\u01a1n gi\u1ea3i tr\u00ecnh c\u00f4ng": {
+                                                                    "type": "integer",
+                                                                    "minimum": 0
+                                                                },
+                                                                "\u0111\u01a1n ngh\u1ec9": {
+                                                                    "type": "integer",
+                                                                    "description": "| \u0110\u01a1n ngh\u1ec9 t\u00ednh theo GIAO NHAU, kh\u00f4ng theo ng\u00e0y b\u1eaft \u0111\u1ea7u.\n|\n| M\u1ed9t \u0111\u01a1n t\u1eeb 30/08 sang 02/09 v\u1eabn \u0111\u1ed5i s\u1ed1 ng\u00e0y c\u00f4ng c\u1ee7a th\u00e1ng 8. Ch\u1ec9\n| l\u1ecdc `start_date` trong k\u1ef3 th\u00ec \u0111\u01a1n v\u1eaft hai k\u1ef3 l\u1ecdt qua \u2014 \u0111\u00fang ch\u1ed7\n| d\u1ec5 l\u1ecdt nh\u1ea5t, c\u00f9ng c\u00e1i b\u1eaby \u0111\u00e3 b\u1ecbt \u1edf `GuardsClosedPeriods`.",
+                                                                    "minimum": 0
+                                                                },
+                                                                "\u0111\u01a1n xin \u0111i mu\u1ed9n / v\u1ec1 s\u1edbm": {
+                                                                    "type": "integer",
+                                                                    "minimum": 0
+                                                                }
+                                                            },
+                                                            "required": [
+                                                                "\u0111\u01a1n gi\u1ea3i tr\u00ecnh c\u00f4ng",
+                                                                "\u0111\u01a1n ngh\u1ec9",
+                                                                "\u0111\u01a1n xin \u0111i mu\u1ed9n / v\u1ec1 s\u1edbm"
+                                                            ]
+                                                        },
+                                                        "ready": {
+                                                            "type": "boolean"
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "period",
+                                                        "pending",
+                                                        "ready"
+                                                    ]
                                                 }
                                             },
                                             "required": [
                                                 "periods",
                                                 "can_close",
-                                                "can_reopen"
+                                                "can_reopen",
+                                                "closable"
                                             ]
                                         }
                                     },
@@ -4570,6 +4847,190 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/attendance/adjustments/{adjustment}/review": {
+            "post": {
+                "operationId": "attendance.reviewAdjustment",
+                "description": "\u26a0\ufe0f Cannot generate request documentation: Cannot evaluate validation rules (1 evaluators failed):\n  [NodeRulesEvaluator] Cannot access private constant App\\Http\\Controllers\\Api\\V1\\Attendance\\ReviewAdjustmentController::PHUT_TOI_DA (at /var/www/html/vendor/dedoc/scramble/src/Support/OperationExtensions/RulesEvaluator/ConstFetchEvaluator.php:42)",
+                "tags": [
+                    "ReviewAdjustment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "work_date": {
+                                                    "type": "string"
+                                                },
+                                                "reason": {
+                                                    "type": "string"
+                                                },
+                                                "requested_minutes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Ch\u1edd duy\u1ec7t",
+                                                        "\u0110\u00e3 duy\u1ec7t",
+                                                        "T\u1eeb ch\u1ed1i",
+                                                        "\u0110\u00e3 r\u00fat"
+                                                    ]
+                                                },
+                                                "is_editable": {
+                                                    "type": "boolean"
+                                                },
+                                                "created_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "review": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "by": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "at": {
+                                                            "type": "string"
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "approved_minutes": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "S\u1ed1 ng\u01b0\u1eddi DUY\u1ec6T ch\u1ed1t \u2014 c\u00f3 th\u1ec3 kh\u00e1c s\u1ed1 \u0111\u00e3 xin, v\u00e0 ng\u01b0\u1eddi n\u1ed9p c\u1ea7n\nth\u1ea5y ngay ch\u1ee9 kh\u00f4ng ph\u1ea3i t\u1ef1 \u0111i so l\u1ea1i b\u1ea3ng c\u00f4ng."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "by",
+                                                        "at",
+                                                        "note",
+                                                        "approved_minutes"
+                                                    ]
+                                                },
+                                                "user": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "department": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "department"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "work_date",
+                                                "reason",
+                                                "requested_minutes",
+                                                "status",
+                                                "status_label",
+                                                "is_editable",
+                                                "created_at",
+                                                "review",
+                                                "user"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error\n\nAn error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "anyOf": [
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "description": "Error overview.",
+                                                    "examples": [
+                                                        ""
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ]
+                                        },
+                                        {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "description": "Error overview.",
+                                                    "examples": [
+                                                        "Kh\u00f4ng t\u1ef1 duy\u1ec7t \u0111\u01a1n gi\u1ea3i tr\u00ecnh c\u1ee7a ch\u00ednh m\u00ecnh \u0111\u01b0\u1ee3c."
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "message"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -5964,6 +6425,158 @@
                 }
             }
         },
+        "/attendance/adjustments": {
+            "post": {
+                "operationId": "attendance.submitAdjustment",
+                "tags": [
+                    "SubmitAdjustment"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SubmitAdjustmentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "work_date": {
+                                                    "type": "string"
+                                                },
+                                                "reason": {
+                                                    "type": "string"
+                                                },
+                                                "requested_minutes": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "status": {
+                                                    "type": "string"
+                                                },
+                                                "status_label": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "Ch\u1edd duy\u1ec7t",
+                                                        "\u0110\u00e3 duy\u1ec7t",
+                                                        "T\u1eeb ch\u1ed1i",
+                                                        "\u0110\u00e3 r\u00fat"
+                                                    ]
+                                                },
+                                                "is_editable": {
+                                                    "type": "boolean"
+                                                },
+                                                "created_at": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "review": {
+                                                    "type": [
+                                                        "object",
+                                                        "null"
+                                                    ],
+                                                    "properties": {
+                                                        "by": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "at": {
+                                                            "type": "string"
+                                                        },
+                                                        "note": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        },
+                                                        "approved_minutes": {
+                                                            "type": [
+                                                                "integer",
+                                                                "null"
+                                                            ],
+                                                            "description": "S\u1ed1 ng\u01b0\u1eddi DUY\u1ec6T ch\u1ed1t \u2014 c\u00f3 th\u1ec3 kh\u00e1c s\u1ed1 \u0111\u00e3 xin, v\u00e0 ng\u01b0\u1eddi n\u1ed9p c\u1ea7n\nth\u1ea5y ngay ch\u1ee9 kh\u00f4ng ph\u1ea3i t\u1ef1 \u0111i so l\u1ea1i b\u1ea3ng c\u00f4ng."
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "by",
+                                                        "at",
+                                                        "note",
+                                                        "approved_minutes"
+                                                    ]
+                                                },
+                                                "user": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "name": {
+                                                            "type": "string"
+                                                        },
+                                                        "department": {
+                                                            "type": [
+                                                                "string",
+                                                                "null"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "required": [
+                                                        "id",
+                                                        "name",
+                                                        "department"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "id",
+                                                "work_date",
+                                                "reason",
+                                                "requested_minutes",
+                                                "status",
+                                                "status_label",
+                                                "is_editable",
+                                                "created_at",
+                                                "review",
+                                                "user"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    }
+                }
+            }
+        },
         "/late-arrivals": {
             "post": {
                 "operationId": "leave.submitLateArrival",
@@ -7268,6 +7881,85 @@
                     },
                     "403": {
                         "$ref": "#/components/responses/AuthorizationException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/attendance/adjustments/team": {
+            "get": {
+                "operationId": "attendance.teamAdjustment",
+                "tags": [
+                    "TeamAdjustment"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "| B\u1ecdc trong `data` nh\u01b0 ba \u0111\u01b0\u1eddng anh em, KH\u00d4NG d\u00f9ng `data` + `meta`.\n|\n| `/late-arrivals/team` t\u1eebng tr\u1ea3 `data` l\u00e0 m\u1ed9t M\u1ea2NG k\u00e8m `meta` ri\u00eang\n| trong khi c\u00e1c \u0111\u01b0\u1eddng c\u00f9ng h\u1ecd theo d\u1ea1ng `data: { requests, ... }`. H\u1eadu\n| qu\u1ea3: `undefined.length` l\u00e0m s\u1eadp c\u1ea3 tab \u2014 nh\u01b0ng CH\u1ec8 v\u1edbi ng\u01b0\u1eddi c\u00f3 quy\u1ec1n\n| duy\u1ec7t, n\u00ean l\u1ed7i s\u1ed1ng s\u00f3t t\u1edbi l\u00fac c\u00f3 ng\u01b0\u1eddi duy\u1ec7t m\u1edf n\u00f3 ra.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "properties": {
+                                                "requests": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "string",
+                                                    "description": "Tr\u1ea3 t\u1ed5ng k\u00e8m tr\u1ea7n: c\u1eaft im l\u1eb7ng th\u00ec ng\u01b0\u1eddi c\u00f3 120 \u0111\u01a1n t\u01b0\u1edfng\nm\u00ecnh ch\u1ec9 t\u1eebng n\u1ed9p 100. Quy \u01b0\u1edbc chung c\u1ee7a c\u1ea3 d\u1ef1 \u00e1n."
+                                                },
+                                                "limit": {
+                                                    "type": "integer",
+                                                    "const": 100
+                                                },
+                                                "pending": {
+                                                    "type": "string",
+                                                    "description": "\u0110\u1ebfm tr\u00ean TRUY V\u1ea4N, kh\u00f4ng \u0111\u1ebfm tr\u00ean trang \u0111\u00e3 l\u1ea5y v\u1ec1: \u0111\u01a1n ch\u1edd\nduy\u1ec7t \u0111\u01b0\u1ee3c s\u1eafp l\u00ean \u0111\u1ea7u, n\u00ean khi s\u1ed1 \u0111\u01a1n ch\u1edd v\u01b0\u1ee3t tr\u1ea7n th\u00ec vi\u00ean\nnh\u00e3n s\u1ebd \u0111\u1ee9ng im \u1edf \u0111\u00fang con s\u1ed1 tr\u1ea7n v\u00e0 ng\u01b0\u1eddi duy\u1ec7t t\u01b0\u1edfng m\u00ecnh\n\u0111\u00e3 x\u1eed l\u00fd g\u1ea7n h\u1ebft."
+                                                }
+                                            },
+                                            "required": [
+                                                "requests",
+                                                "total",
+                                                "limit",
+                                                "pending"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "An error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview.",
+                                            "examples": [
+                                                ""
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "$ref": "#/components/responses/AuthenticationException"
@@ -8993,7 +9685,7 @@
             },
             "NotificationType": {
                 "type": "string",
-                "description": "C\u00e1c lo\u1ea1i th\u00f4ng b\u00e1o ng\u01b0\u1eddi d\u00f9ng c\u00f3 th\u1ec3 b\u1eadt/t\u1eaft. \u0110\u1eb7t \u1edf mi\u1ec1n Identity ch\u1ee9 kh\u00f4ng \u1edf Task: tu\u1ef3 ch\u1ecdn nh\u1eadn th\u00f4ng b\u00e1o l\u00e0 thu\u1ed9c t\u00ednh c\u1ee7a *ng\u01b0\u1eddi d\u00f9ng*, v\u00e0 \u0111\u1ee3t 2\u20134 s\u1ebd th\u00eam lo\u1ea1i c\u1ee7a b\u00e1o c\u00e1o, ch\u1ea5m c\u00f4ng, \u0111\u01a1n ngh\u1ec9. \u0110\u1ec3 \u1edf Task th\u00ec mi\u1ec1n Attendance s\u1ebd ph\u1ea3i g\u1ecdi ng\u01b0\u1ee3c sang Task ch\u1ec9 \u0111\u1ec3 \u0111\u1ecdc m\u1ed9t enum \u2014 \u0111\u00fang th\u1ee9 quy t\u1eafc ph\u1ee5 thu\u1ed9c c\u1ea5m.  M\u1eb7c \u0111\u1ecbnh ch\u1ecdn theo m\u1ee9c \u0111\u1ed9 g\u1ea5p, kh\u00f4ng b\u1eadt h\u1ebft m\u1ecdi k\u00eanh: h\u1ed9p th\u01b0 \u0111\u1ea7y th\u00f4ng b\u00e1o l\u00e0 h\u1ed9p th\u01b0 kh\u00f4ng ai \u0111\u1ecdc, v\u00e0 l\u00fac \u0111\u00f3 th\u00f4ng b\u00e1o th\u1eadt s\u1ef1 quan tr\u1ecdng c\u0169ng tr\u00f4i qua.\n| |\n|---|\n| `task.assigned` <br/>  |\n| `task.due_soon` <br/>  |\n| `task.overdue` <br/>  |\n| `task.comment_added` <br/>  |\n| `task.mentioned` <br/>  |\n| `bonus.locked` <br/> Qu\u1ef9 th\u01b0\u1edfng d\u1ef1 \u00e1n \u0111\u00e3 ch\u1ed1t. Lo\u1ea1i \u0111\u1ea7u ti\u00ean kh\u00f4ng thu\u1ed9c mi\u1ec1n Task \u2014 enum n\u00e0y \u1edf Identity ch\u00ednh v\u00ec \u0111\u00e3 l\u01b0\u1eddng tr\u01b0\u1edbc \u0111i\u1ec1u \u0111\u00f3. |\n| `report.reviewed` <br/> Qu\u1ea3n l\u00fd c\u00f3 nh\u1eadn x\u00e9t tr\u00ean b\u00e1o c\u00e1o ng\u00e0y. |\n| `report.missing` <br/> Cu\u1ed1i ng\u00e0y m\u00e0 ch\u01b0a n\u1ed9p b\u00e1o c\u00e1o. |\n| `leave.requested` <br/> C\u00f3 nh\u00e2n vi\u00ean n\u1ed9p \u0111\u01a1n ngh\u1ec9 c\u1ea7n duy\u1ec7t. |\n| `leave.reviewed` <br/> \u0110\u01a1n ngh\u1ec9 c\u1ee7a m\u00ecnh \u0111\u00e3 \u0111\u01b0\u1ee3c duy\u1ec7t ho\u1eb7c b\u1ecb t\u1eeb ch\u1ed1i. |\n| `late_arrival.requested` <br/>  |\n| `late_arrival.reviewed` <br/>  |",
+                "description": "C\u00e1c lo\u1ea1i th\u00f4ng b\u00e1o ng\u01b0\u1eddi d\u00f9ng c\u00f3 th\u1ec3 b\u1eadt/t\u1eaft. \u0110\u1eb7t \u1edf mi\u1ec1n Identity ch\u1ee9 kh\u00f4ng \u1edf Task: tu\u1ef3 ch\u1ecdn nh\u1eadn th\u00f4ng b\u00e1o l\u00e0 thu\u1ed9c t\u00ednh c\u1ee7a *ng\u01b0\u1eddi d\u00f9ng*, v\u00e0 \u0111\u1ee3t 2\u20134 s\u1ebd th\u00eam lo\u1ea1i c\u1ee7a b\u00e1o c\u00e1o, ch\u1ea5m c\u00f4ng, \u0111\u01a1n ngh\u1ec9. \u0110\u1ec3 \u1edf Task th\u00ec mi\u1ec1n Attendance s\u1ebd ph\u1ea3i g\u1ecdi ng\u01b0\u1ee3c sang Task ch\u1ec9 \u0111\u1ec3 \u0111\u1ecdc m\u1ed9t enum \u2014 \u0111\u00fang th\u1ee9 quy t\u1eafc ph\u1ee5 thu\u1ed9c c\u1ea5m.  M\u1eb7c \u0111\u1ecbnh ch\u1ecdn theo m\u1ee9c \u0111\u1ed9 g\u1ea5p, kh\u00f4ng b\u1eadt h\u1ebft m\u1ecdi k\u00eanh: h\u1ed9p th\u01b0 \u0111\u1ea7y th\u00f4ng b\u00e1o l\u00e0 h\u1ed9p th\u01b0 kh\u00f4ng ai \u0111\u1ecdc, v\u00e0 l\u00fac \u0111\u00f3 th\u00f4ng b\u00e1o th\u1eadt s\u1ef1 quan tr\u1ecdng c\u0169ng tr\u00f4i qua.\n| |\n|---|\n| `task.assigned` <br/>  |\n| `task.due_soon` <br/>  |\n| `task.overdue` <br/>  |\n| `task.comment_added` <br/>  |\n| `task.mentioned` <br/>  |\n| `bonus.locked` <br/> Qu\u1ef9 th\u01b0\u1edfng d\u1ef1 \u00e1n \u0111\u00e3 ch\u1ed1t. Lo\u1ea1i \u0111\u1ea7u ti\u00ean kh\u00f4ng thu\u1ed9c mi\u1ec1n Task \u2014 enum n\u00e0y \u1edf Identity ch\u00ednh v\u00ec \u0111\u00e3 l\u01b0\u1eddng tr\u01b0\u1edbc \u0111i\u1ec1u \u0111\u00f3. |\n| `report.reviewed` <br/> Qu\u1ea3n l\u00fd c\u00f3 nh\u1eadn x\u00e9t tr\u00ean b\u00e1o c\u00e1o ng\u00e0y. |\n| `report.missing` <br/> Cu\u1ed1i ng\u00e0y m\u00e0 ch\u01b0a n\u1ed9p b\u00e1o c\u00e1o. |\n| `leave.requested` <br/> C\u00f3 nh\u00e2n vi\u00ean n\u1ed9p \u0111\u01a1n ngh\u1ec9 c\u1ea7n duy\u1ec7t. |\n| `leave.reviewed` <br/> \u0110\u01a1n ngh\u1ec9 c\u1ee7a m\u00ecnh \u0111\u00e3 \u0111\u01b0\u1ee3c duy\u1ec7t ho\u1eb7c b\u1ecb t\u1eeb ch\u1ed1i. |\n| `late_arrival.requested` <br/>  |\n| `late_arrival.reviewed` <br/>  |\n| `attendance.adjustment.requested` <br/> C\u00f3 nh\u00e2n vi\u00ean n\u1ed9p \u0111\u01a1n gi\u1ea3i tr\u00ecnh c\u00f4ng c\u1ea7n duy\u1ec7t. Kh\u00e1c \u0111\u01a1n ngh\u1ec9 v\u00e0 \u0111\u01a1n \u0111i mu\u1ed9n \u1edf m\u1ed9t \u0111i\u1ec3m quy\u1ebft \u0111\u1ecbnh: \u0111\u01a1n n\u00e0y c\u00f3 H\u1ea0N CH\u00d3T c\u1ee9ng. K\u1ef3 c\u00f4ng ch\u1ed1t r\u1ed3i th\u00ec kh\u00f4ng ai duy\u1ec7t \u0111\u01b0\u1ee3c n\u1eefa, k\u1ec3 c\u1ea3 gi\u00e1m \u0111\u1ed1c, n\u00ean m\u1ed9t \u0111\u01a1n treo qua ng\u00e0y ch\u1ed1t l\u00e0 m\u1ed9t ng\u00e0y c\u00f4ng sai v\u0129nh vi\u1ec5n. |\n| `attendance.adjustment.reviewed` <br/> \u0110\u01a1n gi\u1ea3i tr\u00ecnh c\u1ee7a m\u00ecnh \u0111\u00e3 \u0111\u01b0\u1ee3c duy\u1ec7t ho\u1eb7c b\u1ecb t\u1eeb ch\u1ed1i. |",
                 "enum": [
                     "task.assigned",
                     "task.due_soon",
@@ -9006,7 +9698,9 @@
                     "leave.requested",
                     "leave.reviewed",
                     "late_arrival.requested",
-                    "late_arrival.reviewed"
+                    "late_arrival.reviewed",
+                    "attendance.adjustment.requested",
+                    "attendance.adjustment.reviewed"
                 ],
                 "title": "NotificationType"
             },
@@ -9781,6 +10475,36 @@
             "Stringable": {
                 "type": "string",
                 "title": "Stringable"
+            },
+            "SubmitAdjustmentRequest": {
+                "type": "object",
+                "description": "N\u1ed9p \u0111\u01a1n gi\u1ea3i tr\u00ecnh cho m\u1ed9t ng\u00e0y c\u00f4ng.\n\n## Kh\u00f4ng c\u00f3 kho\u1ea3ng ng\u00e0y nh\u01b0 \u0111\u01a1n ngh\u1ec9\n\n`LeaveWindow` tr\u1ea3 l\u1eddi c\u00e2u \"\u0111\u01b0\u1ee3c xin ngh\u1ec9 tr\u01b0\u1edbc bao l\u00e2u, khai l\u00f9i bao xa\" \u2014\nc\u00e2u h\u1ecfi c\u1ee7a m\u1ed9t \u0111\u01a1n h\u01b0\u1edbng v\u1ec1 t\u01b0\u01a1ng lai. Gi\u1ea3i tr\u00ecnh h\u01b0\u1edbng v\u1ec1 qu\u00e1 kh\u1ee9 v\u00e0 ch\u1ec9 c\u00f3\nhai c\u1eadn:\n\n  - **Kh\u00f4ng qu\u00e1 h\u00f4m nay.** Gi\u1ea3i tr\u00ecnh m\u1ed9t ng\u00e0y ch\u01b0a x\u1ea3y ra l\u00e0 v\u00f4 ngh\u0129a, v\u00e0\n    cho qua th\u00ec sinh ra nh\u1eefng \u0111\u01a1n \u0111\u01b0\u1ee3c duy\u1ec7t tr\u01b0\u1edbc khi c\u00f3 g\u00ec \u0111\u1ec3 gi\u1ea3i tr\u00ecnh.\n  - **Kh\u00f4ng tr\u01b0\u1edbc ng\u00e0y v\u00e0o l\u00e0m.** Ng\u00e0y tr\u01b0\u1edbc \u0111\u00f3 kh\u00f4ng ph\u1ea3i ng\u00e0y c\u00f4ng c\u1ee7a\n    ng\u01b0\u1eddi n\u00e0y.\n\nC\u1eadn d\u01b0\u1edbi th\u1eadt s\u1ef1 l\u00e0 **ch\u1ed1t s\u1ed5 k\u1ef3 c\u00f4ng**, v\u00e0 n\u00f3 \u0111\u01b0\u1ee3c ki\u1ec3m \u1edf controller ch\u1ee9\nkh\u00f4ng \u1edf \u0111\u00e2y: n\u00f3 l\u00e0 lu\u1eadt b\u1eafc qua nhi\u1ec1u mi\u1ec1n, v\u00e0 c\u00e2u l\u1ed7i c\u1ee7a n\u00f3 n\u00f3i ra k\u1ef3 n\u00e0o.\n\n## `today` ph\u1ea3i l\u00e0 h\u00f4m nay theo GI\u1edc VI\u1ec6T NAM\n\nLu\u1eadt `before_or_equal:today` c\u1ee7a Laravel so theo m\u00fai gi\u1edd \u1ee9ng d\u1ee5ng (UTC). T\u1eeb\n00:00 t\u1edbi 07:00 gi\u1edd Vi\u1ec7t Nam m\u1ed7i ng\u00e0y, `today` c\u1ee7a n\u00f3 v\u1eabn \u0111ang \u1edf h\u00f4m tr\u01b0\u1edbc \u2014\nn\u00ean ng\u01b0\u1eddi gi\u1ea3i tr\u00ecnh ng\u00e0y h\u00f4m qua l\u00fac 1h s\u00e1ng s\u1ebd b\u1ecb t\u1eeb ch\u1ed1i nh\u1ea7m. C\u00f9ng c\u00e1i\nb\u1eaby \u0111\u00e3 ghi \u1edf `ClosePeriodAction`.",
+                "properties": {
+                    "work_date": {
+                        "type": "string",
+                        "format": "date"
+                    },
+                    "requested_minutes": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "description": "| S\u1ed1 ph\u00fat \u0111\u1ec1 ngh\u1ecb \u2014 KH\u00d4NG b\u1eaft bu\u1ed9c, v\u00e0 \u0111\u00f3 l\u00e0 \u0111i\u1ec3m ch\u00ednh.\n|\n| Ng\u01b0\u1eddi \u0111i g\u1eb7p kh\u00e1ch c\u1ea3 ng\u00e0y kh\u00f4ng \u0111\u1ebfm ph\u00fat. B\u1eaft nh\u1eadp th\u00ec h\u1ecd \u0111i\u1ec1n\n| m\u1ed9t con s\u1ed1 b\u1ecba cho xong, v\u00e0 ng\u01b0\u1eddi duy\u1ec7t m\u1ea5t lu\u00f4n t\u00edn hi\u1ec7u \"ng\u01b0\u1eddi\n| n\u00e0y kh\u00f4ng kh\u1eb3ng \u0111\u1ecbnh con s\u1ed1 n\u00e0o\".",
+                        "minimum": 1,
+                        "maximum": 1440
+                    },
+                    "reason": {
+                        "type": "string",
+                        "description": "T\u1ed1i thi\u1ec3u 10 k\u00fd t\u1ef1, c\u00f9ng l\u00fd do v\u1edbi \u0111\u01a1n ngh\u1ec9: kh\u00f4ng c\u00f3 m\u1ee9c s\u00e0n th\u00ec\ntr\u01b0\u1eddng n\u00e0y \u0111\u1ea7y nh\u1eefng d\u00f2ng \"b\u1eadn\" v\u00e0 \"\u0111i c\u00f4ng t\u00e1c\".",
+                        "minLength": 10,
+                        "maxLength": 1000
+                    }
+                },
+                "required": [
+                    "work_date",
+                    "reason"
+                ],
+                "title": "SubmitAdjustmentRequest"
             },
             "SubmitLateArrivalRequest": {
                 "type": "object",

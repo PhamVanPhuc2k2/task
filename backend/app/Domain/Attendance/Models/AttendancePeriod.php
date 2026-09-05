@@ -7,11 +7,13 @@ namespace App\Domain\Attendance\Models;
 use App\Domain\Attendance\Enums\PeriodStatus;
 use App\Domain\Identity\Models\User;
 use App\Support\Concerns\HasUuid;
+use App\Support\Time\WorkDate;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Date;
 
 /**
  * Một kỳ công đã từng bị chốt sổ.
@@ -52,6 +54,27 @@ final class AttendancePeriod extends Model
     public static function periodOf(string $workDate): string
     {
         return substr($workDate, 0, 7);
+    }
+
+    /**
+     * Kỳ này đã kết thúc chưa — tính theo **ngày công hôm nay giờ Việt Nam**.
+     *
+     * Không dùng `now()` ở UTC: từ 00:00 tới 07:00 giờ Việt Nam mỗi ngày,
+     * `now()` của Laravel vẫn đang ở hôm trước, nên chốt lúc 1h sáng ngày 01/10
+     * sẽ bị từ chối nhầm.
+     *
+     * Ở trên model chứ không nằm riêng trong `ClosePeriodAction` vì hai chỗ cần
+     * cùng câu trả lời: hành động chốt, và tầng Http khi quyết định hiện lỗi
+     * nào trước — "kỳ chưa kết thúc" phải thắng "kỳ còn đơn treo", vì kỳ chưa
+     * kết thúc thì đơn treo là chuyện đương nhiên.
+     */
+    public static function daKetThuc(string $ky): bool
+    {
+        $cuoiKy = CarbonImmutable::parse($ky.'-01', WorkDate::timezone())
+            ->endOfMonth()
+            ->toDateString();
+
+        return $cuoiKy < WorkDate::from(Date::now());
     }
 
     /** @return BelongsTo<User, $this> */

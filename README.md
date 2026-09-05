@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**792 test xanh** (5037 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**820 test xanh** (5117 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-26 model · 32 migration · 48 bảng · 97 endpoint API · 30 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+27 model · 33 migration · 49 bảng · 102 endpoint API · 30 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3091,7 +3091,7 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 - [ ] `leave_balances` — quỹ phép năm, phép tồn năm trước, phép ứng trước
 - [ ] `overtime_requests` — đăng ký OT, duyệt trước mới được tính
 - [ ] Hệ số OT theo luật: ngày thường 150%, ngày nghỉ 200%, ngày lễ 300%
-- [ ] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Nhân viên giải trình → leader duyệt → sửa công, giữ nguyên vết cũ
+- [x] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Xem [Đơn giải trình công](#đơn-giải-trình-công--đã-xong)
 - [x] **Chốt kỳ công** — khoá sổ theo tháng dương lịch. Xem [Chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong)
 - [x] **Nhật ký kiểm toán** — mọi lần chốt và mở khoá vào `payroll_audits`, bảng chỉ ghi thêm
 - [ ] Tính khấu trừ theo giờ công thực tế (xem mục dưới)
@@ -3153,6 +3153,57 @@ Attendance giữ kỳ công, còn thứ bị chặn nằm ở Report và Leave �
 **Kiến trúc test bắt tên phương thức controller.** `PeriodController::close()` và `reopen()` vi phạm luật "controller chỉ dùng tên RESTful" — đã tách thành `ClosePeriodController` và `ReopenPeriodController` với `__invoke`, đúng khuôn `SubmitLeaveController`.
 
 **`composer larastan:schema` hỏng trên Git Bash và cắt file schema về 0 byte.** Script khai `docker compose exec ... > file` với dấu nháy mà Git Bash phân tích khác; chạy trực tiếp thì đúng. Đáng sửa script, hoặc ít nhất ghi ra đây để lần sau không ai mất mười phút.
+
+#### Đơn giải trình công ✅ Đã xong
+
+Trước phần này, `work_days` chỉ có **một cửa vào**: người quản lý bấm nút. Nhân viên đi gặp khách cả ngày, mất mạng, hay quên mở máy thì không có đường nào nói điều đó *trong hệ thống* — họ nhắn Zalo, quản lý nhớ thì bấm, quên thì thôi. Lý do thật của một ngày công bất thường nằm trong lịch sử chat của hai người.
+
+Từ khi có chốt sổ kỳ công, chuyện đó thành **hạn chót cứng**: chốt rồi thì không ai duyệt được nữa, kể cả giám đốc. Nên nhân viên phải có đường tự khởi xướng, và đường đó phải để lại vết.
+
+| Trước | Sau |
+|---|---|
+| Nhân viên nhắn Zalo cho quản lý | Nộp đơn trong hệ thống, có ngày và lý do |
+| Quản lý nhớ thì bấm "Bỏ qua" | Đơn nằm trong hộp duyệt tới khi được xử lý |
+| Lý do nằm trong chat | Lý do nằm cạnh con số, trên bảng công |
+| Chốt sổ vứt đơn đang treo, im lặng | Chốt sổ **bị chặn** khi kỳ còn đơn treo |
+
+##### Duyệt thì ghi bảng công qua đúng đường nút bấm tay vẫn đi
+
+`ReviewAdjustmentAction` gọi `ReviewWorkDayAction` chứ không tự ghi vào `work_days`. Luật *"chỉ 'bỏ qua' mới được ấn định số phút"* sống ở đó; chép lại phép ghi là hai chỗ cùng viết vào một bảng, và chúng sẽ lệch nhau ở lần đổi luật đầu tiên. Bảng công không cần biết con số đến từ nút bấm hay từ đơn.
+
+Quyết định luôn là `waived` — đó chính là nghĩa của một đơn giải trình được chấp nhận: *"giờ thấp nhưng có lý do chính đáng"*.
+
+##### Số phút của người duyệt thắng số người nộp xin
+
+Giao diện điền sẵn `requested_minutes` cho tiện, nhưng cái đi vào `work_days` là cái **người duyệt** gửi lên. Nếu không thì "duyệt" chỉ còn nghĩa là *"đồng ý với mọi con số nhân viên tự khai"*.
+
+`requested_minutes` được phép để trống, và đó là điểm chính: người đi gặp khách cả ngày không đếm phút. Bắt nhập thì họ điền một con số bịa cho xong, và người duyệt mất luôn tín hiệu *"người này không khẳng định con số nào"*.
+
+`approved_minutes` chép lại số đã duyệt **trên đơn này** và không bao giờ đổi nữa, trong khi `work_days.adjusted_minutes` là số *hiện hành* và có thể bị sửa thẳng sau đó. Hai câu hỏi khác nhau; gộp lại thì câu thứ hai không còn trả lời được.
+
+##### Chốt sổ bị chặn khi kỳ còn đơn treo
+
+Hạng mục quan trọng nhất, và là thứ nối hai chặng đầu của đợt 4 lại với nhau.
+
+Chốt sổ khoá **cả đơn từ**. Một đơn còn treo qua ngày chốt là đơn *không ai duyệt được nữa* — kể cả giám đốc, trừ khi mở khoá lại cả kỳ. Cách hỏng điển hình: giám đốc chốt tháng 8 vào ngày 02/09, ba đơn giải trình nộp hôm 31/08 chết theo, và ba người đó phát hiện ra khi bảng lương về.
+
+Phép kiểm đếm **ba loại đơn**, không phải một — đơn nghỉ và đơn đi muộn còn chờ cũng đổi số ngày công nếu được duyệt sau đó, nên chúng cũng mắc kẹt y hệt. Đơn nghỉ đếm theo **giao nhau** với kỳ, không theo ngày bắt đầu: một đơn từ 30/08 sang 02/09 vẫn đổi số ngày công của tháng 8.
+
+Thứ tự lỗi có chủ ý: **"kỳ chưa kết thúc" thắng "kỳ còn đơn treo"**, vì kỳ đang chạy thì còn đơn treo là chuyện đương nhiên và nói ngược lại sẽ khiến người ta đi xử lý đơn một cách vô ích.
+
+Màn chốt sổ trả kèm `closable` — kỳ sắp chốt là kỳ nào, còn bao nhiêu đơn mỗi loại, đã bấm được chưa. Giao diện **không** tự tính: nó phải biết hôm nay là ngày mấy theo giờ Việt Nam, và biết kỳ nào đã chốt — thứ trình duyệt không có cách nào suy ra. Một nút mờ không lời giải thích là thứ người ta bấm ba lần rồi đi hỏi người khác.
+
+##### Luật bắc qua hai miền nên đặt ở tầng Http
+
+`GuardsPendingWork` đọc `attendance_adjustments` (miền Attendance) cùng `leave_requests` và `late_arrival_requests` (miền Leave). Miền không được gọi miền, còn Http là một trong hai tầng được phép biết nhiều miền — cùng lý do đã ghi ở `GuardsClosedPeriods` và `ResolvesApprovedLeave`.
+
+##### Ba thứ lộ ra khi làm
+
+**Thứ tự khai route bắt buộc, không phải để cho đẹp.** `GET /attendance/adjustments/me` khớp đúng dạng `/attendance/{user}/{date}`, nên khai sau thì Laravel hiểu `adjustments` là uuid người dùng và trả 404. Cùng cái bẫy đã có sẵn với `/attendance/me`, và cả khối đơn giải trình phải nằm **trước** dòng đó.
+
+**`AdjustmentStatus` là bản sao thứ tư của cùng bốn trạng thái** — cạnh `LeaveStatus`, `BonusPoolStatus`, `DailyReportStatus`. Không gộp được: luật tầng cấm Attendance phụ thuộc Leave. Đây đã là nếp của dự án, và cái giá của hướng ngược lại — một enum dùng chung ở tầng Support — là mọi miền cùng phụ thuộc vào thứ không miền nào sở hữu.
+
+**`ngayViet()` từng có sáu bản sao**, mỗi lớp thông báo một bản. Sáu chỗ phải sửa nếu đổi cách viết ngày, và sửa năm chỗ thì người nhận thấy hai định dạng ngày khác nhau trong cùng một hộp thư, im lặng. Đã gom về `App\Support\Time\HumanTime`, cùng chỗ với `gioPhut()` và `ky()`.
 
 #### Cách tính lương theo giờ công — lưu ý pháp lý
 

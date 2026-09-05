@@ -78,6 +78,8 @@ const MIEN_KHAI_QUYEN = [
     // đúng điều đó — xem bên dưới.
     'V1/Attendance/MyAttendanceController.php' => 'Giờ làm của chính mình.',
     'V1/Attendance/HeartbeatController.php' => 'Ghi nhịp tim cho chính mình.',
+    'V1/Attendance/MyAdjustmentController.php' => 'Đơn giải trình công của chính mình.',
+    'V1/Attendance/SubmitAdjustmentController.php' => 'Giải trình ngày công của chính mình; đây là một lời khai, không khai hộ được.',
     'V1/Reports/MyReportsController.php' => 'Báo cáo ngày của chính mình.',
     'V1/Reports/SaveDailyReportController.php' => 'Lưu báo cáo của chính mình.',
     'V1/Tasks/MyTasksController.php' => 'Việc được giao cho chính mình.',

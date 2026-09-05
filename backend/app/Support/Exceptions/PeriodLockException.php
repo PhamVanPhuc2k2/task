@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support\Exceptions;
 
+use App\Support\Time\HumanTime;
+
 /**
  * Thao tác bị chặn vì kỳ công đã chốt, hoặc lệnh chốt/mở khoá không hợp lệ.
  *
@@ -32,7 +34,7 @@ final class PeriodLockException extends DomainException
         return new self(
             sprintf(
                 'Kỳ công %s đã chốt sổ nên không sửa được nữa. Cần điều chỉnh thì đề nghị giám đốc mở khoá kỳ này.',
-                self::tenKy($ky),
+                HumanTime::ky($ky),
             ),
             $truong,
         );
@@ -47,7 +49,7 @@ final class PeriodLockException extends DomainException
     public static function chuaKetThuc(string $ky): self
     {
         return new self(
-            sprintf('Kỳ công %s chưa kết thúc nên chưa chốt sổ được.', self::tenKy($ky)),
+            sprintf('Kỳ công %s chưa kết thúc nên chưa chốt sổ được.', HumanTime::ky($ky)),
             'period',
         );
     }
@@ -55,7 +57,7 @@ final class PeriodLockException extends DomainException
     public static function daChotRoi(string $ky): self
     {
         return new self(
-            sprintf('Kỳ công %s đã chốt từ trước.', self::tenKy($ky)),
+            sprintf('Kỳ công %s đã chốt từ trước.', HumanTime::ky($ky)),
             'period',
         );
     }
@@ -63,7 +65,7 @@ final class PeriodLockException extends DomainException
     public static function chuaChot(string $ky): self
     {
         return new self(
-            sprintf('Kỳ công %s chưa chốt nên không có gì để mở khoá.', self::tenKy($ky)),
+            sprintf('Kỳ công %s chưa chốt nên không có gì để mở khoá.', HumanTime::ky($ky)),
             'period',
         );
     }
@@ -79,13 +81,5 @@ final class PeriodLockException extends DomainException
     public function fieldErrors(): array
     {
         return [$this->truong => [$this->getMessage()]];
-    }
-
-    /** `2026-09` thành `tháng 09/2026` — cách người ta đọc một kỳ công. */
-    private static function tenKy(string $ky): string
-    {
-        [$nam, $thang] = array_pad(explode('-', $ky), 2, '');
-
-        return $thang === '' ? $ky : sprintf('tháng %s/%s', $thang, $nam);
     }
 }

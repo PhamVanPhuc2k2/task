@@ -3,12 +3,17 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\Attendance\AttendanceTimelineController;
+use App\Http\Controllers\Api\V1\Attendance\CancelAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\ClosePeriodController;
 use App\Http\Controllers\Api\V1\Attendance\HeartbeatController;
+use App\Http\Controllers\Api\V1\Attendance\MyAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\MyAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\PeriodController;
 use App\Http\Controllers\Api\V1\Attendance\ReopenPeriodController;
+use App\Http\Controllers\Api\V1\Attendance\ReviewAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\ReviewWorkDayController;
+use App\Http\Controllers\Api\V1\Attendance\SubmitAdjustmentController;
+use App\Http\Controllers\Api\V1\Attendance\TeamAdjustmentController;
 use App\Http\Controllers\Api\V1\Attendance\TeamAttendanceController;
 use App\Http\Controllers\Api\V1\Attendance\WorkDayDetailController;
 use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
@@ -244,6 +249,30 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     | thì làm liền mạch và làm rải rác vẫn ra cùng một con số.
     */
     Route::get('/attendance/timeline', AttendanceTimelineController::class);
+
+    /*
+    | Đơn giải trình công — nhân viên tự nói ra vì sao một ngày đo thiếu.
+    |
+    | Trước đây `work_days` chỉ có một cửa vào: quản lý bấm nút. Người đi gặp
+    | khách cả ngày phải nhắn Zalo, và lý do thật của một ngày công bất thường
+    | nằm trong lịch sử chat của hai người. Từ khi có chốt sổ kỳ công thì chuyện
+    | đó thành hạn chót cứng — chốt rồi là không ai duyệt được nữa.
+    |
+    | Dùng chung quyền `attendance.review` với nút bấm tay: duyệt một đơn giải
+    | trình CHÍNH LÀ ra quyết định trên ngày công đó, chỉ khác ai khởi xướng.
+    |
+    | KHAI TRƯỚC /attendance/{user}/{date} — bắt buộc, không phải để cho đẹp.
+    | `GET /attendance/adjustments/me` khớp đúng dạng {user}/{date}, nên đặt sau
+    | thì Laravel hiểu "adjustments" là uuid người dùng và trả 404. Cùng cái bẫy
+    | đã ghi ngay bên dưới cho /attendance/me.
+    |
+    | Tham số {adjustment} nhận uuid — HasUuid đặt getRouteKeyName() = 'uuid'.
+    */
+    Route::get('/attendance/adjustments/me', MyAdjustmentController::class);
+    Route::get('/attendance/adjustments/team', TeamAdjustmentController::class);
+    Route::post('/attendance/adjustments', SubmitAdjustmentController::class);
+    Route::post('/attendance/adjustments/{adjustment}/review', ReviewAdjustmentController::class);
+    Route::post('/attendance/adjustments/{adjustment}/cancel', CancelAdjustmentController::class);
 
     // Khai báo SAU /attendance/me và /attendance/team, nếu không Laravel hiểu
     // "me" là uuid người dùng rồi trả 404.
