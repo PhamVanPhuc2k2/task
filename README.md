@@ -6,9 +6,9 @@
 
 ## Trạng thái hiện tại
 
-**880 test xanh** (5366 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
+**904 test xanh** (5476 assertions) · Larastan mức 8 sạch · Deptrac 0 vi phạm · `composer audit` & `npm audit` sạch · ESLint / Prettier / `tsc` / `next build` đều xanh
 
-29 model · 35 migration · 51 bảng · 111 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
+29 model · 35 migration · 51 bảng · 113 endpoint API · 31 quyền · 4 vai trò · giao diện và thông báo lỗi hoàn toàn tiếng Việt
 
 ### Chạy được rồi
 
@@ -3093,7 +3093,7 @@ Blast radius đã nhỏ đi rất nhiều nhờ các khối `@property` (717 →
 - [x] **Đơn giải trình & điều chỉnh công** — quên bấm giờ, mất mạng, họp ngoài. Xem [Đơn giải trình công](#đơn-giải-trình-công--đã-xong)
 - [x] **Chốt kỳ công** — khoá sổ theo tháng dương lịch. Xem [Chốt sổ kỳ công](#chốt-sổ-kỳ-công--đã-xong)
 - [x] **Nhật ký kiểm toán** — mọi lần chốt và mở khoá vào `payroll_audits`, bảng chỉ ghi thêm
-- [ ] Tính khấu trừ theo giờ công thực tế (xem mục dưới)
+- [x] **Tính khấu trừ theo giờ công thực tế** + bảng kê lương. Xem [Bảng kê lương](#bảng-kê-lương--đã-xong)
 
 #### Chốt sổ kỳ công ✅ Đã xong
 
@@ -3415,9 +3415,84 @@ Lương giờ = Lương tháng / Số ngày công chuẩn / Số giờ mỗi ca
 Khấu trừ  = (Số phút thiếu - Số phút ân hạn) / 60 × Lương giờ
 ```
 
-- [ ] Cấu hình **số ngày công chuẩn** — cố định 26 ngày hay theo lịch thực tế từng tháng?
-- [ ] Cấu hình **phút ân hạn** — trễ dưới bao nhiêu phút thì bỏ qua?
-- [ ] Cấu hình **quy tắc làm tròn** — tính đúng số phút, hay làm tròn lên block 15/30 phút?
+- [x] **Số ngày công chuẩn**: theo **lịch thực tế từng tháng** — công ty đã chốt. Suy từ lịch tuần, không có tham số nào để gõ sai.
+- [x] **Phút ân hạn**: **5 phút**, áp cho từng ngày. Khớp ngưỡng về sớm hiện hành.
+- [x] **Quy tắc làm tròn**: **tính đúng số phút**. Có tham số `payroll.shortfall_round_to_minutes` nếu công ty đổi ý.
+
+### Bảng kê lương ✅ Đã xong
+
+Chỗ mọi thứ của đợt 4 quy ra tiền: giờ công đã có người duyệt, đơn nghỉ đã duyệt, làm thêm giờ đã duyệt, và mức lương đang hiệu lực.
+
+```
+lương giờ            = lương tháng ÷ (số phút chuẩn của kỳ ÷ 60)
+trừ thiếu giờ        = số phút thiếu       ÷ 60 × lương giờ
+trừ nghỉ không lương = số phút nghỉ KL     ÷ 60 × lương giờ
+tiền làm thêm        = Σ (số phút ÷ 60 × lương giờ × hệ số%)
+
+thực nhận = lương tháng + phụ cấp − trừ thiếu giờ − trừ nghỉ KL + làm thêm
+```
+
+##### Ba tham số, công ty đã chốt
+
+| Tham số | Chọn | Hệ quả |
+|---|---|---|
+| Số ngày công chuẩn | **Theo lịch thực tế từng tháng** | Lương giờ đổi theo tháng. Tháng 08/2026 = 21 ngày cả ngày + 5 ngày nửa buổi = 10.890 phút. |
+| Phút ân hạn | **5 phút**, theo từng ngày | Khớp ngưỡng về sớm hiện hành. Dời ngưỡng, không trừ vào số phút. |
+| Làm tròn | **Tính đúng số phút** | Minh bạch nhất. Có tham số nếu đổi ý. |
+
+Số ngày công chuẩn **không có tham số nào để gõ sai** — nó suy thẳng từ lịch tuần. Đổi lại là lương giờ đổi theo tháng, nên phiếu lương nói ra số phút chuẩn của kỳ ngay cạnh lương giờ.
+
+Ân hạn tính theo **từng ngày**, không theo cả kỳ: cộng dồn cả tháng rồi mới trừ một lần nghĩa là năm phút lẻ mỗi ngày thành gần hai tiếng cuối tháng, mà mục đích của ân hạn là bỏ qua những lệch vặt. Hệ quả kỹ thuật: số phút thiếu **không tính lại được** từ `phải có mặt − đã làm`, nên phải duyệt qua từng ngày thay vì cộng một câu SQL.
+
+##### Ngày lễ không cần một luật miễn trừ riêng
+
+`expectedMinutesOn()` trả 0 cho ngày lễ và ngày nghỉ hằng tuần, nên ngày lễ **rút số phút chuẩn xuống**. Không ai phải có mặt → không ai thiếu giờ → không ai bị trừ. Một dòng dữ liệu thay cho một nhánh `if`.
+
+Nghỉ phép năm đã duyệt cũng vậy: nó rút "số phút phải có mặt" xuống mà không rút mẫu số, nên người nghỉ phép nhận đủ lương. Nghỉ không lương thì rút số phút phải có mặt **và** đi vào một dòng trừ riêng — người đọc phải thấy được ngày nào bị trừ và vì sao.
+
+`LeaveType::isPaidLeave()` là **chỗ duy nhất** quyết định loại nghỉ nào có lương: phép năm và nghỉ ốm có, việc riêng và không lương thì không (Điều 113, 115). Chú thích ở enum đó từ đợt 1 đã nói trước rằng nó sẽ là chỗ gắn luật này.
+
+##### Phép tính thuần, tách khỏi việc đi gom số
+
+`BuildPayslipAction` **không đọc database**. Cùng đầu vào thì luôn ra cùng kết quả — với mã tính tiền thì đó không phải sự ngăn nắp mà là điều kiện để kiểm được: kỳ toàn ngày lễ, lương giờ chia cho 0, người chưa từng được đặt lương — mọi trường hợp biên dựng được bằng một dòng test, không cần người dùng và không cần bảng nào.
+
+Việc đi gom nằm ở `Http\Support\PayslipAssembler`: phiếu lương cần bốn miền (Attendance, Leave, Payroll, và lịch ở Support), mà luật tầng cấm Payroll gọi sang ba miền kia. Http là một trong hai tầng được phép biết nhiều miền — cùng lý do đã ghi ở `GuardsClosedPeriods`.
+
+##### Tiền tính bằng `bcmath`, và `bcmath` CẮT chứ không làm tròn
+
+`bcdiv('20','3',2)` ra `6,66` chứ không phải `6,67`. Với một dòng thì lệch một đồng; với ba mươi người mười hai tháng thì lệch một khoản có người sẽ hỏi. `App\Support\Money` gom lại: lương giờ giữ **6 chữ số** suốt phép tính, chỉ từng dòng tiền mới làm tròn nửa lên về **đồng** — tiền Việt Nam không có hào.
+
+**Tổng cộng từ các dòng đã làm tròn**, không tính lại ở độ chính xác cao. Người nhận lương sẽ cộng tay để đối chiếu; nếu tổng đi đường khác thì nó lệch vài đồng so với phép cộng ấy, và vài đồng lệch trên một phiếu lương là đủ để mất niềm tin vào cả bảng. Có test khoá đúng điều đó.
+
+Phép kiểm tỉnh táo của cả công thức: **không đi làm ngày nào thì khoản trừ phải bằng đúng lương tháng**. Nếu không thì lương giờ đang sai.
+
+##### Phiếu của kỳ chưa chốt là bản TẠM
+
+Không chặn xem — kế toán cần nhìn trước để biết tháng này rơi vào khoảng nào. Nhưng `is_final` nói thẳng ra và màn hình hiện điều đó: một đơn giải trình được duyệt chiều nay sẽ đổi số giờ thiếu của cả tháng.
+
+Đây là chỗ chặng 1 trả cổ tức: chốt sổ khoá giờ công, đơn từ và báo cáo ngày, nên sau khi chốt thì không con số nào trên phiếu đổi được nữa.
+
+##### Quyền và nhật ký
+
+`payroll.view.own` cho phiếu của mình, `payroll.view.all` cho bảng kê. Mở bảng kê **vào nhật ký kiểm toán**; mở phiếu của chính mình thì **không** — `payroll_audits` tồn tại để trả lời *"ai đã xem lương của người khác"*, và ghi cả lượt tự xem thì nhật ký đầy những dòng vô nghĩa đúng lúc cần tra cứu.
+
+Người chưa từng được đặt lương vẫn hiện trên bảng với số tiền bằng 0. Bỏ họ ra là làm một người biến mất khỏi bảng lương mà không ai biết vì sao — và đó đúng là người cần được chú ý.
+
+##### Chưa có
+
+Thuế thu nhập cá nhân, bảo hiểm xã hội, công đoàn phí. Ba khoản đó cần biểu thuế luỹ tiến, mức đóng theo vùng và trần đóng — mỗi thứ là một chính sách riêng có kỳ hiệu lực riêng. Phiếu này trả lời câu hẹp hơn: *"tiền công theo giờ làm việc thực tế của kỳ này là bao nhiêu"*.
+
+Phụ cấp không chia theo tỷ lệ giờ công — nó là khoản cố định hằng tháng. Mức lương lấy theo dòng hiệu lực vào **ngày cuối kỳ**, nên tăng lương giữa tháng thì mức mới áp cho cả kỳ; `salary_records` đã lưu đủ khoảng hiệu lực nếu công ty muốn chia theo tỷ lệ.
+
+##### Giao diện
+
+Trang **Lương** có hai mục: *Phiếu lương* (mặc định) và *Mức lương*. Phiếu lương là câu hỏi thường gặp hơn hẳn — *"tháng vừa rồi tôi được bao nhiêu, và vì sao"*.
+
+Phiếu hiện **đủ đường đi**: giờ chuẩn của kỳ, đã làm, phải có mặt, thiếu giờ, rồi từng dòng tiền kèm phép nhân của nó (*"7h45 × 55.096đ/giờ"*). Cộng tay các dòng ra đúng tổng.
+
+Kỳ mặc định do **server** chọn — giao diện không tự tính "tháng trước" từ `new Date()`. Nút lùi/tiến dựa trên kỳ mà phản hồi nói ra.
+
+Không nạp bảng mức lương khi đang xem phiếu: đó là một lượt gọi cho dữ liệu không hiện ra, **và nó ghi một dòng vào nhật ký kiểm toán**.
 
 ### Mức lương ✅ Phần đặt và xem đã xong
 
@@ -3432,7 +3507,7 @@ Làm sớm hơn lộ trình, theo yêu cầu. Đây mới là **mức lương** 
 - [x] Lịch sử mức lương theo khoảng hiệu lực, chỉ ghi thêm
 - [x] Nhân viên xem được mức và lịch sử của chính mình
 - [x] Nhật ký **cả việc xem lẫn việc sửa**
-- [ ] Bảng lương tính ra tiền phải trả — chờ chốt kỳ công (đợt 4)
+- [x] Bảng lương tính ra tiền phải trả — xem [Bảng kê lương](#bảng-kê-lương--đã-xong)
 - [ ] Xuất cho kế toán — chờ biết dùng phần mềm gì
 
 #### Không nằm trên bảng `users`

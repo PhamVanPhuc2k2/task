@@ -31,4 +31,31 @@ enum LeaveType: string
             self::Personal => 'Nghỉ việc riêng',
         };
     }
+
+    /**
+     * Ngày nghỉ loại này có được công ty trả lương không.
+     *
+     * **Đây là chỗ duy nhất quyết định điều đó**, và nó ra tiền — chú thích đầu
+     * lớp đã lường trước rằng enum này sẽ là chỗ gắn luật ấy.
+     *
+     * - **Phép năm**: có, Điều 113 Bộ luật Lao động 2019.
+     * - **Nghỉ ốm**: có. Công ty vẫn trả ngày ốm có giấy; phần bảo hiểm xã hội
+     *   chi trả được quyết toán ngoài hệ thống này. Đổi ở đây nếu công ty
+     *   chuyển sang để BHXH gánh hẳn.
+     * - **Việc riêng**: không. Điều 115 chỉ cho nghỉ có lương trong vài trường
+     *   hợp cụ thể (kết hôn, con kết hôn, tang); ngoài ra là nghỉ không hưởng
+     *   lương. Người thuộc diện Điều 115 thì nhân sự cộng bù bằng ô điều chỉnh
+     *   quỹ phép, chứ không nới luật ở đây.
+     * - **Không lương**: không, theo đúng tên gọi.
+     *
+     * Phiếu lương hiện tách riêng từng loại chứ không gộp thành một dòng "nghỉ"
+     * — người đọc phải thấy được ngày nào bị trừ và vì sao.
+     */
+    public function isPaidLeave(): bool
+    {
+        return match ($this) {
+            self::Annual, self::Sick => true,
+            self::Personal, self::Unpaid => false,
+        };
+    }
 }

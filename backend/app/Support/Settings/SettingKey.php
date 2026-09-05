@@ -80,6 +80,12 @@ enum SettingKey: string
     case OvertimeMaxMinutesMonth = 'overtime_max_minutes_month';
     case OvertimeMaxMinutesYear = 'overtime_max_minutes_year';
 
+    // ── Bảng lương ───────────────────────────────────────────────────────
+    // Số ngày công chuẩn KHÔNG có ở đây: công ty chốt tính theo lịch thực tế
+    // từng tháng, nên nó suy từ lịch tuần chứ không phải một con số gõ tay.
+    case PayrollGraceMinutes = 'payroll_grace_minutes';
+    case PayrollRoundMinutes = 'payroll_round_minutes';
+
     /** Đường dẫn trong `Config`, hoặc `null` nếu khoá này không đi qua config. */
     public function configPath(): ?string
     {
@@ -121,6 +127,9 @@ enum SettingKey: string
             self::OvertimeMaxMinutesDay => 'attendance.overtime.max_minutes_per_day',
             self::OvertimeMaxMinutesMonth => 'attendance.overtime.max_minutes_per_month',
             self::OvertimeMaxMinutesYear => 'attendance.overtime.max_minutes_per_year',
+
+            self::PayrollGraceMinutes => 'payroll.shortfall_grace_minutes',
+            self::PayrollRoundMinutes => 'payroll.shortfall_round_to_minutes',
         };
     }
 
@@ -148,7 +157,9 @@ enum SettingKey: string
             self::OvertimeRateHoliday,
             self::OvertimeMaxMinutesDay,
             self::OvertimeMaxMinutesMonth,
-            self::OvertimeMaxMinutesYear => SettingType::Integer,
+            self::OvertimeMaxMinutesYear,
+            self::PayrollGraceMinutes,
+            self::PayrollRoundMinutes => SettingType::Integer,
 
             self::ReportReminderEnabled => SettingType::Boolean,
 
@@ -226,6 +237,9 @@ enum SettingKey: string
             self::OvertimeMaxMinutesDay => 'Trần làm thêm mỗi ngày (phút)',
             self::OvertimeMaxMinutesMonth => 'Trần làm thêm mỗi tháng (phút)',
             self::OvertimeMaxMinutesYear => 'Trần làm thêm mỗi năm (phút)',
+
+            self::PayrollGraceMinutes => 'Thiếu bao nhiêu phút mỗi ngày thì bắt đầu trừ',
+            self::PayrollRoundMinutes => 'Làm tròn số phút thiếu (0 = tính đúng)',
         };
     }
 }

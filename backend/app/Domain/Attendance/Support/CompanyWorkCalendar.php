@@ -34,6 +34,17 @@ final class CompanyWorkCalendar implements WorkCalendar
     /** @var array<int, array<string, true>> năm => tập ngày thực nghỉ */
     private array $ngayLe = [];
 
+    public function expectedMinutesOn(string $ngay): int
+    {
+        if ($this->laLe($ngay)) {
+            return 0;
+        }
+
+        // `expectedMinutes()` của ca đã trừ nghỉ trưa, và ca nửa buổi dựng bằng
+        // `WorkShift::halfDay()` nên ra đúng 225 phút mà không cần nhánh riêng.
+        return $this->tuan()->shiftFor($ngay)?->expectedMinutes() ?? 0;
+    }
+
     public function kindOf(string $ngay): DayKind
     {
         /*
@@ -49,10 +60,8 @@ final class CompanyWorkCalendar implements WorkCalendar
             return DayKind::Holiday;
         }
 
-        $tuan = $this->tuan ??= WorkWeek::fromConfig();
-
         // Ngày nửa buổi vẫn là NGÀY LÀM VIỆC — xem chú thích ở `DayKind`.
-        return $tuan->shiftFor($ngay) === null
+        return $this->tuan()->shiftFor($ngay) === null
             ? DayKind::WeeklyRest
             : DayKind::Working;
     }
@@ -63,7 +72,7 @@ final class CompanyWorkCalendar implements WorkCalendar
             return 0.0;
         }
 
-        $tuan = $this->tuan ??= WorkWeek::fromConfig();
+        $tuan = $this->tuan();
 
         $tong = 0.0;
         $ngay = CarbonImmutable::parse($tuNgay);
@@ -78,6 +87,12 @@ final class CompanyWorkCalendar implements WorkCalendar
         }
 
         return $tong;
+    }
+
+    /** Lịch tuần, đọc một lần cho cả vòng đời đối tượng. */
+    private function tuan(): WorkWeek
+    {
+        return $this->tuan ??= WorkWeek::fromConfig();
     }
 
     /**

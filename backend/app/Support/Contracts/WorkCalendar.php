@@ -39,6 +39,19 @@ interface WorkCalendar
     public function countBetween(string $tuNgay, string $denNgay): float;
 
     /**
+     * Số phút của CA hôm đó — 0 với ngày nghỉ hằng tuần và ngày lễ.
+     *
+     * Đây là "số phút phải có mặt" của một ngày, và là mẫu số của mọi phép tính
+     * lương theo giờ công. Ngày nửa buổi ra ít hơn ngày cả ngày, nên cộng dồn
+     * cả kỳ là ra đúng số giờ chuẩn của kỳ đó **theo lịch thực tế** — không
+     * phải một con số 26 ngày cố định.
+     *
+     * Ngày lễ trả 0 nên nó tự động được trả đủ lương mà không bị trừ giờ nào:
+     * không ai phải có mặt, nên không ai thiếu giờ.
+     */
+    public function expectedMinutesOn(string $ngay): int;
+
+    /**
      * Ngày này thuộc loại nào: ngày làm, ngày nghỉ tuần, hay ngày lễ.
      *
      * Dùng để chọn hệ số tiền lương làm thêm giờ (Điều 98 Bộ luật Lao động

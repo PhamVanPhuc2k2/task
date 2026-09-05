@@ -9,6 +9,7 @@ import { Pagination } from "@/components/ui/pagination";
 import { EmptyState, ErrorState, ListSkeleton } from "@/components/ui/states";
 import { useCurrentUser } from "@/features/auth/api/auth-api";
 import { usePayroll } from "@/features/payroll/api/payroll-api";
+import { PayslipPanel } from "@/features/payroll/components/payslip-panel";
 import { SalaryDialog } from "@/features/payroll/components/salary-dialog";
 import { formatMoney } from "@/features/payroll/types/payroll";
 import { useDepartments } from "@/features/users/api/employees-api";
@@ -34,6 +35,17 @@ export default function PayrollPage() {
     null,
   );
 
+  /*
+  | Hai màn, hai câu hỏi khác nhau.
+  |
+  | "Phiếu lương" trả lời *tháng vừa rồi tôi được bao nhiêu, và vì sao* — đó là
+  | thứ người ta mở trang này để xem. "Mức lương" là màn tham chiếu: mức đang
+  | hiệu lực và lịch sử điều chỉnh, mở khi có người tăng lương.
+  |
+  | Mặc định là phiếu lương, có chủ ý: nó là câu hỏi thường gặp hơn hẳn.
+  */
+  const [man, setMan] = useState<Man>("phieu");
+
   const xemTatCa = user?.permissions.includes("payroll.view.all") === true;
   const datDuoc = user?.permissions.includes("payroll.manage") === true;
 
@@ -43,7 +55,9 @@ export default function PayrollPage() {
       department_id: phong || undefined,
       page: trang,
     },
-    xemTatCa,
+    // Không nạp bảng mức lương khi đang xem phiếu — đó là một lượt gọi cho dữ
+    // liệu không hiện ra, và nó ghi một dòng vào nhật ký kiểm toán.
+    xemTatCa && man === "muc",
   );
 
   const { data: phongBan } = useDepartments();
@@ -68,21 +82,25 @@ export default function PayrollPage() {
 
         {user && (
           <Button onClick={() => setDangMo({ id: user.id, name: user.name })}>
-            Lương của tôi
+            Lịch sử lương của tôi
           </Button>
         )}
       </header>
 
-      {/* Người không có quyền xem toàn công ty dừng ở đây — chỉ có nút "Lương
-          của tôi" phía trên. Không gọi API bảng lương để khỏi ăn 403 vô ích. */}
-      {user && !xemTatCa && (
+      <ChonMan man={man} onChange={setMan} />
+
+      {man === "phieu" && <PayslipPanel xemTatCa={xemTatCa} />}
+
+      {/* Người không có quyền xem toàn công ty dừng ở đây — chỉ có nút lịch sử
+          lương phía trên. Không gọi API bảng lương để khỏi ăn 403 vô ích. */}
+      {man === "muc" && user && !xemTatCa && (
         <EmptyState
           title="Bạn chỉ xem được lương của chính mình"
           description="Bấm “Lương của tôi” ở trên để xem mức hiện tại và lịch sử điều chỉnh."
         />
       )}
 
-      {xemTatCa && (
+      {man === "muc" && xemTatCa && (
         <>
           <div className="grid gap-3 sm:grid-cols-[1fr_14rem]">
             <div>
@@ -209,6 +227,46 @@ export default function PayrollPage() {
           canManage={datDuoc && dangMo.id !== user?.id}
         />
       )}
+    </div>
+  );
+}
+
+type Man = "phieu" | "muc";
+
+/**
+ * Bộ chọn hai màn, cùng khuôn với trang Chấm công và Nghỉ phép.
+ *
+ * Cả hai mục đều hiện cho mọi người: ai cũng có phiếu lương của mình, và ai
+ * cũng xem được lịch sử mức lương của chính mình.
+ */
+function ChonMan({ man, onChange }: { man: Man; onChange: (v: Man) => void }) {
+  const muc: { v: Man; nhan: string }[] = [
+    { v: "phieu", nhan: "Phiếu lương" },
+    { v: "muc", nhan: "Mức lương" },
+  ];
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Màn hình"
+      className="border-line bg-paper-sunken inline-flex gap-0.5 rounded-xl border p-0.5"
+    >
+      {muc.map((m) => (
+        <button
+          key={m.v}
+          type="button"
+          role="radio"
+          aria-checked={man === m.v}
+          onClick={() => onChange(m.v)}
+          className={
+            man === m.v
+              ? "focus-frame bg-paper-raised text-ink shadow-card rounded-lg px-4 py-1.5 text-[0.86rem] font-medium"
+              : "focus-frame text-ink-faint hover:text-ink-soft rounded-lg px-4 py-1.5 text-[0.86rem] font-medium transition-colors"
+          }
+        >
+          {m.nhan}
+        </button>
+      ))}
     </div>
   );
 }

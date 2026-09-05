@@ -55,7 +55,9 @@ use App\Http\Controllers\Api\V1\Organization\PositionController;
 use App\Http\Controllers\Api\V1\Payroll\AllocateBonusController;
 use App\Http\Controllers\Api\V1\Payroll\ChangeBonusPoolStatusController;
 use App\Http\Controllers\Api\V1\Payroll\MyBonusController;
+use App\Http\Controllers\Api\V1\Payroll\MyPayslipController;
 use App\Http\Controllers\Api\V1\Payroll\PayrollController;
+use App\Http\Controllers\Api\V1\Payroll\PayslipController;
 use App\Http\Controllers\Api\V1\Payroll\ProjectBonusController;
 use App\Http\Controllers\Api\V1\Projects\ProjectController;
 use App\Http\Controllers\Api\V1\Projects\ProjectMemberController;
@@ -386,6 +388,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function (): void {
     // ── Lương ────────────────────────────────────────
     // Tách hẳn khỏi /users, có chủ ý: quản trị nhân sự và quản trị lương là hai
     // vai khác nhau, nên guard cũng phải tách. Xem PayrollController.
+    /*
+    | Bảng kê lương theo kỳ — nơi giờ công, đơn nghỉ và làm thêm giờ quy ra tiền.
+    |
+    | Khai TRƯỚC /payroll/{user}: "payslips" khớp đúng dạng {user}, nên đặt sau
+    | thì Laravel hiểu nó là uuid người dùng và trả 404. Cùng cái bẫy đã gặp ở
+    | /attendance/adjustments/me và /attendance/overtime/me.
+    |
+    | Phiếu của kỳ CHƯA CHỐT là bản tạm — không chặn xem, nhưng `is_final` nói
+    | thẳng ra, vì một đơn giải trình được duyệt chiều nay sẽ đổi số giờ thiếu
+    | của cả tháng.
+    */
+    Route::get('/payroll/payslips', [PayslipController::class, 'index']);
+    Route::get('/payroll/payslips/me', MyPayslipController::class);
+
     Route::get('/payroll', [PayrollController::class, 'index']);
     Route::get('/payroll/{user}', [PayrollController::class, 'show']);
     Route::post('/payroll/{user}', [PayrollController::class, 'store']);

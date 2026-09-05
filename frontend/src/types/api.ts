@@ -548,6 +548,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/payroll/payslips/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payroll.myPayslip"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/me": {
         parameters: {
             query?: never;
@@ -663,6 +679,22 @@ export interface paths {
         patch: operations["notificationSetting.update"];
         trace?: never;
     };
+    "/attendance/overtime/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["attendance.overtimePreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboard/overview": {
         parameters: {
             query?: never;
@@ -715,6 +747,22 @@ export interface paths {
         get: operations["payroll.show"];
         put?: never;
         post: operations["payroll.store"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/payroll/payslips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payslip.index"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2254,6 +2302,8 @@ export interface components {
                 overtime_max_minutes_day?: number;
                 overtime_max_minutes_month?: number;
                 overtime_max_minutes_year?: number;
+                payroll_grace_minutes?: number;
+                payroll_round_minutes?: number;
             };
         };
         /**
@@ -3875,6 +3925,86 @@ export interface operations {
             401: components["responses"]["AuthenticationException"];
         };
     };
+    "payroll.myPayslip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            /**
+                             * @description | Đã chốt sổ kỳ này chưa.
+                             *     |
+                             *     | Chốt sổ khoá giờ công, đơn từ và báo cáo ngày của kỳ — sau đó
+                             *     | không con số nào trên phiếu đổi được nữa. Trước đó thì phiếu là
+                             *     | bản tạm, và màn hình phải nói thẳng điều đó.
+                             */
+                            is_final: boolean;
+                            minutes: {
+                                /**
+                                 * @description Số phút chuẩn của kỳ THEO LỊCH THỰC TẾ — mẫu số của lương giờ.
+                                 *     Hiện ra ngay cạnh lương giờ để con số đó không đến từ hư không.
+                                 */
+                                standard: number;
+                                required: number;
+                                worked: number;
+                                paid_leave: number;
+                                unpaid_leave: number;
+                                shortfall: number;
+                                overtime: number;
+                            };
+                            money: {
+                                base_salary: string;
+                                allowance: string;
+                                hourly_rate: string;
+                                shortfall_deduction: string;
+                                unpaid_leave_deduction: string;
+                                overtime_pay: string;
+                                net_total: string;
+                            };
+                            /**
+                             * @description Gom theo hệ số, sắp từ thấp lên cao: phiếu của hai tháng phải đọc
+                             *     giống nhau, chứ không chạy theo thứ tự đơn được duyệt.
+                             */
+                            overtime_lines: unknown[];
+                            user: {
+                                id: string;
+                                name: string;
+                                employee_code: string | null;
+                                department: string | null;
+                            };
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
+        };
+    };
     "reports.myReports": {
         parameters: {
             query?: never;
@@ -4135,6 +4265,46 @@ export interface operations {
             422: components["responses"]["ValidationException"];
         };
     };
+    "attendance.overtimePreview": {
+        parameters: {
+            query: {
+                date: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            work_date: string;
+                            day_kind: string;
+                            /** @enum {string} */
+                            day_kind_label: "Ngày làm việc" | "Ngày nghỉ hằng tuần" | "Ngày nghỉ lễ";
+                            rate_percent: number;
+                            /**
+                             * @description Con số này còn đổi được cho tới lúc duyệt — giao diện nói
+                             *     "dự kiến", cùng khuôn với `rate_is_final` trên từng đơn.
+                             */
+                            rate_is_final: boolean;
+                            shift: {
+                                start: string;
+                                end: string;
+                            } | null;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            422: components["responses"]["ValidationException"];
+        };
+    };
     "dashboard.overview": {
         parameters: {
             query?: never;
@@ -4364,6 +4534,60 @@ export interface operations {
             403: components["responses"]["AuthorizationException"];
             404: components["responses"]["ModelNotFoundException"];
             422: components["responses"]["ValidationException"];
+        };
+    };
+    "payslip.index": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            period: string;
+                            is_final: boolean;
+                            payslips: string[];
+                            /**
+                             * @description Trả tổng kèm trần: cắt im lặng thì công ty 250 người tưởng
+                             *     mình chỉ có 200 — và với bảng lương thì đó là 50 người không
+                             *     được trả mà không ai nhận ra.
+                             */
+                            total: string;
+                            /** @constant */
+                            limit: 200;
+                            /**
+                             * @description Tổng chi của kỳ, cộng từ đúng những dòng đang hiện. Kế toán
+                             *     cần con số này trước khi mở từng phiếu.
+                             */
+                            net_total: string;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["AuthenticationException"];
+            /** @description An error */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @description Error overview.
+                         * @example
+                         */
+                        message: string;
+                    };
+                };
+            };
         };
     };
     "period.index": {
